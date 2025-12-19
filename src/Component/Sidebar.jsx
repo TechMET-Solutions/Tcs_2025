@@ -21,8 +21,9 @@ import {
   WalletCards
 } from "lucide-react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import LOGO from "../assets/logo.png";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -33,6 +34,14 @@ export default function Sidebar() {
   const [openQuotation, setOpenQuotation] = useState(false);
 
   const isActive = (path) => location.pathname === path;
+
+  /* Close submenus when sidebar collapses */
+  useEffect(() => {
+    if (!open) {
+      setOpenInventory(false);
+      setOpenQuotation(false);
+    }
+  }, [open]);
 
   const menuTop = [
     { label: "Dashboard", icon: <LayoutDashboard />, path: "/" },
@@ -64,78 +73,95 @@ export default function Sidebar() {
 
   return (
     <div
-      className={`
-        h-screen ${open ? "w-72" : "w-20"}
-        bg-gradient-to-b from-[#F3F4F6] to-[#E5E7EB]
-        border-r border-gray-300 shadow-xl
-        flex flex-col transition-all duration-300
-      `}
+      className={`h-screen ${
+        open ? "w-72 rounded-tr-[50px] rounded-br-[50px]" : "w-20"
+      } bg-[#1E1E1E] border-r border-black/30 shadow-xl flex flex-col transition-all duration-300 ease-in-out overflow-hidden`}
     >
       {/* HEADER */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-gray-300">
-        {open && (
-          <h1 className="text-xl font-semibold text-gray-800 tracking-wide">
-            Ceramic Studio
-          </h1>
+      <div className="flex items-center justify-between p-5 min-h-[80px]">
+        {open ? (
+          <img 
+            src={LOGO} 
+            alt="logo" 
+            className="w-[75%] transition-all duration-300 ease-in-out opacity-100" 
+          />
+        ) : (
+          <div className="w-8 h-8 flex items-center justify-center transition-all duration-300">
+            <div className="w-6 h-6 bg-orange-500 rounded-full"></div>
+          </div>
         )}
-
-        <Menu
+        <button
           onClick={() => setOpen(!open)}
-          className="cursor-pointer text-gray-700 hover:text-gray-900 transition"
-        />
+          className="p-2 rounded-lg hover:bg-orange-500/20 transition-colors duration-200"
+        >
+          <Menu className="text-white hover:text-orange-400 transition-colors duration-200" />
+        </button>
       </div>
 
-      <div className="py-4 flex-1 overflow-y-auto">
-
+      {/* MENU WRAPPER */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll px-3">
         {/* TOP MENU */}
         {menuTop.map((item, i) => (
           <div
             key={i}
             onClick={() => navigate(item.path)}
-            className={`
-              flex items-center gap-4 px-5 py-3 cursor-pointer rounded-xl mb-2 transition-all
-              ${isActive(item.path)
-                ? "bg-gray-800 text-white shadow-md scale-[1.03]"
-                : "hover:bg-gray-300 text-gray-800"
-              }
-            `}
+            className={`flex items-center gap-4 p-3 cursor-pointer rounded-xl mb-1 transition-all duration-200
+              ${
+                isActive(item.path)
+                  ? "bg-orange-500 text-white shadow-lg"
+                  : "text-gray-300 hover:bg-orange-500/20 hover:text-white"
+              } ${!open ? "justify-center" : ""}`}
           >
-            <span className="text-[20px]">{item.icon}</span>
-            {open && <span className="font-medium text-sm">{item.label}</span>}
+            <span className={`text-lg ${!open ? "scale-110" : ""}`}>{item.icon}</span>
+            {open && (
+              <span 
+                className="text-sm font-medium transition-opacity duration-200 opacity-100"
+              >
+                {item.label}
+              </span>
+            )}
           </div>
         ))}
 
         {/* INVENTORY */}
-        <div>
+        <div className="mt-2">
           <div
             onClick={() => setOpenInventory(!openInventory)}
-            className="flex items-center justify-between px-5 py-3 cursor-pointer rounded-xl 
-              hover:bg-gray-300 text-gray-800"
+            className={`flex items-center ${
+              open ? "justify-between" : "justify-center"
+            } p-3 cursor-pointer rounded-xl text-gray-300 hover:bg-orange-500/20 hover:text-white transition-all duration-200`}
           >
             <div className="flex items-center gap-4">
-              <Layers className="text-gray-700" />
-              {open && <span className="font-medium text-sm">Inventory</span>}
+              <Layers />
+              {open && (
+                <span className="text-sm font-medium transition-opacity duration-200">
+                  Inventory
+                </span>
+              )}
             </div>
-
             {open && (openInventory ? <ChevronDown /> : <ChevronRight />)}
           </div>
 
           {openInventory && open && (
-            <div className="ml-10 mt-2 flex flex-col gap-2 border-l border-gray-400 pl-4 animate-expand">
+            <div 
+              className="ml-8 mt-2 flex flex-col gap-1 border-l border-gray-600 pl-4 transition-all duration-300"
+              style={{
+                animation: "expand 0.3s ease-out"
+              }}
+            >
               {inventorySubMenu.map((sub, j) => (
                 <div
                   key={j}
                   onClick={() => navigate(sub.path)}
-                  className={`
-                    flex items-center gap-3 cursor-pointer py-2 px-3 rounded-lg transition-all
-                    ${isActive(sub.path)
-                      ? "bg-gray-800 text-white shadow-md scale-[1.03]"
-                      : "text-gray-800 hover:bg-gray-300"
-                    }
-                  `}
+                  className={`flex items-center gap-3 py-2 px-3 rounded-lg cursor-pointer transition-all duration-200
+                    ${
+                      isActive(sub.path)
+                        ? "bg-orange-500 text-white"
+                        : "text-gray-300 hover:bg-orange-500/20 hover:text-white"
+                    }`}
                 >
                   {sub.icon}
-                  {open && sub.label}
+                  <span className="text-sm">{sub.label}</span>
                 </div>
               ))}
             </div>
@@ -143,36 +169,44 @@ export default function Sidebar() {
         </div>
 
         {/* QUOTATION */}
-        <div className="mt-3">
+        <div className="mt-2">
           <div
             onClick={() => setOpenQuotation(!openQuotation)}
-            className="flex items-center justify-between px-5 py-3 cursor-pointer rounded-xl 
-              hover:bg-gray-300 text-gray-800"
+            className={`flex items-center ${
+              open ? "justify-between" : "justify-center"
+            } p-3 cursor-pointer rounded-xl text-gray-300 hover:bg-orange-500/20 hover:text-white transition-all duration-200`}
           >
             <div className="flex items-center gap-4">
-              <FileSignature className="text-gray-700" />
-              {open && <span className="font-medium text-sm">Quotation</span>}
+              <FileSignature />
+              {open && (
+                <span className="text-sm font-medium transition-opacity duration-200">
+                  Quotation
+                </span>
+              )}
             </div>
-
             {open && (openQuotation ? <ChevronDown /> : <ChevronRight />)}
           </div>
 
           {openQuotation && open && (
-            <div className="ml-10 mt-2 flex flex-col gap-2 border-l border-gray-400 pl-4 animate-expand">
+            <div 
+              className="ml-8 mt-2 flex flex-col gap-1 border-l border-gray-600 pl-4 transition-all duration-300"
+              style={{
+                animation: "expand 0.3s ease-out"
+              }}
+            >
               {quotationSubMenu.map((sub, j) => (
                 <div
                   key={j}
                   onClick={() => navigate(sub.path)}
-                  className={`
-                    flex items-center gap-3 cursor-pointer py-2 px-3 rounded-lg transition-all
-                    ${isActive(sub.path)
-                      ? "bg-gray-800 text-white shadow-md scale-[1.03]"
-                      : "text-gray-800 hover:bg-gray-300"
-                    }
-                  `}
+                  className={`flex items-center gap-3 py-2 px-3 rounded-lg cursor-pointer transition-all duration-200
+                    ${
+                      isActive(sub.path)
+                        ? "bg-orange-500 text-white"
+                        : "text-gray-300 hover:bg-orange-500/20 hover:text-white"
+                    }`}
                 >
                   {sub.icon}
-                  {open && sub.label}
+                  <span className="text-sm">{sub.label}</span>
                 </div>
               ))}
             </div>
@@ -185,28 +219,100 @@ export default function Sidebar() {
             <div
               key={i}
               onClick={() => navigate(item.path)}
-              className={`
-                flex items-center gap-4 px-5 py-3 cursor-pointer rounded-xl mb-2 transition-all
-                ${isActive(item.path)
-                  ? "bg-gray-800 text-white shadow-md scale-[1.03]"
-                  : "hover:bg-gray-300 text-gray-800"
-                }
-              `}
+              className={`flex items-center gap-4 p-3 cursor-pointer rounded-xl mb-1 transition-all duration-200
+                ${
+                  isActive(item.path)
+                    ? "bg-orange-500 text-white"
+                    : "text-gray-300 hover:bg-orange-500/20 hover:text-white"
+                } ${!open ? "justify-center" : ""}`}
             >
-              <span className="text-[20px]">{item.icon}</span>
-              {open && <span className="font-medium text-sm">{item.label}</span>}
+              <span className={`text-lg ${!open ? "scale-110" : ""}`}>{item.icon}</span>
+              {open && (
+                <span className="text-sm font-medium transition-opacity duration-200">
+                  {item.label}
+                </span>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* ANIMATION */}
+      {/* Optional: Add a subtle indicator when sidebar is minimized */}
+      {!open && (
+        <div className="absolute bottom-4 right-2 w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+      )}
+
+      {/* HIDE SCROLLBAR & ANIMATIONS */}
       <style>{`
-        @keyframes expand {
-          from { opacity: 0; transform: translateY(-5px); }
-          to { opacity: 1; transform: translateY(0); }
+        .sidebar-scroll::-webkit-scrollbar {
+          width: 4px;
         }
-        .animate-expand { animation: expand 0.25s ease-out; }
+        .sidebar-scroll::-webkit-scrollbar-track {
+          background: #2d2d2d;
+          border-radius: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+          background: #555;
+          border-radius: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+          background: #777;
+        }
+        .sidebar-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #555 #2d2d2d;
+        }
+        
+        @keyframes expand {
+          0% {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes slideIn {
+          from {
+            transform: translateX(-10px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        
+        /* Smooth text fade */
+        .text-fade-enter {
+          opacity: 0;
+          transform: translateX(-10px);
+        }
+        .text-fade-enter-active {
+          opacity: 1;
+          transform: translateX(0);
+          transition: opacity 200ms, transform 200ms;
+        }
+        .text-fade-exit {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        .text-fade-exit-active {
+          opacity: 0;
+          transform: translateX(-10px);
+          transition: opacity 200ms, transform 200ms;
+        }
       `}</style>
     </div>
   );
