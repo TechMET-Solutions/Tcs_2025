@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Edit, Layers, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Images } from "../assets";
 
 const BASE_URL = "http://localhost:5000/api/qualities";
 
@@ -85,32 +86,29 @@ export default function QualityManagement() {
   return (
     <div className="p-6 font-['Lexend']">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-3 text-black">
-          <Layers size={30} className="text-black" />
+      <div className="flex justify-between items-center mb-10 px-4 py-2 border rounded-xl">
+        <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
           Quality Management
         </h1>
-
         <button
           onClick={() => {
             setShowModal(true);
             setIsEditing(false);
             setQuality({ name: "", status: "Available" });
           }}
-          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-500 
-          text-white px-5 py-3 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+          className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42]"
         >
           <Plus size={18} /> Add Quality
         </button>
       </div>
 
       {/* TABLE */}
-      <table className="w-full rounded-2xl overflow-hidden shadow">
+      <table className="w-full rounded-2xl text-center overflow-hidden shadow">
         <thead>
-          <tr className="bg-gradient-to-r from-purple-100 to-blue-100 text-gray-700">
-            <th className="p-3 text-left">Quality Name</th>
-            <th className="p-3 text-left">Status</th>
-            <th className="p-3 text-center">Actions</th>
+          <tr className="bg-[#FA9C42] text-white ">
+            <th className="py-6 px-2">Quality Name</th>
+            <th className="py-6 px-2">Status</th>
+            <th className="py-6 px-2 text-center">Actions</th>
           </tr>
         </thead>
 
@@ -130,11 +128,10 @@ export default function QualityManagement() {
                 <td className="p-3 font-medium">{item.name}</td>
                 <td className="p-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      item.status === "Available"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${item.status === "Available"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                      }`}
                   >
                     {item.status}
                   </span>
@@ -142,16 +139,16 @@ export default function QualityManagement() {
                 <td className="p-3 flex items-center justify-center gap-3">
                   <button
                     onClick={() => editQuality(item)}
-                    className="px-3 py-2 rounded-lg bg-yellow-100 text-yellow-700 hover:scale-105 transition"
+                    className="px-3 py-2 rounded-lg text-balck hover:scale-105 transition"
                   >
-                    <Edit size={16} />
+                    <Edit size={20} />
                   </button>
 
                   <button
                     onClick={() => confirmDelete(item)}
-                    className="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:scale-105 transition"
+                    className="px-3 py-2 rounded-lg font-bold text-red-700 hover:scale-105 transition"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={20} />
                   </button>
                 </td>
               </tr>
@@ -163,13 +160,18 @@ export default function QualityManagement() {
       {/* ADD / EDIT MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="w-[460px] bg-white rounded-2xl p-7 shadow-xl">
+          <div className="w-[460px] bg-[#FFF7EF] rounded-2xl p-7 shadow-xl">
             <div className="flex justify-between mb-4">
-              <h2 className="text-xl font-semibold">
-                {isEditing ? "Edit Quality" : "Add Quality"}
-              </h2>
+              <div className="flex items-center gap-3">
+                <img src={Images.User} alt="Add User" className="w-8 h-8" />
+                <h2 className="text-xl font-bold text-gray-800"> {isEditing ? "Edit Quality" : "Add Quality"}</h2>
+              </div>
               <button onClick={() => setShowModal(false)}>
-                <X />
+                <img
+                  src={Images.Cross}
+                  alt="Close"
+                  className="w-8 h-8"
+                />
               </button>
             </div>
 
@@ -179,7 +181,7 @@ export default function QualityManagement() {
                 value={quality.name}
                 onChange={handleChange}
                 placeholder="Quality Name"
-                className="border p-3 rounded-xl"
+                className="w-full border-2 rounded-lg px-3 py-2 focus:outline-none border-[#FA9C42]"
                 required
               />
 
@@ -187,18 +189,20 @@ export default function QualityManagement() {
                 name="status"
                 value={quality.status}
                 onChange={handleChange}
-                className="border p-3 rounded-xl"
+                className="w-full border-2 rounded-lg px-3 py-2 focus:outline-none border-[#FA9C42]"
               >
                 <option value="Available">Available</option>
                 <option value="Unavailable">Unavailable</option>
               </select>
 
-              <button
-                type="submit"
-                className="bg-indigo-600 text-white py-3 rounded-xl"
-              >
-                {isEditing ? "Update Quality" : "Save Quality"}
-              </button>
+              <div className="pt-2 flex justify-end mr-5">
+                <button
+                  type="submit"
+                  className="w-[120px] bg-[#f57a00] text-white p-2 rounded-xl font-semibold transition"
+                >
+                  {isEditing ? "Update" : "Save"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
