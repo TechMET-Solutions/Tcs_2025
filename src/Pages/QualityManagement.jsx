@@ -128,9 +128,11 @@ export default function QualityManagement() {
                 <td className="p-3 font-medium">{item.name}</td>
                 <td className="p-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${item.status === "Available"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
+                    className={`inline-block text-center px-3 py-1 border-2 rounded-lg font-medium
+      w-32
+      ${item.status === "Available"
+                        ? "border-green-600 text-green-700"
+                        : "border-red-600 text-red-700"
                       }`}
                   >
                     {item.status}

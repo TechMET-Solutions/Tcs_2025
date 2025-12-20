@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Badge, Edit, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Images } from "../assets";
 
 const BASE_URL = "http://localhost:5000/api/brands";
 
@@ -85,32 +86,29 @@ export default function BrandManagement() {
   return (
     <div className="p-6">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-semibold text-gray-800 flex items-center gap-2">
-          <Badge size={26} /> Brand Management
+      <div className="flex justify-between items-center mb-10 px-4 py-2 border rounded-xl">
+        <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
+          Brand Management
         </h1>
-
         <button
           onClick={() => {
             setShowModal(true);
             setIsEditing(false);
             setBrand({ name: "", status: "Available" });
           }}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700"
+          className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42]"
         >
-          <Plus size={18} /> Add Brand
+          <Plus size={18} /> Add Quality
         </button>
       </div>
 
       {/* BRAND LIST */}
-      <div className="bg-white p-6 rounded-xl shadow-xl">
-        <h3 className="text-xl font-semibold mb-4">Brand List</h3>
-
+      <div className="w-full rounded-2xl text-center overflow-hidden shadow">
         <table className="w-full rounded-xl overflow-hidden">
-          <thead className="bg-gray-100 text-gray-700">
+          <thead className="bg-[#FA9C42] text-white text-center">
             <tr>
-              <th className="p-3 text-left">Brand Name</th>
-              <th className="p-3 text-left">Status</th>
+              <th className="py-6 px-2">Brand Name</th>
+              <th className="py-6 px-2">Status</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
@@ -129,29 +127,29 @@ export default function BrandManagement() {
 
                   <td className="p-3">
                     <span
-                      className={`px-3 py-1 rounded-full text-sm ${
-                        item.status === "Available"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                      className={`inline-block text-center px-3 py-1 border-2 rounded-lg font-medium
+      w-32
+      ${item.status === "Available"
+                          ? "border-green-600 text-green-700"
+                          : "border-red-600 text-red-700"
+                        }`}
                     >
                       {item.status}
                     </span>
                   </td>
-
                   <td className="p-3 text-center flex justify-center gap-3">
                     <button
                       onClick={() => editBrand(item)}
-                      className="bg-yellow-500 text-white px-3 py-1 rounded-lg hover:bg-yellow-600 flex items-center gap-1"
+                      className="px-3 py-2 rounded-lg text-balck hover:scale-105 transition"
                     >
-                      <Edit size={16} /> Edit
+                      <Edit size={20} />
                     </button>
 
                     <button
                       onClick={() => confirmDelete(item)}
-                      className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 flex items-center gap-1"
+                      className="px-3 py-2 rounded-lg text-red-600 hover:scale-105 transition"
                     >
-                      <Trash2 size={16} /> Delete
+                      <Trash2 size={20} />
                     </button>
                   </td>
                 </tr>
@@ -164,17 +162,18 @@ export default function BrandManagement() {
       {/* ADD / EDIT MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">
-          <div className="bg-white w-[450px] rounded-xl p-6 shadow-xl animate-scaleIn">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
-                {isEditing ? "Edit Brand" : "Add Brand"}
-              </h2>
-
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-black"
-              >
-                <X size={22} />
+          <div className="bg-[#FFF7EF] w-[450px] rounded-xl p-6 shadow-xl animate-scaleIn">
+            <div className="flex justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <img src={Images.User} alt="Add User" className="w-8 h-8" />
+                <h2 className="text-xl font-bold text-gray-800"> {isEditing ? "Edit Brand" : "Add Brand"}</h2>
+              </div>
+              <button onClick={() => setShowModal(false)}>
+                <img
+                  src={Images.Cross}
+                  alt="Close"
+                  className="w-8 h-8"
+                />
               </button>
             </div>
 
@@ -186,7 +185,7 @@ export default function BrandManagement() {
                   value={brand.name}
                   onChange={handleChange}
                   placeholder="Enter brand name"
-                  className="border rounded p-2 w-full mt-1"
+                  className="w-full mt-1 border-2 rounded-lg px-3 py-2 focus:outline-none border-[#FA9C42]"
                   required
                 />
               </div>
@@ -197,19 +196,21 @@ export default function BrandManagement() {
                   name="status"
                   value={brand.status}
                   onChange={handleChange}
-                  className="border rounded p-2 w-full mt-1"
+                  className="w-full mt-1 border-2 rounded-lg px-3 py-2 focus:outline-none border-[#FA9C42]"
                 >
                   <option value="Available">Available</option>
                   <option value="Unavailable">Unavailable</option>
                 </select>
               </div>
 
-              <button
-                type="submit"
-                className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 mt-2"
-              >
-                {isEditing ? "Update Brand" : "Save Brand"}
-              </button>
+              <div className="pt-2 flex justify-end mr-5">
+                <button
+                  type="submit"
+                  className="w-[120px] bg-[#f57a00] text-white p-2 rounded-xl font-semibold transition"
+                >
+                  {isEditing ? "Update" : "Save"}
+                </button>
+              </div>
             </form>
           </div>
         </div>

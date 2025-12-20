@@ -86,19 +86,19 @@ export default function CategoryManagement() {
     <div className="p-6">
       {/* HEADER */}
       <div className="flex justify-between items-center mb-10 px-4 py-2 border rounded-xl">
-            <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
-                   Category Management
-                </h1>
-                <button
-                  onClick={() => {
-                    setShowModal(true);
-                    setIsEditing(false);
-                    setQuality({ name: "", status: "Available" });
-                  }}
-                  className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42]"
-                >
-                  <Plus size={18} /> Add Category
-                </button>
+        <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
+          Category Management
+        </h1>
+        <button
+          onClick={() => {
+            setShowModal(true);
+            setIsEditing(false);
+            setQuality({ name: "", status: "Available" });
+          }}
+          className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42]"
+        >
+          <Plus size={18} /> Add Category
+        </button>
       </div>
 
       {/* CATEGORY LIST */}
@@ -126,15 +126,16 @@ export default function CategoryManagement() {
 
                   <td className="p-3">
                     <span
-                      className={`px-3 py-1 rounded-full text-sm ${item.status === "Available"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                      className={`inline-block text-center px-3 py-1 border-2 rounded-lg font-medium
+      w-32
+      ${item.status === "Available"
+                          ? "border-green-600 text-green-700"
+                          : "border-red-600 text-red-700"
                         }`}
                     >
                       {item.status}
                     </span>
                   </td>
-
                   <td className="p-3 text-center flex items-center justify-center gap-3">
                     <button
                       onClick={() => editCategory(item)}
@@ -162,7 +163,7 @@ export default function CategoryManagement() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">
           <div className="bg-white w-[450px] rounded-xl p-6 shadow-xl animate-scaleIn">
             <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <img src={Images.User} alt="Add User" className="w-8 h-8" />
                 <h2 className="text-xl font-bold text-gray-800">  {isEditing ? "Edit Category" : "Add Category"}</h2>
               </div>
