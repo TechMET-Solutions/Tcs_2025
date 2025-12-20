@@ -358,13 +358,15 @@ const saveProduct = async (e) => {
     <div className="bg-white p-6 rounded-xl shadow-xl text-center w-[350px]">
 
       <h2 className="text-xl font-semibold mb-4">🔗 Product Link QR</h2>
-
-      <QRCode
+            <div className="flex justify-center">
+               <QRCode
         value={selectedLink}
         size={200}
         level="H"
         includeMargin={true}
       />
+              </div>
+     
 
       <p className="text-xs text-gray-500 mt-3 break-all">
         {selectedLink}

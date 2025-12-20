@@ -1,7 +1,7 @@
 import axios from "axios";
-import { MessageCircle, Plus, Users, X } from "lucide-react";
+import { MessageCircle, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
+import { Images } from "../assets";
 /* ✅ TOOLTIP COMPONENT */
 const Tooltip = ({ text, children }) => {
   return (
@@ -31,6 +31,7 @@ export default function CustomerManagement() {
 
   const [customer, setCustomer] = useState({
     name: "",
+    Last_Name :"",
     phone: "",
     email: "",
     assignedEmployee: "",
@@ -128,7 +129,7 @@ export default function CustomerManagement() {
     <div className="p-6 font-['Lexend']">
 
       {/* ✅ HEADER */}
-      <div className="flex justify-between items-center mb-10">
+      {/* <div className="flex justify-between items-center mb-10">
         <h1 className="text-3xl font-bold flex items-center gap-3 text-gray-800">
           <Users size={30} className="text-blue-600" />
           Customer Management (CRM)
@@ -142,14 +143,30 @@ export default function CustomerManagement() {
             <Plus size={18} /> Add Customer
           </button>
         </Tooltip>
-      </div>
+      </div> */}
+       <div className="flex justify-between items-center mb-10 px-4 py-2 border rounded-xl">
+              <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
+                {/* <Users size={30} className="text-blue-600" /> */}
+          Customer Management (CRM)
+              </h1>
+              <button
+                onClick={() => {
+                  setShowModal(true);
+                  // setIsEditing(false);
+                  // setQuality({ name: "", status: "Available" });
+                }}
+                className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42] hover:bg-orange-500 hover:text-white "
+              >
+                <Plus size={18} /> Add Customer
+              </button>
+            </div>
 
       {/* ✅ TABLE */}
       <table className="w-full rounded-2xl overflow-hidden shadow-xl bg-white">
         <thead>
-          <tr className="bg-purple-100 text-gray-700">
+          <tr className="bg-[#FA9C42] text-white">
             {["Customer", "Phone", "Employee", "Architect", "Status", "Next Follow-up", "Actions"].map(h => (
-              <th key={h} className="p-4 text-left text-sm font-semibold">{h}</th>
+              <th key={h} className="p-4 text-center text-sm font-semibold py-6 px-2">{h}</th>
             ))}
           </tr>
         </thead>
@@ -162,7 +179,7 @@ export default function CustomerManagement() {
             </tr>
           ) : (
             customerList.map((item, index) => (
-              <tr key={item.id || index} className="hover:bg-blue-50 border-b">
+              <tr key={item.id || index} className=" border-b">
                 <td className="p-4 font-semibold">{item.name}</td>
                 <td className="p-4">{item.phone}</td>
                 <td className="p-4">{item.assignedEmployee}</td>
@@ -171,16 +188,16 @@ export default function CustomerManagement() {
                 <td className="p-4">{item.nextFollowup || "-"}</td>
 
                 <td className="p-4 flex gap-2">
-                  <Tooltip text="Send Message">
+                  {/* <Tooltip text="Send Message">
                     <button className="bg-green-500 text-white px-3 py-1 rounded-lg">
                       <MessageCircle size={14} />
                     </button>
-                  </Tooltip>
+                  </Tooltip> */}
 
                   <Tooltip text="View History">
                     <button
                       onClick={() => openHistory(item)}
-                      className="bg-indigo-500 text-white px-3 py-1 rounded-lg"
+                      className="  px-3 py-1 rounded-lg border border-[#FA9C42] hover:bg-[#FA9C42] hover:text-white cursor-pointer"
                     >
                       History
                     </button>
@@ -192,7 +209,7 @@ export default function CustomerManagement() {
                         setActiveIndex(index);
                         setShowUpdateFollowup(true);
                       }}
-                      className="bg-orange-500 text-white px-3 py-1 rounded-lg"
+                      className="px-3 py-1 rounded-lg border border-[#FA9C42] hover:bg-[#FA9C42] hover:text-white cursor-pointer"
                     >
                       + Follow-up
                     </button>
@@ -207,41 +224,66 @@ export default function CustomerManagement() {
       {/* ✅ ADD CUSTOMER MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="w-[650px] bg-white p-7 rounded-2xl shadow-2xl">
+          <div className="w-[804px] bg-[#FFF7EF] p-7 rounded-2xl shadow-2xl">
             <div className="flex justify-between mb-5">
-              <h2 className="text-xl font-bold">Add Customer</h2>
-              <button onClick={() => setShowModal(false)}><X /></button>
+              <h2 className="text-[34px] font-bold">Add Customer</h2>
+               <button onClick={() => setShowModal(false)}>
+                             <img
+                               src={Images.Cross}
+                               alt="Close"
+                               className="w-8 h-8"
+                             />
+                           </button>
             </div>
 
-            <form className="grid grid-cols-2 gap-5" onSubmit={saveCustomer}>
-              <input name="name" onChange={handleChange} value={customer.name} placeholder="Name" className="border p-2 rounded" required />
-              <input name="phone" onChange={handleChange} value={customer.phone} placeholder="Phone" className="border p-2 rounded" required />
-              <input name="email" onChange={handleChange} value={customer.email} placeholder="Email" className="border p-2 rounded col-span-2" />
-              <select name="assignedEmployee" onChange={handleChange} value={customer.assignedEmployee} className="border p-2 rounded">
+            <form className=" " onSubmit={saveCustomer}>
+              <div className="flex justify-center gap-10">
+<input name="name" onChange={handleChange} value={customer.name} placeholder="Name" className="border p-2 rounded w-[382px]" required />
+               <input name="Last_Name" onChange={handleChange} value={customer.Last_Name} placeholder="Last Name " className="border p-2 rounded w-[382px]" required />
+              </div>
+
+              <div className="flex justify-center gap-10 mt-2">
+<input name="phone" onChange={handleChange} value={customer.phone} placeholder="Phone" className="border p-2 rounded w-[382px]" required />
+              <input name="email" onChange={handleChange} value={customer.email} placeholder="Email" className="border p-2 rounded col-span-2 w-[382px]" />
+              </div>
+               <div className="flex justify-center gap-10 mt-2">
+<select name="assignedEmployee" onChange={handleChange} value={customer.assignedEmployee} className="border p-2 rounded w-[382px]">
                 <option value="">Select Employee</option>
                 <option>Rahul</option>
                 <option>Sagar</option>
                 <option>Pritesh</option>
               </select>
-              <select name="assignedArchitect" onChange={handleChange} value={customer.assignedArchitect} className="border p-2 rounded">
+              <select name="assignedArchitect" onChange={handleChange} value={customer.assignedArchitect} className="border p-2 rounded w-[382px]">
                 <option value="">Select Architect</option>
                 <option>Architect 1</option>
                 <option>Architect 2</option>
               </select>
-              <select name="status" onChange={handleChange} value={customer.status} className="border p-2 rounded">
+
+               </div>
+               <div className="flex justify-center gap-10 mt-2">
+
+<select name="status" onChange={handleChange} value={customer.status} className="border p-2 rounded  w-[382px]">
                 <option>New</option>
                 <option>Pending</option>
                 <option>Hold</option>
                 <option>Quoted</option>
                 <option>Finalized</option>
               </select>
-              <input type="date" name="nextFollowup" onChange={handleChange} value={customer.nextFollowup} className="border p-2 rounded" />
-              <textarea name="followupResponse" onChange={handleChange} value={customer.followupResponse} className="border p-2 rounded col-span-2" placeholder="Follow-up response"></textarea>
-              <textarea name="notes" onChange={handleChange} value={customer.notes} className="border p-2 rounded col-span-2" placeholder="Notes"></textarea>
-
-              <button type="submit" className="col-span-2 bg-blue-600 text-white py-3 rounded-xl">
-                Save Lead
+              <input type="date" name="nextFollowup" onChange={handleChange} value={customer.nextFollowup} className="border p-2 rounded  w-[382px]" />
+               </div>
+              <div className="mt-5">
+ <textarea name="followupResponse" onChange={handleChange} value={customer.followupResponse} className="border p-2 rounded col-span-2 w-[750px]" placeholder="Follow-up response"></textarea>
+              </div>
+              <div className="mt-5">
+                 <textarea name="notes" onChange={handleChange} value={customer.notes} className="border p-2 rounded col-span-2 w-[750px]" placeholder="Notes"></textarea>
+             </div>
+              <div className="flex justify-end">
+                 <button type="submit" className="col-span-2 bg-[#FA9C42] text-white py-3 rounded-xl w-[134px] h-[48px]">
+               Save
               </button>
+             </div>
+
+             
             </form>
           </div>
         </div>
@@ -250,7 +292,7 @@ export default function CustomerManagement() {
       {/* ✅ ADD FOLLOW-UP MODAL */}
       {showUpdateFollowup && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white w-[450px] p-6 rounded-xl shadow-2xl">
+          <div className="bg-[#FFF7EF] w-[450px] p-6 rounded-xl shadow-2xl">
             <div className="flex justify-between mb-4">
               <h2 className="text-lg font-bold">Add New Follow-up</h2>
               <button onClick={() => setShowUpdateFollowup(false)}><X /></button>
@@ -269,7 +311,7 @@ export default function CustomerManagement() {
       {/* ✅ HISTORY MODAL */}
       {showHistory && selectedCustomer && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white w-[500px] p-6 rounded-xl shadow-2xl">
+          <div className="bg-[#FFF7EF] w-[500px] p-6 rounded-xl shadow-2xl">
             <div className="flex justify-between mb-4">
               <h2 className="text-lg font-bold">
                 Follow-up History - {selectedCustomer.name}
