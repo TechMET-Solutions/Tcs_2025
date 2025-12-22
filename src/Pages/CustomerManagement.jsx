@@ -30,17 +30,23 @@ export default function CustomerManagement() {
   });
 
   const [customer, setCustomer] = useState({
-    name: "",
-    Last_Name :"",
-    phone: "",
-    email: "",
-    assignedEmployee: "",
-    assignedArchitect: "",
-    status: "New",
-    nextFollowup: "",
-    followupResponse: "",
-    notes: "",
-  });
+  name: "",
+  Last_Name: "",
+  phone: "",
+  email: "",
+  assignedEmployee: "",
+  assignedArchitect: "",
+  status: "New",
+  nextFollowup: "",
+  followupResponse: "",
+  notes: "",
+
+  // 🔹 NEW FIELDS
+  projectName: "",
+  siteName: "",
+  siteType: "",
+});
+
 
   const [customerList, setCustomerList] = useState([]);
 
@@ -276,9 +282,44 @@ export default function CustomerManagement() {
               </div>
               <div className="mt-5">
                  <textarea name="notes" onChange={handleChange} value={customer.notes} className="border p-2 rounded col-span-2 w-[750px]" placeholder="Notes"></textarea>
-             </div>
-              <div className="flex justify-end">
-                 <button type="submit" className="col-span-2 bg-[#FA9C42] text-white py-3 rounded-xl w-[134px] h-[48px]">
+              </div>
+              <div className="flex justify-center gap-10 mt-2">
+  <input
+    name="projectName"
+    onChange={handleChange}
+    value={customer.projectName}
+    placeholder="Project Name"
+    className="border p-2 rounded w-[382px]"
+    required
+  />
+
+  <input
+    name="siteName"
+    onChange={handleChange}
+    value={customer.siteName}
+    placeholder="Site Name"
+    className="border p-2 rounded w-[382px]"
+    required
+  />
+</div><div className="flex justify-center gap-10 mt-2">
+  <select
+    name="siteType"
+    onChange={handleChange}
+    value={customer.siteType}
+    className="border p-2 rounded w-[382px]"
+    required
+  >
+    <option value="">Select Site Type</option>
+    <option value="Residential">Residential</option>
+    <option value="Commercial">Commercial</option>
+    <option value="Industrial">Industrial</option>
+    <option value="Government">Government</option>
+  </select>
+</div>
+
+
+              <div className="flex justify-end ">
+                 <button type="submit" className="col-span-2 bg-[#FA9C42] text-white py-3 rounded-xl w-[134px] h-[48px] mt-2">
                Save
               </button>
              </div>

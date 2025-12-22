@@ -7,6 +7,7 @@ import {
   createEmployeeAPI,
   getEmployeesAPI,
 } from "../Component/API/employeeApi";
+import { useNavigate } from "react-router-dom";
 
 export default function EmployeeRegistration() {
   const [showModal, setShowModal] = useState(false);
@@ -29,7 +30,7 @@ const [documents, setDocuments] = useState({
     expense: "",
     advance: "",
   });
-
+const navigate = useNavigate();
   const [employeeList, setEmployeeList] = useState([]);
 
   // ===================== INPUT =====================
@@ -106,7 +107,14 @@ const handleFileChange = (e) => {
               <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
                 {/* <Users size={30} className="text-blue-600" /> */}
         Employee Registration
-              </h1>
+        </h1>
+        <div className="flex gap-10">
+ <button
+  onClick={() => navigate("/employee-reviews")}
+  className="flex items-center gap-2 text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42] hover:bg-orange-500 hover:text-white"
+>
+   Employee Rating
+</button>
               <button
                 onClick={() => {
                   setShowModal(true);
@@ -117,6 +125,8 @@ const handleFileChange = (e) => {
               >
                 <Plus size={18} /> Add Employee
               </button>
+        </div>
+      
             </div>
       {/* TABLE */}
       <table className="w-full bg-white rounded-xl shadow overflow-hidden">
@@ -130,7 +140,7 @@ const handleFileChange = (e) => {
               "Salary",
               "Expense",
               "Birthdate",
-              "Actions",
+             
             ].map((h) => (
               <th key={h} className="p-4 text-center bg-[#FA9C42] text-white py-6 px-2 ">
                 {h}
@@ -157,29 +167,7 @@ const handleFileChange = (e) => {
                 <td className="p-4">₹{item.expense}</td>
                 <td className="p-4">{item.birthdate}</td>
 
-                <td className="p-4 flex gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedEmployee(item);
-                      setReviewType("rating");
-                      setShowReviewModal(true);
-                    }}
-                    className="bg-yellow-500 text-white px-3 py-1 rounded text-sm"
-                  >
-                    ⭐ Rating
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setSelectedEmployee(item);
-                      setReviewType("feedback");
-                      setShowReviewModal(true);
-                    }}
-                    className="bg-green-600 text-white px-3 py-1 rounded text-sm"
-                  >
-                    💬 Feedback
-                  </button>
-                </td>
+               
               </tr>
             ))
           )}

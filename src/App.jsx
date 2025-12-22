@@ -21,6 +21,7 @@ import ManageInventory from "./Pages/ManageInventory";
 import ManageQuotation from "./Pages/ManageQuotation";
 import ProductRegistration from "./Pages/ProductRegistration";
 import QualityManagement from "./Pages/QualityManagement";
+import EmployeeReviews from "./Pages/EmployeeReviews";
 
 
 
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="employee-role" element={<EmployeeRole />} />
           <Route path="employee-attendance" element={<EmployeeAttendance />} />
           <Route path="Architect-Registration" element={<ArchitectRegistration />} />
+            <Route path="/employee-reviews" element={<EmployeeReviews />} />
         </Route>
 
       </Routes>

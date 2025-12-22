@@ -1,4 +1,4 @@
-import { BarChart, Eye, Package, Plus, Upload, X } from "lucide-react";
+import { BarChart, Package, Plus, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Barcode from "react-barcode";
 import QRCode from "react-qr-code";
@@ -216,12 +216,18 @@ const saveProduct = async (e) => {
           Product Registration
         </h1>
 
-        <button
+        {/* <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700"
         >
           <Plus size={18} /> Add Product
-        </button>
+        </button> */}
+        <button
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42]"
+                >
+                  <Plus size={18} /> Add Product
+                </button>
       </div>
 
       {/* PRODUCT TABLE */}
@@ -231,19 +237,19 @@ const saveProduct = async (e) => {
         </h2>
 
         <table className="w-full bg-white rounded-xl overflow-hidden">
-          <thead className="bg-gray-100 text-gray-700">
+          <thead className="bg-[#FA9C42] text-white ">
             <tr>
-              <th className="p-3">Image</th>
-              <th className="p-3">Name</th>
-              <th className="p-3">Brand</th>
-              <th className="p-3">Category</th>
-              <th className="p-3">Quality</th>
-              <th className="p-3">Rate</th>
-              <th className="p-3">Godown</th>
-              <th className="p-3">Batch Details</th> {/* ⭐ NEW */}
-              <th className="p-3">Barcode</th>
-              <th className="p-3">QR Code</th>
-<th className="p-3">Print</th>
+              <th className="py-6 px-2">Image</th>
+              <th className="py-6 px-2">Name</th>
+              <th className="py-6 px-2">Brand</th>
+              <th className="py-6 px-2">Category</th>
+              <th className="py-6 px-2">Quality</th>
+              <th className="py-6 px-2">Rate</th>
+              <th className="py-6 px-2">Godown</th>
+              <th className="py-6 px-2">Batch Details</th> {/* ⭐ NEW */}
+              <th className="py-6 px-2">Barcode</th>
+              <th className="py-6 px-2">QR Code</th>
+<th className="py-6 px-2">Print</th>
 
             </tr>
           </thead>
@@ -308,32 +314,34 @@ const saveProduct = async (e) => {
 
 
                   {/* BARCODE */}
-                  <td className="p-3 text-center">
-                    <button
-                      className="text-blue-600 underline flex items-center gap-1 mx-auto"
+                 <td className="p-2">
+                  <div
+                    className="cursor-pointer inline-block"
+                    onClick={() => {
+                      setSelectedBarcode(item.name);
+                      setShowBarcodeModal(true);
+                    }}
+                  >
+                    <Barcode value={item.name} height={40} width={1} />
+                  </div>
+                </td>
+
+                {/* QR CODE IN LIST */}
+                <td className="p-2">
+                  {item.link ? (
+                    <div
+                      className="cursor-pointer inline-block"
                       onClick={() => {
-                        setSelectedBarcode(item.name);
-                        setShowBarcodeModal(true);
+                        setSelectedLink(item.link);
+                        setShowQRModal(true);
                       }}
                     >
-                      <Eye size={16} /> View
-                    </button>
-                  </td>
-                  <td className="p-3 text-center">
-  {item.link ? (
-    <button
-      className="text-green-600 underline flex items-center gap-1 mx-auto"
-      onClick={() => {
-        setSelectedLink(item.link);
-        setShowQRModal(true);
-      }}
-    >
-      <Eye size={16} /> View QR
-    </button>
-  ) : (
-    <span className="text-gray-400 italic">No Link</span>
-  )}
-</td>
+                      <QRCode value={item.link} size={60} />
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">No Link</span>
+                  )}
+                </td>
 
 <td className="p-3 text-center">
   <button
@@ -355,7 +363,7 @@ const saveProduct = async (e) => {
       </div>
 {showQRModal && (
   <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded-xl shadow-xl text-center w-[350px]">
+    <div className="bg-[#FFF7EF] p-6 rounded-xl shadow-xl text-center w-[350px]">
 
       <h2 className="text-xl font-semibold mb-4">🔗 Product Link QR</h2>
             <div className="flex justify-center">
@@ -385,7 +393,7 @@ const saveProduct = async (e) => {
       {/* ADD PRODUCT MODAL */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center">
-          <div className="bg-white w-[750px] rounded-xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#FFF7EF] w-[750px] rounded-xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
 
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -399,7 +407,7 @@ const saveProduct = async (e) => {
             <form onSubmit={saveProduct}>
 
               {/* PRODUCT FORM */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 ">
                 {/* IMAGE */}
                 <div>
                   <label>Product Image:</label>
@@ -545,8 +553,8 @@ const saveProduct = async (e) => {
               <div className="mt-6">
                 <h3 className="text-lg font-semibold mb-2">Batch Details</h3>
 
-                <table className="w-full border rounded-lg">
-                  <thead className="bg-gray-100">
+                <table className="w-full border rounded-lg bg-white">
+                  <thead className="">
                     <tr>
                       <th className="p-2 border">Batch No</th>
                       <th className="p-2 border">Quantity</th>
@@ -612,13 +620,15 @@ const saveProduct = async (e) => {
                   </button>
                 </div>
               </div>
-
-              <button
+              <div className="flex justify-end">
+                 <button
                 type="submit"
-                className="w-full mt-6 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                className="w-[134px] mt-6 bg-[#FA9C42] text-white py-2  hover:bg-blue-700 h-[48px] rounded-[8px]"
               >
-                Save Product
+                Save 
               </button>
+</div>
+             
             </form>
 
           </div>
@@ -628,7 +638,7 @@ const saveProduct = async (e) => {
       {/* BARCODE MODAL */}
       {showBarcodeModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-xl shadow-xl text-center">
+          <div className="bg-[#FFF7EF] p-6 rounded-xl shadow-xl text-center">
             <h2 className="text-xl font-semibold mb-4">Barcode</h2>
 
             <Barcode value={selectedBarcode || "Product"} />
@@ -643,9 +653,9 @@ const saveProduct = async (e) => {
         </div>
       )}
 
-      {showBatchModal && (
+     {showBatchModal && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white w-[500px] rounded-xl shadow-2xl p-6">
+    <div className="bg-[#FFF7EF] w-[600px] rounded-xl shadow-2xl p-6">
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
@@ -653,25 +663,48 @@ const saveProduct = async (e) => {
           📦 Batch Details
         </h3>
         <button
-          className="text-gray-500 hover:text-red-500"
+          className="text-gray-500 hover:text-red-500 text-xl"
           onClick={() => setShowBatchModal(false)}
         >
           ✕
         </button>
       </div>
 
-      {/* BATCH LIST */}
-      <div className="space-y-3 max-h-[300px] overflow-auto">
-        {selectedBatches.map((b, index) => (
-          <div
-            key={index}
-            className="border rounded-lg p-3 bg-gray-50"
-          >
-            <p><strong>Batch No:</strong> {b.batch_no}</p>
-            <p><strong>Quantity:</strong> {b.qty}</p>
-            <p><strong>Location:</strong> {b.location}</p>
-          </div>
-        ))}
+      {/* TABLE */}
+      <div className="max-h-[300px] overflow-auto rounded-lg border bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100 sticky top-0">
+            <tr>
+              <th className="p-3 border text-left">Batch No</th>
+              <th className="p-3 border text-left">Quantity</th>
+              <th className="p-3 border text-left">Location</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {selectedBatches.length > 0 ? (
+              selectedBatches.map((b, index) => (
+                <tr
+                  key={index}
+                  className="border-t hover:bg-gray-50 transition"
+                >
+                  <td className="p-3 border">{b.batch_no}</td>
+                  <td className="p-3 border">{b.qty}</td>
+                  <td className="p-3 border">{b.location}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="3"
+                  className="p-4 text-center text-gray-500 italic"
+                >
+                  No batch data available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* FOOTER */}
@@ -686,9 +719,10 @@ const saveProduct = async (e) => {
     </div>
   </div>
 )}
+
 {showPrintModal && printProduct && (
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white w-[850px] rounded-2xl shadow-2xl p-6">
+    <div className="bg-[#FFF7EF] w-[850px] rounded-2xl shadow-2xl p-6">
 
       {/* HEADER (HIDDEN ON PRINT) */}
       <div className="flex justify-between items-center mb-4 print:hidden">

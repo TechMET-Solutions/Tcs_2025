@@ -1,7 +1,7 @@
 import axios from "axios";
-import { Plus, User, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-
+import { Images } from "../assets";
 const BASE_URL = "http://localhost:5000/api/architects";
 
 export default function ArchitectRegistration() {
@@ -9,6 +9,7 @@ export default function ArchitectRegistration() {
 
   const [architect, setArchitect] = useState({
     name: "",
+    lastname:"",
     whatsapp: "",
     commission: "",
     birthdate: "",
@@ -63,32 +64,53 @@ export default function ArchitectRegistration() {
     <div className="p-6">
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      {/* <div className="flex justify-between items-center mb-8">
         <h2 className="text-3xl font-semibold text-gray-800 flex items-center gap-2">
           <User size={26} /> Architect Registration
         </h2>
 
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700"
+          className="flex items-center gap-2  text-black px-4 py-2 rounded-lg shadow  border-[#FA9C42] hover:bg-[#FA9C42] hover:text-white"
         >
           <Plus size={18} /> Add Architect
         </button>
-      </div>
+      </div> */}
+       <div className="flex justify-between items-center mb-10 px-4 py-2 border rounded-xl">
+              <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
+                {/* <Users size={30} className="text-blue-600" /> */}
+        Architect Registration
+        </h1>
+        <div className="flex gap-10">
+ <button
+  // onClick={() => navigate("/employee-reviews")}
+  className="flex items-center gap-2 text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42] hover:bg-orange-500 hover:text-white"
+>
+   Employee Rating
+</button>
+              <button
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42] hover:bg-orange-500 hover:text-white "
+              >
+                <Plus size={18} /> Add Architect
+              </button>
+        </div>
+      
+            </div>
 
       {/* Architect List */}
       <div className="bg-white p-6 shadow-xl rounded-xl">
         <h3 className="text-xl font-semibold mb-4">Architect List</h3>
 
         <table className="w-full rounded-xl overflow-hidden">
-          <thead className="bg-gray-100 text-gray-700">
+          <thead className="bg-[#FA9C42] text-white ">
             <tr>
-              <th className="p-3">Name</th>
-              <th className="p-3">WhatsApp</th>
-              <th className="p-3">Commission (%)</th>
-              <th className="p-3">Birthdate</th>
-              <th className="p-3">Loyalty Points</th>
-              <th className="p-3">remark</th>
+              <th className="py-6 px-2">Name</th>
+              <th className="py-6 px-2">WhatsApp</th>
+              <th className="py-6 px-2">Commission (%)</th>
+              <th className="py-6 px-2">Birthdate</th>
+              <th className="py-6 px-2">Loyalty Points</th>
+              <th className="py-6 px-2">remark</th>
             </tr>
           </thead>
 
@@ -118,20 +140,33 @@ export default function ArchitectRegistration() {
       {/* Add Architect Modal */}
      {showModal && (
   <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-    <div className="bg-white w-[600px] rounded-xl p-6 shadow-xl">
+    <div className="bg-[#FFF7EF] w-[600px] rounded-xl p-6 shadow-xl">
       <div className="flex justify-between mb-4">
         <h2 className="text-xl font-semibold">Add Architect</h2>
-        <button onClick={() => setShowModal(false)}>
-          <X />
-        </button>
+       <button onClick={() => setShowModal(false)}>
+                       <img
+                         src={Images.Cross}
+                         alt="Close"
+                         className="w-8 h-8"
+                       />
+                     </button>
       </div>
 
       <form className="grid grid-cols-2 gap-4" onSubmit={saveArchitect}>
         <input
-          name="name"
+          name="FirstName"
           value={architect.name}
           onChange={handleChange}
-          placeholder="Full Name"
+          placeholder="First Name"
+          className="border p-2"
+          required
+        />
+
+               <input
+          name="lastName"
+          value={architect.lastname}
+          onChange={handleChange}
+          placeholder="Last Name"
           className="border p-2"
           required
         />
@@ -140,7 +175,7 @@ export default function ArchitectRegistration() {
           name="whatsapp"
           value={architect.whatsapp}
           onChange={handleChange}
-          placeholder="WhatsApp"
+          placeholder="WhatsApp Number"
           className="border p-2"
           required
         />
@@ -181,15 +216,19 @@ export default function ArchitectRegistration() {
           placeholder="Remark"
           className="border p-2 col-span-2 resize-none"
           rows={3}
-        />
-
-        <button
+              />
+              <div className="flex ">
+                 <button
           type="submit"
-          className="col-span-2 bg-blue-600 text-white py-2 rounded-lg mt-2"
+          className=" bg-[#FA9C42] text-white py-2 rounded-lg mt-2 w-[134px] h-12"
         >
-          Save Architect
-        </button>
-      </form>
+          Save 
+        </button> 
+</div>
+      
+            </form>
+            
+             
     </div>
   </div>
 )}
