@@ -1,4 +1,4 @@
-import { BarChart, Package, Plus, Upload, X } from "lucide-react";
+import { BarChart, Eye, Package, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Barcode from "react-barcode";
 import QRCode from "react-qr-code";
@@ -48,7 +48,9 @@ const [selectedBatches, setSelectedBatches] = useState([]);
   const [productList, setProductList] = useState([]);
 const [showPrintModal, setShowPrintModal] = useState(false);
 const [printProduct, setPrintProduct] = useState(null);
-
+const [modalMode, setModalMode] = useState("add"); 
+// "add" | "edit" | "view"
+const [selectedProductId, setSelectedProductId] = useState(null);
   // FETCH PRODUCTS
   const fetchProducts = async () => {
     try {
@@ -99,57 +101,7 @@ const [printProduct, setPrintProduct] = useState(null);
     setBatchList(updated);
   };
 
-  // SAVE PRODUCT
-  // const saveProduct = async (e) => {
-  //   e.preventDefault();
-
-  //   try {
-  //     const formData = new FormData();
-
-  //     Object.keys(product).forEach((key) => {
-  //       if (key === "godown") {
-  //         formData.append("godown", JSON.stringify(product.godown));
-  //       } else {
-  //         formData.append(key, product[key]);
-  //       }
-  //     });
-
-  //     formData.append("batches", JSON.stringify(batchList));
-
-  //     if (product.image) {
-  //       formData.append("image", product.image);
-  //     }
-
-  //     const res = await addProductAPI(formData);
-
-  //     if (res.data.success) {
-  //       alert("✅ Product Saved Successfully");
-
-  //       fetchProducts();
-
-  //       setProduct({
-  //         name: "",
-  //         size: "",
-  //         brand: "",
-  //         category: "",
-  //         quality: "",
-  //         rate: "",
-  //         status: "",
-  //         link: "",
-  //         godown: [],
-  //         description: "",
-  //         image: null,
-  //       });
-
-  //       setBatchList([{ batchNo: "", qty: "", location: "" }]);
-  //       setShowAddModal(false);
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert("❌ Product Save Failed");
-  //   }
-  // };
-const saveProduct = async (e) => {
+  const saveProduct = async (e) => {
   e.preventDefault();
 
   try {
@@ -206,7 +158,79 @@ const saveProduct = async (e) => {
     alert("❌ Product Save Failed");
   }
 };
+const normalizeGodown = (godown) => {
+  if (Array.isArray(godown)) return godown;
+  if (typeof godown === "string") {
+    return godown.split(",").map(g => g.trim());
+  }
+  return [];
+};
 
+const viewProduct = (item) => {
+  setModalMode("view");
+  setSelectedProductId(item.id);
+
+  setProduct({
+    name: item.name || "",
+    size: item.size || "",
+    brand: item.brand || "",
+    category: item.category || "",
+    quality: item.quality || "",
+    rate: item.rate || "",
+    status: item.status || "",
+    link: item.link || "",
+    godown: normalizeGodown(item.godown), // ✅ FIX
+    description: item.description || "",
+    image: null,
+  });
+
+  setBatchList(
+    item.batches?.map(b => ({
+      batchNo: b.batch_no,
+      qty: b.qty,
+      location: b.location,
+    })) || [{ batchNo: "", qty: "", location: "" }]
+  );
+
+  setShowAddModal(true);
+};
+
+
+const editProduct = (item) => {
+  setModalMode("edit");
+  setSelectedProductId(item.id);
+
+  setProduct({
+    name: item.name || "",
+    size: item.size || "",
+    brand: item.brand || "",
+    category: item.category || "",
+    quality: item.quality || "",
+    rate: item.rate || "",
+    status: item.status || "",
+    link: item.link || "",
+    godown: normalizeGodown(item.godown), // ✅ FIX
+    description: item.description || "",
+    image: null,
+  });
+
+  setBatchList(
+    item.batches?.map(b => ({
+      batchNo: b.batch_no,
+      qty: b.qty,
+      location: b.location,
+    })) || [{ batchNo: "", qty: "", location: "" }]
+  );
+
+  setShowAddModal(true);
+};
+
+
+const deleteProduct = (id) => {
+  if (window.confirm("Are you sure you want to delete this product?")) {
+    console.log("Delete ID:", id);
+  }
+};
   return (
     <div className="p-6">
 
@@ -231,135 +255,178 @@ const saveProduct = async (e) => {
       </div>
 
       {/* PRODUCT TABLE */}
-      <div className="bg-white p-6 shadow-xl rounded-xl">
+     <div className="bg-white p-5 shadow-xl rounded-xl w-full overflow-x-auto">
+
         <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
           <BarChart size={22} /> Inventory List
         </h2>
 
-        <table className="w-full bg-white rounded-xl overflow-hidden">
-          <thead className="bg-[#FA9C42] text-white ">
-            <tr>
-              <th className="py-6 px-2">Image</th>
-              <th className="py-6 px-2">Name</th>
-              <th className="py-6 px-2">Brand</th>
-              <th className="py-6 px-2">Category</th>
-              <th className="py-6 px-2">Quality</th>
-              <th className="py-6 px-2">Rate</th>
-              <th className="py-6 px-2">Godown</th>
-              <th className="py-6 px-2">Batch Details</th> {/* ⭐ NEW */}
-              <th className="py-6 px-2">Barcode</th>
-              <th className="py-6 px-2">QR Code</th>
-<th className="py-6 px-2">Print</th>
+     <table className="w-full bg-white rounded-xl overflow-hidden">
+  <thead className="bg-[#FA9C42] text-white">
+    <tr>
+      <th className="py-3 px-2">Image</th>
+      <th className="py-3 px-2">Name</th>
+      <th className="py-3 px-2">Size</th>
+      <th className="py-3 px-2">Brand</th>
+      <th className="py-3 px-2">Quality</th>
+      <th className="py-3 px-2">Category</th>
+      <th className="py-3 px-2">Quantity</th>
+      <th className="py-3 px-2">Rate</th>
+      <th className="py-3 px-2">Godown</th>
+      <th className="py-3 px-2">Status</th>
+      <th className="py-3 px-2">Action</th>
+      <th className="py-3 px-2">Batch Details</th>
+      <th className="py-3 px-2">Barcode</th>
+      <th className="py-3 px-2">QR Code</th>
+      <th className="py-3 px-2">Print</th>
+    </tr>
+  </thead>
 
-            </tr>
-          </thead>
+  <tbody>
+    {productList.length === 0 ? (
+      <tr>
+        <td colSpan="15" className="text-center p-6 text-gray-500 italic">
+          No products added yet.
+        </td>
+      </tr>
+    ) : (
+      productList.map((item, index) => {
+        const totalQty = item.batches?.reduce(
+          (sum, b) => sum + Number(b.qty || 0),
+          0
+        );
 
-          <tbody>
-            {productList.length === 0 ? (
-              <tr>
-                <td colSpan="9" className="text-center p-6 text-gray-500 italic">
-                  No products added yet.
-                </td>
-              </tr>
-            ) : (
-              productList.map((item, index) => (
-                <tr key={index} className="border-t hover:bg-gray-50 transition">
+        return (
+          <tr key={index} className="border-t hover:bg-gray-50 transition">
 
-                  {/* IMAGE */}
-                  <td className="p-3 text-center">
-                    {item.image_url ? (
-                      <img
-                        className="h-12 w-12 rounded-md object-cover mx-auto"
-                        src={item.image_url}
-                      />
-                    ) : "-"}
-                  </td>
+            {/* IMAGE */}
+            <td className="p-2 text-center">
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  className="h-12 w-12 rounded-md object-cover mx-auto"
+                />
+              ) : "-"}
+            </td>
 
-                  <td className="p-3">{item.name}</td>
-                  <td className="p-3">{item.brand}</td>
-                  <td className="p-3">{item.category}</td>
-                  <td className="p-3">{item.quality}</td>
-                  <td className="p-3">₹{item.rate}</td>
-                  <td className="p-3">{item.godown}</td>
+            <td className="p-2">{item.name}</td>
+            <td className="p-2">{item.size}</td>
+            <td className="p-2">{item.brand}</td>
+            <td className="p-2">{item.quality}</td>
+            <td className="p-2">{item.category}</td>
 
-                  {/* ⭐ BATCH DETAILS DISPLAY */}
-                  {/* <td className="p-3">
-                    {item.batches && item.batches.length > 0 ? (
-                      <div className="space-y-1">
-                        {item.batches.map((b, idx) => (
-                          <div key={idx} className="text-sm bg-gray-100 p-1 rounded">
-                            <strong>Batch {b.batch_no}</strong> → Qty: {b.qty}, Loc: {b.location}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 italic">No Batch</span>
-                    )}
-                  </td> */}
-                  <td className="p-3 text-center">
-  {item.batches && item.batches.length > 0 ? (
+            {/* TOTAL QTY */}
+            <td className="p-2 text-center font-semibold">
+              {totalQty}
+            </td>
+
+            <td className="p-2">₹{item.rate}</td>
+            <td className="p-2">{item.godown}</td>
+
+            {/* ✅ STATUS (ALWAYS AVAILABLE) */}
+            <td className="p-2 text-center">
+              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                Available
+              </span>
+            </td>
+
+            {/* ✅ ACTION BUTTONS */}
+           <td className="p-2 text-center">
+  <div className="flex justify-center gap-2">
+
     <button
-      className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
-      onClick={() => {
-        setSelectedBatches(item.batches);
-        setShowBatchModal(true);
-      }}
+      onClick={() => editProduct(item)}
+      className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center"
     >
-      View Batches
+      <Pencil size={16} />
     </button>
-  ) : (
-    <span className="text-gray-400 italic">No Batch</span>
-  )}
+
+    <button
+      onClick={() => deleteProduct(item.id)}
+      className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center"
+    >
+      <Trash2 size={16} />
+    </button>
+
+    <button
+      onClick={() => viewProduct(item)}
+      className="w-9 h-9 rounded-full bg-sky-500 hover:bg-sky-600 text-white flex items-center justify-center"
+    >
+      <Eye size={16} />
+    </button>
+
+  </div>
 </td>
 
+            {/* BATCH DETAILS */}
+            <td className="p-2 text-center">
+              {item.batches?.length > 0 ? (
+                <button
+                  className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                  onClick={() => {
+                    setSelectedBatches(item.batches);
+                    setShowBatchModal(true);
+                  }}
+                >
+                  View Batches
+                </button>
+              ) : (
+                <span className="text-gray-400 italic">No Batch</span>
+              )}
+            </td>
 
-                  {/* BARCODE */}
-                 <td className="p-2">
-                  <div
-                    className="cursor-pointer inline-block"
-                    onClick={() => {
-                      setSelectedBarcode(item.name);
-                      setShowBarcodeModal(true);
-                    }}
-                  >
-                    <Barcode value={item.name} height={40} width={1} />
-                  </div>
-                </td>
+            {/* BARCODE */}
+            <td className="p-2 text-center">
+              <div
+                className="cursor-pointer inline-block"
+                onClick={() => {
+                  setSelectedBarcode(item.name);
+                  setShowBarcodeModal(true);
+                }}
+              >
+                <Barcode value={item.name} height={40} width={1} />
+              </div>
+            </td>
 
-                {/* QR CODE IN LIST */}
-                <td className="p-2">
-                  {item.link ? (
-                    <div
-                      className="cursor-pointer inline-block"
-                      onClick={() => {
-                        setSelectedLink(item.link);
-                        setShowQRModal(true);
-                      }}
-                    >
-                      <QRCode value={item.link} size={60} />
-                    </div>
-                  ) : (
-                    <span className="text-gray-400">No Link</span>
-                  )}
-                </td>
+            {/* QR CODE */}
+            <td className="p-2 text-center">
+              {item.link ? (
+                <div
+                  className="cursor-pointer inline-block"
+                  onClick={() => {
+                    setSelectedLink(item.link);
+                    setShowQRModal(true);
+                  }}
+                >
+                  <QRCode value={item.link} size={60} />
+                </div>
+              ) : (
+                <span className="text-gray-400">No Link</span>
+              )}
+            </td>
 
-<td className="p-3 text-center">
-  <button
-    className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-black"
-    onClick={() => {
-      setPrintProduct(item);
-      setShowPrintModal(true);
-    }}
-  >
-    🖨 Print
-  </button>
-</td>
+            {/* PRINT */}
+            <td className="p-3 text-center">
+              <button
+                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-black"
+                onClick={() => {
+                  setPrintProduct(item);
+                  setShowPrintModal(true);
+                }}
+              >
+                🖨 Print
+              </button>
+            </td>
 
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+          </tr>
+        );
+      })
+    )}
+  </tbody>
+</table>
+
+
       </div>
 {showQRModal && (
   <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
@@ -397,8 +464,11 @@ const saveProduct = async (e) => {
 
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Package size={20} /> Add New Product
-              </h2>
+  <Package size={20} />
+  {modalMode === "add" && "Add New Product"}
+  {modalMode === "edit" && "Edit Product"}
+  {modalMode === "view" && "View Product"}
+</h2>
               <button onClick={() => setShowAddModal(false)}>
                 <X size={24} />
               </button>
@@ -423,6 +493,7 @@ const saveProduct = async (e) => {
                   <input
                     name="name"
                     value={product.name}
+                    disabled={modalMode === "view"}
                     onChange={handleChange}
                     className="border rounded p-2 w-full mt-1"
                     required
@@ -435,6 +506,7 @@ const saveProduct = async (e) => {
                   <input
                     name="size"
                     value={product.size}
+                    disabled={modalMode === "view"}
                     onChange={handleChange}
                     className="border rounded p-2 w-full mt-1"
                   />
@@ -446,6 +518,7 @@ const saveProduct = async (e) => {
                   <select
                     name="brand"
                     value={product.brand}
+                    disabled={modalMode === "view"}
                     onChange={handleChange}
                     className="border rounded p-2 w-full mt-1"
                     required
@@ -465,6 +538,7 @@ const saveProduct = async (e) => {
                   <select
                     name="quality"
                     value={product.quality}
+                    disabled={modalMode === "view"}
                     onChange={handleChange}
                     className="border rounded p-2 w-full mt-1"
                   >
@@ -480,6 +554,7 @@ const saveProduct = async (e) => {
                   <label>Category:</label>
                   <select
                     name="category"
+                    disabled={modalMode === "view"}
                     value={product.category}
                     onChange={handleChange}
                     className="border rounded p-2 w-full mt-1"
@@ -499,6 +574,7 @@ const saveProduct = async (e) => {
                     name="rate"
                     type="number"
                     value={product.rate}
+                    disabled={modalMode === "view"}
                     onChange={handleChange}
                     className="border rounded p-2 w-full mt-1"
                   />
@@ -510,6 +586,7 @@ const saveProduct = async (e) => {
                   <select
                     name="status"
                     value={product.status}
+                    disabled={modalMode === "view"}
                     onChange={handleChange}
                     className="border rounded p-2 w-full mt-1"
                   >
@@ -525,6 +602,7 @@ const saveProduct = async (e) => {
                   <input
                     name="link"
                     value={product.link}
+                    disabled={modalMode === "view"}
                     onChange={handleChange}
                     className="border rounded p-2 w-full mt-1"
                     placeholder="Paste link here"
@@ -540,6 +618,7 @@ const saveProduct = async (e) => {
                         <input
                           type="checkbox"
                           checked={product.godown.includes(g)}
+                          disabled={modalMode === "view"}
                           onChange={() => handleGodownSelect(g)}
                         />
                         {g}
@@ -570,6 +649,7 @@ const saveProduct = async (e) => {
                           <input
                             className="border p-2 w-full rounded"
                             value={batch.batchNo}
+                            disabled={modalMode === "view"}
                             onChange={(e) =>
                               handleBatchChange(index, "batchNo", e.target.value)
                             }
@@ -580,6 +660,7 @@ const saveProduct = async (e) => {
                           <input
                             className="border p-2 w-full rounded"
                             value={batch.qty}
+                            disabled={modalMode === "view"}
                             onChange={(e) =>
                               handleBatchChange(index, "qty", e.target.value)
                             }
@@ -590,6 +671,7 @@ const saveProduct = async (e) => {
                           <input
                             className="border p-2 w-full rounded"
                             value={batch.location}
+                            disabled={modalMode === "view"}
                             onChange={(e) =>
                               handleBatchChange(index, "location", e.target.value)
                             }
@@ -599,6 +681,7 @@ const saveProduct = async (e) => {
                         <td className="p-2 border text-center">
                           <button
                             type="button"
+                            disabled={modalMode === "view"}
                             className="text-red-600 text-lg"
                             onClick={() => removeBatchRow(index)}
                           >
@@ -611,22 +694,32 @@ const saveProduct = async (e) => {
                 </table>
 
                 <div className="flex justify-center mt-3">
-                  <button
-                    type="button"
-                    onClick={addBatchRow}
-                    className="bg-blue-600 text-white px-4 py-1 rounded-full text-xl"
-                  >
-                    +
-                  </button>
+                 {modalMode !== "view" && (
+  <div className="flex justify-center mt-3">
+    <button
+      type="button"
+      onClick={addBatchRow}
+      className="bg-blue-600 text-white px-4 py-1 rounded-full text-xl"
+    >
+      +
+    </button>
+  </div>
+)}
+
                 </div>
               </div>
               <div className="flex justify-end">
-                 <button
-                type="submit"
-                className="w-[134px] mt-6 bg-[#FA9C42] text-white py-2  hover:bg-blue-700 h-[48px] rounded-[8px]"
-              >
-                Save 
-              </button>
+                <div className="flex justify-end">
+  {modalMode !== "view" && (
+    <button
+      type="submit"
+      className="w-[134px] mt-6 bg-[#FA9C42] text-white py-2 h-[48px] rounded-[8px]"
+    >
+      {modalMode === "edit" ? "Update" : "Save"}
+    </button>
+  )}
+</div>
+
 </div>
              
             </form>

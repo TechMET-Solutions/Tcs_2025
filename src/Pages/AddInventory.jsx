@@ -13,19 +13,29 @@ export default function AddInventory() {
   const [subTotal, setSubTotal] = useState(0);
 
   const emptyRow = {
-    productId: "",
-    productName: "",
-    size: "",
-    quality: "",
-    rate: "",
-    cov: 1,
-    batchNo: "",
-    batches: [],
-    availQty: 0,
-    qty: "",
-    total: 0,
-    godown: "KKW",
-  };
+  productId: "",
+  productName: "",
+  size: "",
+  quality: "",
+  rate: "",
+  cov: 1,
+
+  batches: [],
+  batchNo: "",
+  availQty: 0,
+
+  qty: "",
+  total: 0,
+  godown: "KKW",
+
+  // 🔽 UI helpers
+  showProductDropdown: false,
+  filteredProducts: [],
+
+  showBatchDropdown: false,
+  filteredBatches: [],
+};
+
 
   const [rows, setRows] = useState([emptyRow]);
 
@@ -162,6 +172,70 @@ export default function AddInventory() {
     alert("Saved Successfully, Bill: " + res.data.billNo);
     navigate("/inventory/manage");
   };
+const handleProductSearch = (i, value) => {
+  const updated = [...rows];
+  updated[i].productName = value;
+  updated[i].showProductDropdown = true;
+
+  updated[i].filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(value.toLowerCase())
+  );
+
+  setRows(updated);
+};
+const selectProductFromSearch = (i, product) => {
+  const updated = [...rows];
+
+  updated[i] = {
+    ...updated[i],
+    productId: product.id,
+    productName: product.name,
+    size: product.size,
+    quality: product.quality,
+    rate: Number(product.rate),
+    batches: product.batches || [],
+    batchNo: "",
+    availQty: 0,
+    qty: "",
+    cov: 1,
+    total: 0,
+    showProductDropdown: false,
+  };
+
+  setRows(updated);
+};
+const addNewProduct = (i) => {
+  alert(`Open Add Product Modal for: ${rows[i].productName}`);
+  // 👉 here you can open Add Product modal
+};
+const handleBatchSearch = (i, value) => {
+  const updated = [...rows];
+  updated[i].batchNo = value;
+  updated[i].showBatchDropdown = true;
+
+  updated[i].filteredBatches = updated[i].batches.filter((b) =>
+    b.batch_no.toLowerCase().includes(value.toLowerCase())
+  );
+
+  setRows(updated);
+};
+const selectBatchFromSearch = (i, batch) => {
+  const updated = [...rows];
+
+  updated[i].batchNo = batch.batch_no;
+  updated[i].availQty = Number(batch.qty);
+  updated[i].showBatchDropdown = false;
+
+  updated[i].total =
+    Number(updated[i].qty || 0) *
+    Number(updated[i].rate || 0) *
+    Number(updated[i].cov || 1);
+
+  setRows(updated);
+};
+const addNewBatch = (i) => {
+  alert(`Open Add Batch Modal for: ${rows[i].batchNo}`);
+};
 
   return (
     <form onSubmit={savePurchase} className="p-6 font-['Lexend']">
@@ -169,7 +243,7 @@ export default function AddInventory() {
 
         {/* META SECTION */}
         <div className="grid grid-cols-2 gap-6 mb-8">
-          {["purchaseDate", "billNo", "clientName", "clientContact"].map((f) => (
+          {["purchaseDate", "clientName", "clientContact"].map((f) => (
             <div key={f}>
               <label className="font-semibold">{f}</label>
               <input
@@ -185,107 +259,151 @@ export default function AddInventory() {
 
         {/* TABLE */}
         <div className="overflow-x-auto">
-          <table className="w-full border rounded-xl">
-            <thead className="bg-gray-200">
-              <tr>
-                {[
-                  "Product", "Size", "Quality", "Rate", "COV", "Batch",
-                  "Avail", "Qty", "Total", "Godown", "Action",
-                ].map((h) => (
-                  <th key={h} className="p-3">{h}</th>
-                ))}
-              </tr>
-            </thead>
+  <table className="w-full border rounded-xl">
+    <thead className="bg-gray-200">
+      <tr>
+        {[
+          "Product", "Size", "Quality", "Rate", "COV", "Batch",
+          "Avail", "Qty", "Total", "Godown", "Action",
+        ].map((h) => (
+          <th key={h} className="p-3">{h}</th>
+        ))}
+      </tr>
+    </thead>
 
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={i}>
-                  {/* PRODUCT */}
-                  <td className="p-2">
-                    <select
-                      value={r.productId}
-                      onChange={(e) => selectProduct(i, e.target.value)}
-                      className="inputCell"
+    <tbody>
+      {rows.map((r, i) => (
+        <tr key={i} className="relative">
+
+          {/* PRODUCT INPUT */}
+          <td className="p-2 relative">
+            <input
+              value={r.productName}
+              onChange={(e) => handleProductSearch(i, e.target.value)}
+              placeholder="Type product"
+              className="inputCell"
+            />
+
+            {r.showProductDropdown && (
+              <div className="absolute z-20 bg-white border rounded-xl w-full mt-1 shadow max-h-40 overflow-auto">
+                {r.filteredProducts.length ? (
+                  r.filteredProducts.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => selectProductFromSearch(i, p)}
+                      className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
                     >
-                      <option value="">Select Product</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                  </td>
+                      {p.name}
+                    </div>
+                  ))
+                ) : (
+                  <div
+                    onClick={() => addNewProduct(i)}
+                    className="px-3 py-2 text-blue-600 cursor-pointer hover:bg-blue-50"
+                  >
+                    ➕ Add "{r.productName}"
+                  </div>
+                )}
+              </div>
+            )}
+          </td>
 
-                  <td className="p-2"><input readOnly value={r.size} className="inputCell bg-gray-100" /></td>
-                  <td className="p-2"><input readOnly value={r.quality} className="inputCell bg-gray-100" /></td>
+          <td className="p-2">
+            <input readOnly value={r.size} className="inputCell bg-gray-100" />
+          </td>
 
-                  <td className="p-2">
-                    <input
-                      value={r.rate}
-                      onChange={(e) => updateRowField(i, "rate", e.target.value)}
-                      className="inputCell"
-                    />
-                  </td>
+          <td className="p-2">
+            <input readOnly value={r.quality} className="inputCell bg-gray-100" />
+          </td>
 
-                  <td className="p-2">
-                    <input
-                      value={r.cov}
-                      onChange={(e) => updateRowField(i, "cov", e.target.value)}
-                      className="inputCell"
-                    />
-                  </td>
+          <td className="p-2">
+            <input
+              value={r.rate}
+              onChange={(e) => updateRowField(i, "rate", e.target.value)}
+              className="inputCell"
+            />
+          </td>
 
-                  {/* BATCH */}
-                  <td className="p-2">
-                    <select
-                      value={r.batchNo}
-                      onChange={(e) => selectBatch(i, e.target.value)}
-                      className="inputCell"
+          <td className="p-2">
+            <input
+              value={r.cov}
+              onChange={(e) => updateRowField(i, "cov", e.target.value)}
+              className="inputCell"
+            />
+          </td>
+
+          {/* BATCH INPUT */}
+          <td className="p-2 relative">
+            <input
+              value={r.batchNo}
+              onChange={(e) => handleBatchSearch(i, e.target.value)}
+              placeholder="Type batch"
+              className="inputCell"
+            />
+
+            {r.showBatchDropdown && (
+              <div className="absolute z-20 bg-white border rounded-xl w-full mt-1 shadow max-h-40 overflow-auto">
+                {r.filteredBatches.length ? (
+                  r.filteredBatches.map((b) => (
+                    <div
+                      key={b.batch_no}
+                      onClick={() => selectBatchFromSearch(i, b)}
+                      className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
                     >
-                      <option value="">Select Batch</option>
-                      {r.batches.map((b) => (
-                        <option key={b.batch_no} value={b.batch_no}>
-                          {b.batch_no} – {b.location}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
+                      {b.batch_no} – {b.location}
+                    </div>
+                  ))
+                ) : (
+                  <div
+                    onClick={() => addNewBatch(i)}
+                    className="px-3 py-2 text-blue-600 cursor-pointer hover:bg-blue-50"
+                  >
+                    ➕ Add "{r.batchNo}"
+                  </div>
+                )}
+              </div>
+            )}
+          </td>
 
-                  <td className="p-2">
-                    <input readOnly value={r.availQty} className="inputCell bg-gray-100" />
-                  </td>
+          <td className="p-2">
+            <input readOnly value={r.availQty} className="inputCell bg-gray-100" />
+          </td>
 
-                  <td className="p-2">
-                    <input
-                      value={r.qty}
-                      onChange={(e) => updateRowField(i, "qty", e.target.value)}
-                      className="inputCell"
-                    />
-                  </td>
+          <td className="p-2">
+            <input
+              value={r.qty}
+              onChange={(e) => updateRowField(i, "qty", e.target.value)}
+              className="inputCell"
+            />
+          </td>
 
-                  <td className="p-2"><input readOnly value={r.total} className="inputCell bg-gray-100" /></td>
+          <td className="p-2">
+            <input readOnly value={r.total} className="inputCell bg-gray-100" />
+          </td>
 
-                  <td className="p-2">
-                    <select
-                      value={r.godown}
-                      onChange={(e) => updateRowField(i, "godown", e.target.value)}
-                      className="inputCell"
-                    >
-                      <option>KKW</option>
-                      <option>MN</option>
-                      <option>TCS</option>
-                    </select>
-                  </td>
+          <td className="p-2">
+            <select
+              value={r.godown}
+              onChange={(e) => updateRowField(i, "godown", e.target.value)}
+              className="inputCell"
+            >
+              <option>KKW</option>
+              <option>MN</option>
+              <option>TCS</option>
+            </select>
+          </td>
 
-                  <td className="p-2 text-center">
-                    <button onClick={() => removeRow(i)} type="button">
-                      <Trash2 className="text-red-600" />
-                    </button>
-                  </td>
+          <td className="p-2 text-center">
+            <button type="button" onClick={() => removeRow(i)}>
+              <Trash2 className="text-red-600" />
+            </button>
+          </td>
 
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 
         {/* SUBTOTAL */}
         <div className="flex justify-end mt-6">

@@ -86,7 +86,7 @@ export default function ArchitectRegistration() {
   // onClick={() => navigate("/employee-reviews")}
   className="flex items-center gap-2 text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42] hover:bg-orange-500 hover:text-white"
 >
-   Employee Rating
+  Architect Rating 
 </button>
               <button
                 onClick={() => setShowModal(true)}

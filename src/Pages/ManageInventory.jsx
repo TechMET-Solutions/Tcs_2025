@@ -53,6 +53,14 @@ export default function ManageInventory() {
       p.purchase_date?.toLowerCase().includes(q)
     );
   });
+const formatDate = (date) => {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
   return (
     <div className="p-6 font-['Lexend']">
@@ -110,7 +118,10 @@ export default function ManageInventory() {
                     className="border-b hover:bg-blue-50 transition"
                   >
                     <td className="p-3">{p.id}</td>
-                    <td className="p-3">{p.purchase_date}</td>
+                    <td className="p-3"><td className="p-3">
+  {formatDate(p.purchase_date)}
+</td>
+</td>
                     <td className="p-3 font-semibold">{p.bill_no}</td>
                     <td className="p-3">{p.client_name}</td>
                     <td className="p-3">{p.client_contact}</td>
