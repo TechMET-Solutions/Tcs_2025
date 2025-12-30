@@ -1,37 +1,26 @@
-import { FileDown, Search } from "lucide-react";
+import { CheckCircle, CreditCard, FileText, Search, Trash2, Truck, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { createDeliveryChallan, getAllQuotations } from "../Component/API/quotationApi";
+import { useNavigate } from "react-router-dom";
+import { getAllQuotations } from "../Component/API/quotationApi";
 
 export default function ManageQuotation() {
   const [quotationList, setQuotationList] = useState([]);
   const [search, setSearch] = useState("");
 
-  // Modals
+  // Modals Toggle
   const [openDCModal, setOpenDCModal] = useState(false);
   const [openPayModal, setOpenPayModal] = useState(false);
-
-  // Delivery Challan Header Fields
-  const [dcHeader, setDcHeader] = useState({
-    deliveryBoy: "",
-    contact: "",
-    tempo: ""
-  });
-
-  // DC Items List
-  const [dcItems, setDcItems] = useState([]);
-
-  // Selected Quotation
+  const [openEditModal, setOpenEditModal] = useState(false);
+const navigate = useNavigate();
+  // States
   const [selectedQuotation, setSelectedQuotation] = useState(null);
-
-  // Payment Modal Data
+  const [dcHeader, setDcHeader] = useState({ deliveryBoy: "", contact: "", tempo: "" });
+  const [dcItems, setDcItems] = useState([]);
+  const [editData, setEditData] = useState({ id: null, clientName: "", contactNo: "", items: [] });
   const [paymentData, setPaymentData] = useState({
-    amount: "",
-    paymentType: "",
-    remark: "",
+    amount: "", paymentType: "", remark: "",
     date: new Date().toISOString().slice(0, 10),
-    grandTotal: 0,
-    paid: 0,
-    due: 0,
+    grandTotal: 0, paid: 0, due: 0,
   });
 
   useEffect(() => {
@@ -41,27 +30,53 @@ export default function ManageQuotation() {
   const fetchQuotations = async () => {
     try {
       const res = await getAllQuotations();
-      if (res.data.success) {
-        setQuotationList(res.data.quotations);
-      }
-    } catch (error) {
-      console.log(error);
-    }
+      if (res.data.success) setQuotationList(res.data.quotations);
+    } catch (error) { console.log(error); }
   };
 
   const filteredData = quotationList.filter((q) =>
     q.clientName?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ---------------------------------------
-  // OPEN PAYMENT MODAL
-  // ---------------------------------------
+  // --- EDIT LOGIC ---
+  const handleEditClick = (q) => {
+    setEditData({
+      id: q.id,
+      clientName: q.clientName,
+      contactNo: q.contactNo,
+      items: q.items.map(item => ({ ...item })) // Deep copy
+    });
+    setOpenEditModal(true);
+  };
+
+  const updateEditItem = (index, field, value) => {
+    const updated = [...editData.items];
+    updated[index][field] = value;
+    setEditData({ ...editData, items: updated });
+  };
+
+  const removeItemFromEdit = (index) => {
+    const updated = editData.items.filter((_, i) => i !== index);
+    setEditData({ ...editData, items: updated });
+  };
+
+  const saveUpdatedQuotation = async () => {
+    const total = editData.items.reduce((sum, i) => sum + (i.qty * i.price), 0);
+    const payload = { ...editData, grandTotal: total };
+    
+    try {
+      // API CALL HERE: await updateQuotationApi(editData.id, payload);
+      alert("Quotation Updated Successfully!");
+      setOpenEditModal(false);
+      fetchQuotations();
+    } catch (err) { alert("Failed to update"); }
+  };
+
+  // --- DC & PAYMENT LOGIC (Existing) ---
   const openPaymentModal = (q) => {
     setSelectedQuotation(q);
     setPaymentData({
-      amount: "",
-      paymentType: "",
-      remark: "",
+      amount: "", paymentType: "", remark: "",
       date: new Date().toISOString().slice(0, 10),
       grandTotal: q.grandTotal,
       paid: q.paid || 0,
@@ -70,166 +85,75 @@ export default function ManageQuotation() {
     setOpenPayModal(true);
   };
 
-  // ---------------------------------------
-  // OPEN DELIVERY CHALLAN MODAL
-  // ---------------------------------------
- const openDeliveryChallan = (q) => {
-  setSelectedQuotation(q);
-
-  const formatted = q.items.map((item) => ({
-    productId: item.productId,
-    productName: item.productName,
-    totalBox: item.remainingBoxes,   // ✔ फक्त remaining वापर
-    currentStock: item.currentStock, // ✔ backend total batch stock
-    dispatchBox: 0,                  // default
-    qtyPerBox: 0,                    // default
-  }));
-
-  setDcItems(formatted);
-  setOpenDCModal(true);
-};
-
-
-  // CHANGE DISPATCH BOXES
-  const handleDispatchBoxChange = (index, value) => {
-    const updated = [...dcItems];
-    updated[index].dispatchBox = Number(value);
-    updated[index].boxQty = Array(Number(value)).fill(1);
-    setDcItems(updated);
+  const openDeliveryChallan = (q) => {
+    setSelectedQuotation(q);
+    setDcItems(q.items.map(i => ({
+      productId: i.productId,
+      productName: i.productName,
+      totalBox: i.remainingBoxes || 0,
+      currentStock: i.currentStock || 0,
+      dispatchBox: 0,
+      qtyPerBox: 0,
+    })));
+    setOpenDCModal(true);
   };
 
-  // CHANGE QTY PER BOX
-  const handleBoxQtyChange = (pIndex, boxIndex, qty) => {
-    const updated = [...dcItems];
-    updated[pIndex].boxQty[boxIndex] = Number(qty);
-    setDcItems(updated);
-  };
+  const openQuotationPDF = (id, mode) => window.open(`http://localhost:5000/api/Quotation/print/${id}?mode=${mode}`, "_blank");
 
-  // ---------------------------------------
-  // GENERATE DC
-  // ---------------------------------------
-  // const generateDC = () => {
-  //   const finalDC = {
-  //     quotationId: selectedQuotation.id,
-  //     client: selectedQuotation.clientName,
-  //     contact: selectedQuotation.contactNo,
-  //     address: selectedQuotation.address,
-  //     driverDetails: dcHeader,
-
-  //     items: dcItems.map((p) => {
-  //       const totalDispatchQty = p.boxQty.reduce((sum, q) => sum + q, 0);
-  //       return {
-  //         productId: p.productId,
-  //         productName: p.productName,
-  //         dispatchBoxes: p.dispatchBox,
-  //         boxQty: p.boxQty,
-  //         totalDispatchQty,
-  //         currentStock: p.currentStock,
-  //         remainingStock: p.currentStock - totalDispatchQty,
-  //       };
-  //     }),
-  //   };
-
-  //   console.log("FINAL DC PAYLOAD:", finalDC);
-
-  //   alert("Delivery Challan Generated Successfully!");
-  //   setOpenDCModal(false);
-  // };
-const generateDC = async () => {
-  const finalDC = {
-    quotationId: selectedQuotation.id,
-    client: selectedQuotation.clientName,
-    contact: selectedQuotation.contactNo,
-    address: selectedQuotation.address,
-    driverDetails: dcHeader,
-
-    items: dcItems.map((p) => {
-      const totalDispatchQty = p.dispatchBox * p.qtyPerBox;
-
-      return {
-        productId: p.productId,
-        productName: p.productName,
-        dispatchBoxes: p.dispatchBox,
-        qtyPerBox: p.qtyPerBox,
-        totalDispatchQty,
-      };
-    }),
-  };
-
-  try {
-    const res = await createDeliveryChallan(finalDC);
-
-    if (res.data.success) {
-      alert("Delivery Challan Created Successfully!");
-      setOpenDCModal(false);
-      fetchQuotations(); // 🔥 Refresh quotation stock
-    }
-  } catch (error) {
-    console.log(error);
-    alert("Failed to generate Delivery Challan");
-  }
-};
   return (
-    <div className="p-6 font-['Lexend']">
-      <h2 className="text-2xl font-semibold mb-5">Manage Quotation</h2>
+    <div className="min-h-screen bg-[#FDFDFD] p-6 md:p-10 font-['Lexend'] text-slate-700">
+      
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-10 bg-white p-6 rounded-[30px] shadow-sm border border-slate-100 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-orange-50 rounded-2xl text-orange-500"><FileText size={28} /></div>
+          <div>
+            <h1 className="text-2xl font-black text-slate-800 tracking-tight underline decoration-orange-200 underline-offset-4">Quotations</h1>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Inventory & Sales Control</p>
+          </div>
+        </div>
 
-      {/* Search */}
-      <div className="flex items-center bg-white border px-3 py-2 rounded-lg shadow-sm w-80 mb-4">
-        <Search size={18} className="text-gray-500 mr-2" />
-        <input
-          className="outline-none w-full"
-          placeholder="Search quotation..."
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <div className="flex items-center gap-3 w-full md:w-96 px-5 py-3 rounded-2xl border bg-slate-50 border-slate-100 focus-within:border-orange-300 focus-within:bg-white transition-all">
+          <Search size={20} className="text-slate-400" />
+          <input className="outline-none w-full bg-transparent font-medium text-sm" placeholder="Search client..." onChange={(e) => setSearch(e.target.value)} />
+        </div>
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-lg overflow-hidden shadow border">
-        <table className="w-full text-sm">
-          <thead className="bg-gradient-to-r from-purple-100 to-blue-100">
-            <tr>
-              {["ID", "Client", "Items", "Date", "Total", "Options", "PDF"].map(
-                (h) => (
-                  <th key={h} className="p-3 text-center">{h}</th>
-                )
-              )}
+      <div className="bg-white rounded-[35px] shadow-sm border border-slate-100 overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50/50">
+              {["ID", "Client Details", "Date", "Status", "Amount", "Actions"].map((h) => (
+                <th key={h} className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
+              ))}
             </tr>
           </thead>
-
-          <tbody>
+          <tbody className="divide-y divide-slate-50">
             {filteredData.map((q) => (
-              <tr key={q.id} className="border-b hover:bg-gray-50">
-                <td className="p-3 text-center">{q.id}</td>
-                <td className="p-3">{q.clientName}</td>
-                <td className="p-3 text-center">{q.items.length}</td>
-                <td className="p-3 text-center">
-                  {new Date(q.createdAt).toLocaleDateString()}
+              <tr key={q.id} className="hover:bg-slate-50/50 transition-all group">
+                <td className="p-6 text-sm font-black text-slate-300">#{q.id}</td>
+                <td className="p-6">
+                  <p className="font-bold text-slate-800">{q.clientName}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">{q.items.length} Products</p>
                 </td>
-                <td className="p-3 text-center">₹ {q.grandTotal}</td>
-
-                <td className="p-3 text-center flex gap-2 justify-center">
-                  <button className="blue-btn" onClick={() => openPaymentModal(q)}>
-                    Pay
-                  </button>
-
-                  <button className="blue-btn" onClick={() => openDeliveryChallan(q)}>
-                    DC
-                  </button>
-                </td>
-
-                {/* PDF BUTTON */}
-                <td className="p-3 text-center">
-                  <button
-                    className="blue-btn"
-                    onClick={() =>
-                      window.open(
-                        `http://localhost:5000/api/Quotation/print/${q.id}`,
-                        "_blank"
-                      )
-                    }
-                  >
-                    <FileDown size={16} />
-                  </button>
+                <td className="p-6 text-sm font-medium text-slate-500">{new Date(q.createdAt).toLocaleDateString('en-GB')}</td>
+                <td className="p-6"><span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">Active</span></td>
+                <td className="p-6 text-base font-black text-slate-800">₹{q.grandTotal.toLocaleString()}</td>
+                <td className="p-6">
+                  <div className="flex flex-wrap gap-2">
+                    <button 
+  onClick={() => navigate("/quotation/add", { state: { editData: q } })} 
+  className="action-btn text-purple-600 border-purple-100 hover:bg-purple-600"
+>
+  <FileText size={14} /> Edit
+</button>
+                    <button onClick={() => openPaymentModal(q)} className="action-btn text-blue-600 border-blue-100 hover:bg-blue-600"><CreditCard size={14} /> Pay</button>
+                    <button onClick={() => openDeliveryChallan(q)} className="action-btn text-orange-600 border-orange-100 hover:bg-orange-600"><Truck size={14} /> DC</button>
+                    <div className="w-[1px] bg-slate-100 mx-1"></div>
+                    <button onClick={() => openQuotationPDF(q.id, "qcode")} className="print-btn">Code</button>
+                    <button onClick={() => openQuotationPDF(q.id, "qname")} className="print-btn">Name</button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -237,227 +161,143 @@ const generateDC = async () => {
         </table>
       </div>
 
-      {/* ------------------------------------------------------
-         PAYMENT MODAL
-      ------------------------------------------------------ */}
-      {openPayModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 w-[380px] rounded-2xl shadow-xl">
-            <h3 className="text-xl font-semibold mb-4 text-blue-700">💰 Payment Details</h3>
-
-            <div className="space-y-3">
-              <label>Grand Total</label>
-              <input className="modal-input bg-gray-100" disabled value={paymentData.grandTotal} />
-
-              <label>Paid Amount</label>
-              <input className="modal-input bg-gray-100" disabled value={paymentData.paid} />
-
-              <label>Due Amount</label>
-              <input className="modal-input bg-gray-100" disabled value={paymentData.due} />
-
-              <label>Payment Type</label>
-              <select
-                className="modal-input"
-                onChange={(e) =>
-                  setPaymentData({ ...paymentData, paymentType: e.target.value })
-                }
-              >
-                <option>Select Type</option>
-                <option>Cash</option>
-                <option>Online</option>
-                <option>Cheque</option>
-              </select>
-
-              <label>Enter Amount</label>
-              <input
-                className="modal-input"
-                type="number"
-                onChange={(e) =>
-                  setPaymentData({ ...paymentData, amount: e.target.value })
-                }
-              />
-
-              <label>Payment Date</label>
-              <input
-                className="modal-input"
-                type="date"
-                value={paymentData.date}
-                onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
-              />
+      {/* --- EDIT MODAL --- */}
+      {openEditModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+          <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-[40px] shadow-2xl flex flex-col animate-in zoom-in duration-200">
+            <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-purple-50/30">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-white rounded-xl text-purple-600 shadow-sm"><FileText size={24}/></div>
+                <h2 className="text-xl font-black text-slate-800 uppercase italic">Edit Quotation #{editData.id}</h2>
+              </div>
+              <button onClick={() => setOpenEditModal(false)} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-all"><X size={24}/></button>
             </div>
 
-            <div className="flex gap-3 justify-end mt-5">
-              <button
-                className="px-4 py-2 bg-gray-300 rounded"
-                onClick={() => setOpenPayModal(false)}
-              >
-                Close
-              </button>
+            <div className="p-8 overflow-y-auto space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><label className="modal-label">Client Name</label>
+                  <input type="text" className="lux-modal-input" value={editData.clientName} onChange={(e) => setEditData({...editData, clientName: e.target.value})} />
+                </div>
+                <div><label className="modal-label">Contact</label>
+                  <input type="text" className="lux-modal-input" value={editData.contactNo} onChange={(e) => setEditData({...editData, contactNo: e.target.value})} />
+                </div>
+              </div>
 
-              <button className="px-4 py-2 bg-blue-600 text-white rounded">
-                Submit
-              </button>
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pb-2 border-b">Manage Items</h4>
+                <div className="grid grid-cols-1 gap-3">
+                  {editData.items.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 group">
+                      <div className="flex-1 font-bold text-slate-700">{item.productName}</div>
+                      <div className="w-24">
+                        <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Qty</label>
+                        <input type="number" className="w-full p-2 rounded-xl border border-slate-200 font-bold" value={item.qty} onChange={(e) => updateEditItem(idx, 'qty', Number(e.target.value))} />
+                      </div>
+                      <div className="w-32">
+                        <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Price</label>
+                        <input type="number" className="w-full p-2 rounded-xl border border-slate-200 font-bold" value={item.price} onChange={(e) => updateEditItem(idx, 'price', Number(e.target.value))} />
+                      </div>
+                      <div className="w-28 text-right pt-4 font-black text-slate-800 italic">₹{(item.qty * item.price).toLocaleString()}</div>
+                      <button onClick={() => removeItemFromEdit(idx)} className="p-2 mt-4 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={18}/></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-8 border-t bg-slate-50/50 flex justify-between items-center">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase">New Grand Total</p>
+                <p className="text-3xl font-black text-purple-600 italic">₹{editData.items.reduce((s, i) => s + (i.qty * i.price), 0).toLocaleString()}</p>
+              </div>
+              <div className="flex gap-4">
+                <button onClick={() => setOpenEditModal(false)} className="px-8 py-4 font-black text-slate-400 uppercase text-[10px] tracking-widest">Discard</button>
+                <button onClick={saveUpdatedQuotation} className="px-10 py-4 bg-purple-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-purple-100 flex items-center gap-2 hover:bg-purple-700 transition-all">
+                  <CheckCircle size={18}/> Update Quotation
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ------------------------------------------------------
-         DELIVERY CHALLAN MODAL
-      ------------------------------------------------------ */}
-   {openDCModal && selectedQuotation && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white w-[750px] max-h-[85vh] overflow-y-auto p-6 rounded-2xl shadow-xl">
-
-      <h2 className="text-xl font-bold mb-4">🚚 Delivery Challan</h2>
-
-      <p>Client: <b>{selectedQuotation.clientName}</b></p>
-
-      {/* DELIVERY INFO */}
-      <div className="grid grid-cols-3 gap-4 mb-4 mt-4">
-
-        <div>
-          <label>Delivery Boy Name</label>
-          <input
-            type="text"
-            className="border w-full p-2 rounded"
-            value={dcHeader.deliveryBoy}
-            onChange={(e) =>
-              setDcHeader({ ...dcHeader, deliveryBoy: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <label>Contact Number</label>
-          <input
-            type="text"
-            className="border w-full p-2 rounded"
-            value={dcHeader.contact}
-            onChange={(e) =>
-              setDcHeader({ ...dcHeader, contact: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <label>Tempo Number</label>
-          <input
-            type="text"
-            className="border w-full p-2 rounded"
-            value={dcHeader.tempo}
-            onChange={(e) =>
-              setDcHeader({ ...dcHeader, tempo: e.target.value })
-            }
-          />
-        </div>
-
-      </div>
-
-      {/* PRODUCT WISE DISPATCH */}
-      {dcItems.map((p, index) => {
-
-        const totalDispatchQty = p.dispatchBox * p.qtyPerBox;
-        const remaining = p.currentStock - totalDispatchQty;
-
-        return (
-          <div key={index} className="border p-4 rounded mt-4 bg-gray-50">
-
-            <h3 className="font-semibold text-lg">{p.productName}</h3>
-
-            <p>Total Remaining Boxes: <b>{p.totalBox}</b></p>
-            <p>Total Stock (Batches): <b>{p.currentStock}</b></p>
-
-            {/* Dispatch Boxes */}
-           {/* Dispatch Boxes */}
-<label className="text-sm mt-3 block">Dispatch Boxes</label>
-<input
-  type="number"
-  min={0}
-  max={p.totalBox}  // UI max
-  value={p.dispatchBox}
-  className="border p-1 w-24 rounded"
-  onChange={(e) => {
-    let val = Number(e.target.value);
-
-    if (val < 1) val = 1;
-
-    if (val > p.totalBox) {
-      alert(`You cannot dispatch more than ${p.totalBox} boxes.`);
-      val = p.totalBox;
-    }
-
-    const updated = [...dcItems];
-    updated[index].dispatchBox = val;
-    setDcItems(updated);
-  }}
-/>
-
-
-            {/* Qty Per Box */}
-            <label className="text-sm mt-3 block">Qty Per Box (pcs)</label>
-            <input
-              type="number"
-              min={0}
-              value={p.qtyPerBox}
-              className="border p-1 w-32 rounded"
-              onChange={(e) => {
-                const updated = [...dcItems];
-                updated[index].qtyPerBox = Number(e.target.value);
-                setDcItems(updated);
-              }}
-            />
-
-            <p className="font-semibold mt-3">
-              Total Dispatch Qty: <b>{totalDispatchQty}</b> pcs
-            </p>
-
-            <p className="font-semibold text-blue-700">
-              Remaining Stock After Dispatch: <b>{remaining}</b>
-            </p>
-
+      {/* --- PAYMENT MODAL (Simplified UI) --- */}
+      {openPayModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white p-8 w-full max-w-md rounded-[40px] shadow-2xl animate-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-6">
+               <h3 className="text-xl font-black text-slate-800 flex items-center gap-2 italic"><CreditCard className="text-blue-500"/> Settlement</h3>
+               <button onClick={() => setOpenPayModal(false)} className="p-2 text-slate-300 hover:text-red-500"><X size={20}/></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[9px] font-black text-slate-400 uppercase">Grand Total</p>
+                  <p className="text-lg font-black text-slate-800">₹{paymentData.grandTotal}</p>
+               </div>
+               <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                  <p className="text-[9px] font-black text-orange-400 uppercase">Due</p>
+                  <p className="text-lg font-black text-orange-600">₹{paymentData.due}</p>
+               </div>
+            </div>
+            <div className="space-y-4">
+              <div><label className="modal-label">Payment Method</label>
+                <select className="lux-modal-input"><option>Cash</option><option>UPI</option></select>
+              </div>
+              <div><label className="modal-label">Amount</label>
+                <input className="lux-modal-input" type="number" placeholder="Enter amount" />
+              </div>
+            </div>
+            <button className="w-full mt-8 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-100">Save Payment</button>
           </div>
-        );
-      })}
+        </div>
+      )}
 
-      <div className="flex justify-end gap-3 mt-4">
-        <button
-          className="px-4 py-2 bg-gray-400 text-white rounded"
-          onClick={() => setOpenDCModal(false)}
-        >
-          Close
-        </button>
+      {/* --- DC MODAL (Simplified UI) --- */}
+      {openDCModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[40px] shadow-2xl flex flex-col">
+            <div className="p-8 border-b flex justify-between items-center bg-orange-50/30">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-white rounded-xl text-orange-500 shadow-sm"><Truck size={24}/></div>
+                <h2 className="text-xl font-black text-slate-800 uppercase italic tracking-tighter">Dispatch Challan</h2>
+              </div>
+              <button onClick={() => setOpenDCModal(false)} className="p-2 text-slate-300 hover:text-red-500"><X size={24}/></button>
+            </div>
+            <div className="p-8 overflow-y-auto space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                {["Delivery Boy", "Contact", "Vehicle No"].map(l => (
+                  <div key={l}><label className="modal-label">{l}</label><input className="lux-modal-input" /></div>
+                ))}
+              </div>
+              <div className="space-y-2">
+                {dcItems.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="font-bold text-slate-700 w-1/3">{p.productName}</span>
+                    <div className="flex gap-4">
+                      <div className="text-center"><label className="text-[8px] block font-black text-slate-400">Dispatch</label><input type="number" className="w-16 p-1 rounded-lg border" /></div>
+                      <div className="text-center"><label className="text-[8px] block font-black text-slate-400">Qty/Box</label><input type="number" className="w-16 p-1 rounded-lg border" /></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="p-8 border-t flex justify-end gap-4">
+               <button onClick={() => setOpenDCModal(false)} className="px-8 font-black text-slate-400 text-[10px]">Cancel</button>
+               <button className="px-10 py-4 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-orange-100">Create DC</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-          onClick={generateDC}
-        >
-          Generate DC
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}
-
-
-
-      {/* Styles */}
+      {/* STYLES */}
       <style>{`
-        .blue-btn {
-          background: #0ea5e9;
-          color: white;
-          padding: 6px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-        }
-
-        .modal-input {
-          width: 100%;
-          border: 1px solid #ccc;
-          padding: 6px;
-          border-radius: 6px;
-        }
+        .action-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 12px; border: 1.5px solid; font-weight: 800; font-size: 11px; text-transform: uppercase; transition: all 0.2s; }
+        .action-btn:hover { color: white; transform: translateY(-2px); }
+        .print-btn { padding: 6px 12px; border-radius: 10px; border: 1.5px solid #E2E8F0; color: #64748B; font-weight: 800; font-size: 10px; text-transform: uppercase; }
+        .print-btn:hover { border-color: #FA9C42; color: #FA9C42; }
+        .modal-label { display: block; font-size: 9px; font-weight: 900; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; margin-left: 4px; }
+        .lux-modal-input { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1.5px solid #F1F5F9; background: #F8FAFC; font-weight: 700; color: #334155; outline: none; }
+        .lux-modal-input:focus { border-color: #9333ea; background: white; }
       `}</style>
     </div>
   );

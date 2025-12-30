@@ -7,7 +7,7 @@ export default function EmployeeReviews() {
   const [showModal, setShowModal] = useState(false);
   const [reviewType, setReviewType] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-
+const [search, setSearch] = useState("");
   useEffect(() => {
     fetchEmployees();
   }, []);
@@ -18,10 +18,24 @@ export default function EmployeeReviews() {
       setEmployeeList(res.data.employees);
     }
   };
-
+const filteredEmployees = employeeList.filter((emp) =>
+  emp.name.toLowerCase().includes(search.toLowerCase()) ||
+  emp.email.toLowerCase().includes(search.toLowerCase()) ||
+  emp.phone.includes(search)
+);
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6">Employee Reviews</h2>
+      <div className="p-6">
+          <div className="flex justify-between">
+               <h2 className="text-2xl font-semibold mb-6">Employee Reviews</h2>
+<input
+  type="text"
+  placeholder="Search by name, email or phone..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="mb-4 w-[300px] border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#FA9C42]"
+/>
+          </div>
+     
 
       {/* TABLE */}
       <table className="w-full bg-white rounded-xl shadow">
@@ -35,7 +49,7 @@ export default function EmployeeReviews() {
         </thead>
 
         <tbody>
-          {employeeList.map((emp, i) => (
+          {filteredEmployees.map((emp, i) => (
             <tr key={i} className="border-t text-center">
               <td className="p-4">{emp.name}</td>
               <td>{emp.email}</td>

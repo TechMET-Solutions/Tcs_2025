@@ -6,6 +6,7 @@ import ProtectedRoute from "./Component/ProtectedRoute";
 import PublicRoute from "./Component/PublicRoute";
 import AddInventory from "./Pages/AddInventory";
 import AddQuotation from "./Pages/AddQuotation";
+import ArchitectDetails from "./Pages/ArchitectDetails";
 import ArchitectRegistration from "./Pages/ArchitectRegistration";
 import BrandManagement from "./Pages/BrandManagement";
 import CategoryManagement from "./Pages/CategoryManagement";
@@ -15,13 +16,13 @@ import DeliveryChallan from "./Pages/DeliveryChallan";
 import EmpDashboard from "./Pages/empdashboard";
 import EmployeeAttendance from "./Pages/EmployeeAttendance";
 import EmployeeRegistration from "./Pages/EmployeeRegistration";
+import EmployeeReviews from "./Pages/EmployeeReviews";
 import EmployeeRole from "./Pages/EmployeeRole";
 import GenerateQuote from "./Pages/GenerateQuote";
 import ManageInventory from "./Pages/ManageInventory";
 import ManageQuotation from "./Pages/ManageQuotation";
 import ProductRegistration from "./Pages/ProductRegistration";
 import QualityManagement from "./Pages/QualityManagement";
-import EmployeeReviews from "./Pages/EmployeeReviews";
 
 
 
@@ -69,7 +70,8 @@ export default function App() {
           <Route path="employee-role" element={<EmployeeRole />} />
           <Route path="employee-attendance" element={<EmployeeAttendance />} />
           <Route path="Architect-Registration" element={<ArchitectRegistration />} />
-            <Route path="/employee-reviews" element={<EmployeeReviews />} />
+          <Route path="/employee-reviews" element={<EmployeeReviews />} />
+          <Route path="/architect/:id" element={<ArchitectDetails />} />
         </Route>
 
       </Routes>

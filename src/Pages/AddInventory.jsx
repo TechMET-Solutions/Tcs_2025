@@ -1,435 +1,298 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Calendar, User, Phone, Package, Info, CheckCircle2, ShoppingBag, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { addPurchaseAPI, getSinglePurchaseAPI } from "../Component/API/inventoryApi";
+import { useNavigate } from "react-router-dom";
+import { addPurchaseAPI } from "../Component/API/inventoryApi";
 import { getProductAPI } from "../Component/API/productApi";
 
 export default function AddInventory() {
   const navigate = useNavigate();
-  const { state } = useLocation();
-  const editId = state?.editId ?? null;
-
   const [products, setProducts] = useState([]);
+  const [rows, setRows] = useState([]);
   const [subTotal, setSubTotal] = useState(0);
 
-  const emptyRow = {
-  productId: "",
-  productName: "",
-  size: "",
-  quality: "",
-  rate: "",
-  cov: 1,
-
-  batches: [],
-  batchNo: "",
-  availQty: 0,
-
-  qty: "",
-  total: 0,
-  godown: "KKW",
-
-  // 🔽 UI helpers
-  showProductDropdown: false,
-  filteredProducts: [],
-
-  showBatchDropdown: false,
-  filteredBatches: [],
-};
-
-
-  const [rows, setRows] = useState([emptyRow]);
+  // Brand Colors from your screenshots
+  const BRAND_ORANGE = "#FF7A00";
+  const SIDEBAR_DARK = "#1E1E1E";
 
   const [purchaseMeta, setPurchaseMeta] = useState({
     purchaseDate: new Date().toISOString().slice(0, 10),
-    billNo: "",
     clientName: "",
     clientContact: "",
+    billNo: "",
   });
 
-  // ✅ FETCH PRODUCTS
+  const [dropdownPos, setDropdownPos] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+    rowIndex: null,
+    type: null, // "product" or "batch"
+  });
+
+  const emptyRow = {
+    productId: "", productName: "", size: "", quality: "", rate: "",
+    cov: 1, batches: [], batchNo: "", availQty: 0, qty: "", total: 0,
+    godown: "KKW", filteredProducts: [],
+  };
+
   useEffect(() => {
-    getProductAPI().then(res => setProducts(res.data.products));
+    getProductAPI().then((res) => {
+      setProducts(res.data.products || []);
+      setRows([{ ...emptyRow }]);
+    });
   }, []);
 
-  // ✅ EDIT MODE (LOAD AFTER PRODUCTS ARRIVE)
+  // Global click listener to close dropdowns
   useEffect(() => {
-    if (!editId) return;
-    if (products.length === 0) return; // ⛔ WAIT FOR PRODUCTS
-
-    const loadData = async () => {
-      const res = await getSinglePurchaseAPI(editId);
-      const p = res.data.purchase;
-
-      // META
-      setPurchaseMeta({
-        purchaseDate: p.purchase_date?.slice(0, 10),
-        billNo: p.bill_no,
-        clientName: p.client_name,
-        clientContact: p.client_contact,
-      });
-
-      // ITEMS
-      const loadedRows = p.items.map((item) => {
-        const product = products.find((pr) => pr.id === item.product_id);
-
-        return {
-          productId: item.product_id,
-          productName: product?.name || "",
-          size: product?.size || "",
-          quality: product?.quality || "",
-          rate: Number(item.rate),
-          cov: Number(item.cov),
-          batchNo: item.batch_no,
-          batches: product?.batches || [],
-          availQty: product?.batches.find(b => b.batch_no == item.batch_no)?.qty || 0,
-          qty: Number(item.qty),
-          total: Number(item.total),
-          godown: item.godown,
-        };
-      });
-
-      setRows(loadedRows.length ? loadedRows : [emptyRow]);
+    const handleGlobalClick = (e) => {
+      if (!e.target.closest(".tableInput") && !e.target.closest(".dropdown-panel")) {
+        setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null });
+      }
     };
+    window.addEventListener("click", handleGlobalClick);
+    return () => window.removeEventListener("click", handleGlobalClick);
+  }, []);
 
-    loadData();
-  }, [editId, products]);
-
-  // 🔢 SUBTOTAL UPDATE
   useEffect(() => {
-    const sum = rows.reduce((a, r) => a + (Number(r.total) || 0), 0);
-    setSubTotal(sum);
+    setSubTotal(rows.reduce((sum, r) => sum + Number(r.total || 0), 0));
   }, [rows]);
 
-  // META CHANGE
-  const handleMetaChange = (e) => {
-    setPurchaseMeta({ ...purchaseMeta, [e.target.name]: e.target.value });
-  };
+  const handleMetaChange = (e) => setPurchaseMeta({ ...purchaseMeta, [e.target.name]: e.target.value });
 
-  // PRODUCT SELECT
-  const selectProduct = (i, id) => {
+  // --- PRODUCT LOGIC ---
+  const handleProductSearch = (i, value) => {
     const updated = [...rows];
-    const product = products.find((p) => p.id == id);
-
-    if (product) {
-      updated[i] = {
-        ...updated[i],
-        productId: id,
-        productName: product.name,
-        size: product.size,
-        quality: product.quality,
-        rate: Number(product.rate),
-        batches: product.batches || [],
-        batchNo: "",
-        availQty: 0,
-        qty: "",
-        cov: 1,
-        total: 0,
-      };
-    }
-
+    updated[i].productName = value;
+    updated[i].filteredProducts = products.filter((p) =>
+      p.name.toLowerCase().includes(value.toLowerCase())
+    );
     setRows(updated);
   };
 
-  // BATCH SELECT
-  const selectBatch = (i, batchNo) => {
+  const selectProductFromSearch = (i, product) => {
     const updated = [...rows];
-    const row = updated[i];
+    updated[i] = {
+      ...updated[i],
+      productId: product.id, productName: product.name, size: product.size,
+      quality: product.quality, rate: Number(product.rate), 
+      batches: product.batches || [],
+      availQty: 0, qty: "", total: 0, batchNo: ""
+    };
+    setRows(updated);
+    setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null });
+  };
 
-    row.batchNo = batchNo;
-
-    const batch = row.batches.find(b => b.batch_no == batchNo);
-
-    row.availQty = batch ? Number(batch.qty) : 0;
-    row.total = Number(row.qty || 0) * Number(row.rate || 0) * Number(row.cov || 1);
-
+  // --- BATCH LOGIC ---
+  const handleBatchInput = (i, value) => {
+    const updated = [...rows];
+    updated[i].batchNo = value;
+    const existing = updated[i].batches.find(b => b.batch_no.toLowerCase() === value.toLowerCase());
+    updated[i].availQty = existing ? existing.qty : 0;
     setRows(updated);
   };
 
-  // UPDATE FIELDS
+  const selectBatch = (i, batchObj) => {
+    const updated = [...rows];
+    updated[i].batchNo = batchObj.batch_no;
+    updated[i].availQty = batchObj.qty;
+    setRows(updated);
+    setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null });
+  };
+
   const updateRowField = (i, field, value) => {
     const updated = [...rows];
     updated[i][field] = value;
-
-    const r = updated[i];
-    r.total = Number(r.qty || 0) * Number(r.rate || 0) * Number(r.cov || 1);
-
+    updated[i].total = Number(updated[i].qty || 0) * Number(updated[i].rate || 0) * Number(updated[i].cov || 1);
     setRows(updated);
   };
 
   const addRow = () => setRows([...rows, { ...emptyRow }]);
   const removeRow = (i) => setRows(rows.filter((_, idx) => idx !== i));
 
-  // SAVE PURCHASE
   const savePurchase = async (e) => {
     e.preventDefault();
-
-    const res = await addPurchaseAPI({
-      ...purchaseMeta,
-      items: rows,
-      subTotal,
-    });
-
-    alert("Saved Successfully, Bill: " + res.data.billNo);
-    navigate("/inventory/manage");
+    if(!purchaseMeta.clientName || !purchaseMeta.billNo) return alert("Fill Bill No and Supplier Name");
+    try {
+        await addPurchaseAPI({ ...purchaseMeta, items: rows, subTotal });
+        alert("Saved Successfully");
+        navigate("/inventory/manage");
+    } catch (err) { alert("Error saving purchase"); }
   };
-const handleProductSearch = (i, value) => {
-  const updated = [...rows];
-  updated[i].productName = value;
-  updated[i].showProductDropdown = true;
-
-  updated[i].filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(value.toLowerCase())
-  );
-
-  setRows(updated);
-};
-const selectProductFromSearch = (i, product) => {
-  const updated = [...rows];
-
-  updated[i] = {
-    ...updated[i],
-    productId: product.id,
-    productName: product.name,
-    size: product.size,
-    quality: product.quality,
-    rate: Number(product.rate),
-    batches: product.batches || [],
-    batchNo: "",
-    availQty: 0,
-    qty: "",
-    cov: 1,
-    total: 0,
-    showProductDropdown: false,
-  };
-
-  setRows(updated);
-};
-const addNewProduct = (i) => {
-  alert(`Open Add Product Modal for: ${rows[i].productName}`);
-  // 👉 here you can open Add Product modal
-};
-const handleBatchSearch = (i, value) => {
-  const updated = [...rows];
-  updated[i].batchNo = value;
-  updated[i].showBatchDropdown = true;
-
-  updated[i].filteredBatches = updated[i].batches.filter((b) =>
-    b.batch_no.toLowerCase().includes(value.toLowerCase())
-  );
-
-  setRows(updated);
-};
-const selectBatchFromSearch = (i, batch) => {
-  const updated = [...rows];
-
-  updated[i].batchNo = batch.batch_no;
-  updated[i].availQty = Number(batch.qty);
-  updated[i].showBatchDropdown = false;
-
-  updated[i].total =
-    Number(updated[i].qty || 0) *
-    Number(updated[i].rate || 0) *
-    Number(updated[i].cov || 1);
-
-  setRows(updated);
-};
-const addNewBatch = (i) => {
-  alert(`Open Add Batch Modal for: ${rows[i].batchNo}`);
-};
 
   return (
-    <form onSubmit={savePurchase} className="p-6 font-['Lexend']">
-      <div className="bg-white p-6 shadow-xl rounded-2xl">
-
-        {/* META SECTION */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          {["purchaseDate", "clientName", "clientContact"].map((f) => (
-            <div key={f}>
-              <label className="font-semibold">{f}</label>
-              <input
-                type={f === "purchaseDate" ? "date" : "text"}
-                name={f}
-                value={purchaseMeta[f]}
-                onChange={handleMetaChange}
-                className="mt-2 p-3 border rounded-xl w-full"
-              />
+    <div className="min-h-screen bg-[#FAFAFA] p-4 md:p-8 font-['Lexend'] text-slate-800">
+      <form onSubmit={savePurchase} className="max-w-[1600px] mx-auto">
+        
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight" style={{ color: SIDEBAR_DARK }}>Stock Inward</h1>
+            <p className="text-slate-500 font-medium mt-1">Record new arrivals into the inventory ledger</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="bg-white px-8 py-3 rounded-[20px] shadow-sm border border-slate-100 text-right">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Grand Total</p>
+              <p className="text-2xl font-black" style={{ color: BRAND_ORANGE }}>₹ {subTotal.toLocaleString()}</p>
             </div>
-          ))}
-        </div>
-
-        {/* TABLE */}
-        <div className="overflow-x-auto">
-  <table className="w-full border rounded-xl">
-    <thead className="bg-gray-200">
-      <tr>
-        {[
-          "Product", "Size", "Quality", "Rate", "COV", "Batch",
-          "Avail", "Qty", "Total", "Godown", "Action",
-        ].map((h) => (
-          <th key={h} className="p-3">{h}</th>
-        ))}
-      </tr>
-    </thead>
-
-    <tbody>
-      {rows.map((r, i) => (
-        <tr key={i} className="relative">
-
-          {/* PRODUCT INPUT */}
-          <td className="p-2 relative">
-            <input
-              value={r.productName}
-              onChange={(e) => handleProductSearch(i, e.target.value)}
-              placeholder="Type product"
-              className="inputCell"
-            />
-
-            {r.showProductDropdown && (
-              <div className="absolute z-20 bg-white border rounded-xl w-full mt-1 shadow max-h-40 overflow-auto">
-                {r.filteredProducts.length ? (
-                  r.filteredProducts.map((p) => (
-                    <div
-                      key={p.id}
-                      onClick={() => selectProductFromSearch(i, p)}
-                      className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
-                    >
-                      {p.name}
-                    </div>
-                  ))
-                ) : (
-                  <div
-                    onClick={() => addNewProduct(i)}
-                    className="px-3 py-2 text-blue-600 cursor-pointer hover:bg-blue-50"
-                  >
-                    ➕ Add "{r.productName}"
-                  </div>
-                )}
-              </div>
-            )}
-          </td>
-
-          <td className="p-2">
-            <input readOnly value={r.size} className="inputCell bg-gray-100" />
-          </td>
-
-          <td className="p-2">
-            <input readOnly value={r.quality} className="inputCell bg-gray-100" />
-          </td>
-
-          <td className="p-2">
-            <input
-              value={r.rate}
-              onChange={(e) => updateRowField(i, "rate", e.target.value)}
-              className="inputCell"
-            />
-          </td>
-
-          <td className="p-2">
-            <input
-              value={r.cov}
-              onChange={(e) => updateRowField(i, "cov", e.target.value)}
-              className="inputCell"
-            />
-          </td>
-
-          {/* BATCH INPUT */}
-          <td className="p-2 relative">
-            <input
-              value={r.batchNo}
-              onChange={(e) => handleBatchSearch(i, e.target.value)}
-              placeholder="Type batch"
-              className="inputCell"
-            />
-
-            {r.showBatchDropdown && (
-              <div className="absolute z-20 bg-white border rounded-xl w-full mt-1 shadow max-h-40 overflow-auto">
-                {r.filteredBatches.length ? (
-                  r.filteredBatches.map((b) => (
-                    <div
-                      key={b.batch_no}
-                      onClick={() => selectBatchFromSearch(i, b)}
-                      className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
-                    >
-                      {b.batch_no} – {b.location}
-                    </div>
-                  ))
-                ) : (
-                  <div
-                    onClick={() => addNewBatch(i)}
-                    className="px-3 py-2 text-blue-600 cursor-pointer hover:bg-blue-50"
-                  >
-                    ➕ Add "{r.batchNo}"
-                  </div>
-                )}
-              </div>
-            )}
-          </td>
-
-          <td className="p-2">
-            <input readOnly value={r.availQty} className="inputCell bg-gray-100" />
-          </td>
-
-          <td className="p-2">
-            <input
-              value={r.qty}
-              onChange={(e) => updateRowField(i, "qty", e.target.value)}
-              className="inputCell"
-            />
-          </td>
-
-          <td className="p-2">
-            <input readOnly value={r.total} className="inputCell bg-gray-100" />
-          </td>
-
-          <td className="p-2">
-            <select
-              value={r.godown}
-              onChange={(e) => updateRowField(i, "godown", e.target.value)}
-              className="inputCell"
-            >
-              <option>KKW</option>
-              <option>MN</option>
-              <option>TCS</option>
-            </select>
-          </td>
-
-          <td className="p-2 text-center">
-            <button type="button" onClick={() => removeRow(i)}>
-              <Trash2 className="text-red-600" />
+            <button type="submit" className="text-white px-10 py-4 rounded-[20px] font-black transition-all shadow-xl flex items-center gap-2 hover:scale-105 active:scale-95" style={{ backgroundColor: BRAND_ORANGE }}>
+              <CheckCircle2 size={22}/> SAVE INVOICE
             </button>
-          </td>
-
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-
-        {/* SUBTOTAL */}
-        <div className="flex justify-end mt-6">
-          <input readOnly value={subTotal} className="p-3 border rounded-xl bg-gray-100" />
+          </div>
         </div>
 
-        {/* BUTTONS */}
-        <div className="flex gap-4 mt-6">
-          <button type="button" onClick={addRow} className="px-5 py-2 bg-blue-600 text-white rounded-xl flex gap-2">
-            <Plus size={18} /> Add Row
-          </button>
-
-          <button type="submit" className="px-6 py-2 bg-green-600 text-white rounded-xl">
-            Save
-          </button>
+        {/* METADATA SECTION */}
+        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 mb-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="space-y-2">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+              <Calendar size={14} style={{ color: BRAND_ORANGE }}/> Date
+            </label>
+            <input name="purchaseDate" type="date" value={purchaseMeta.purchaseDate} onChange={handleMetaChange} className="metaInput"/>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+              <Info size={14} style={{ color: BRAND_ORANGE }}/> Bill Number
+            </label>
+            <input name="billNo" placeholder="Ex: BILL-101" value={purchaseMeta.billNo} onChange={handleMetaChange} className="metaInput"/>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+              <User size={14} style={{ color: BRAND_ORANGE }}/> Supplier
+            </label>
+            <input name="clientName" placeholder="Enter Supplier" value={purchaseMeta.clientName} onChange={handleMetaChange} className="metaInput"/>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+              <Phone size={14} style={{ color: BRAND_ORANGE }}/> Contact
+            </label>
+            <input name="clientContact" placeholder="Mobile / Ref" value={purchaseMeta.clientContact} onChange={handleMetaChange} className="metaInput"/>
+          </div>
         </div>
-      </div>
+
+        {/* TABLE SECTION */}
+        <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  {["Product Description", "Size", "Quality", "Rate", "Cov", "Batch Selection", "Stock", "Qty", "Amount", "Godown", ""].map((h) => (
+                    <th key={h} className="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {rows.map((r, i) => (
+                  <tr key={i} className="group hover:bg-slate-50/30 transition-colors">
+                    <td className="p-3 w-72">
+                      <input value={r.productName} placeholder="Search Product..." 
+                        onChange={(e) => handleProductSearch(i, e.target.value)}
+                        onFocus={(e) => {
+                            const rect = e.target.getBoundingClientRect();
+                            setDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width, rowIndex: i, type: "product" });
+                        }}
+                        className="tableInput font-bold text-[#1E1E1E]"/>
+                    </td>
+
+                    <td className="p-3"><input value={r.size} onChange={(e) => updateRowField(i, "size", e.target.value)} className="tableInput w-20" /></td>
+                    <td className="p-3"><input value={r.quality} onChange={(e) => updateRowField(i, "quality", e.target.value)} className="tableInput w-24" /></td>
+                    <td className="p-3"><input value={r.rate} onChange={(e) => updateRowField(i, "rate", e.target.value)} className="tableInput w-24 font-black text-orange-600" /></td>
+                    <td className="p-3"><input value={r.cov} onChange={(e) => updateRowField(i, "cov", e.target.value)} className="tableInput w-16" /></td>
+                    
+                    <td className="p-3 w-48">
+                        <input value={r.batchNo} placeholder="Select or New..."
+                          onChange={(e) => handleBatchInput(i, e.target.value)}
+                          onFocus={(e) => {
+                            const rect = e.target.getBoundingClientRect();
+                            setDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width, rowIndex: i, type: "batch" });
+                          }}
+                          className="tableInput font-bold bg-blue-50/30 border-blue-100" />
+                    </td>
+
+                    <td className="p-3"><input readOnly value={r.availQty} className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold" /></td>
+                    <td className="p-3"><input value={r.qty} onChange={(e) => updateRowField(i, "qty", e.target.value)} className="tableInput w-24 font-black bg-yellow-50 border-yellow-200 focus:border-yellow-500" /></td>
+                    <td className="p-3 font-black text-slate-800 text-sm whitespace-nowrap">₹{r.total.toLocaleString()}</td>
+                    
+                    <td className="p-3">
+                      <select value={r.godown} onChange={(e) => updateRowField(i, "godown", e.target.value)} className="tableInput w-24 appearance-none font-bold bg-white">
+                        <option>KKW</option><option>MN</option><option>TCS</option>
+                      </select>
+                    </td>
+                    <td className="p-3">
+                      <button type="button" onClick={() => removeRow(i)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
+            <button type="button" onClick={addRow} className="flex items-center gap-2 text-[#FF7A00] font-black text-xs uppercase tracking-widest bg-white px-6 py-3 rounded-2xl border border-slate-200 hover:border-orange-200 transition-all shadow-sm">
+              <Plus size={18} /> Add Product Row
+            </button>
+            <div className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+              <Info size={14} style={{ color: BRAND_ORANGE }}/> Calculations update automatically
+            </div>
+          </div>
+        </div>
+
+        {/* ✅ FIXED POSITION DROPDOWN (Solves clipping issue) */}
+        {dropdownPos.rowIndex !== null && (
+          <div 
+            className="fixed z-[9999] bg-white border border-slate-200 rounded-xl shadow-2xl mt-1 overflow-auto dropdown-panel animate-in fade-in slide-in-from-top-1 duration-150"
+            style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, maxHeight: '250px' }}
+          >
+            {/* Product List */}
+            {dropdownPos.type === "product" && (
+                rows[dropdownPos.rowIndex].filteredProducts.length > 0 ? (
+                    rows[dropdownPos.rowIndex].filteredProducts.map(p => (
+                        <div key={p.id} onClick={() => selectProductFromSearch(dropdownPos.rowIndex, p)} className="p-3 hover:bg-orange-50 cursor-pointer border-b border-slate-50 last:border-0 transition-colors">
+                            <p className="text-sm font-bold text-slate-700">{p.name}</p>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">Size: {p.size} | Quality: {p.quality}</p>
+                        </div>
+                    ))
+                ) : <div className="p-4 text-center text-xs text-slate-400 italic">No matches found</div>
+            )}
+
+            {/* Batch List */}
+            {dropdownPos.type === "batch" && (
+                <>
+                  <div className="p-2 bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">Select Existing Batch</div>
+                  {rows[dropdownPos.rowIndex].batches
+                    .filter(b => b.batch_no.toLowerCase().includes(rows[dropdownPos.rowIndex].batchNo.toLowerCase()))
+                    .map((b, idx) => (
+                      <div key={idx} onClick={() => selectBatch(dropdownPos.rowIndex, b)} className="p-3 hover:bg-orange-50 cursor-pointer flex justify-between items-center border-b border-slate-50 transition-colors">
+                        <span className="text-sm font-bold text-slate-700">{b.batch_no}</span>
+                        <span className="text-[10px] font-black bg-orange-100 text-orange-600 px-2 py-0.5 rounded">Stock: {b.qty}</span>
+                      </div>
+                  ))}
+                  {rows[dropdownPos.rowIndex].batchNo && (
+                    <div onClick={() => setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null })}
+                      className="p-3 hover:bg-green-50 cursor-pointer text-green-600 font-bold text-xs flex items-center gap-2 border-t border-slate-100">
+                      <Plus size={14}/> Create New Batch: "{rows[dropdownPos.rowIndex].batchNo}"
+                    </div>
+                  )}
+                </>
+            )}
+          </div>
+        )}
+      </form>
 
       <style>{`
-        .inputCell {
-          width: 100%;
-          padding: 8px;
-          border: 1px solid #ccc;
-          border-radius: 10px;
+        .metaInput {
+          width: 100%; padding: 14px; background: #F8FAFC; border: 1px solid #E2E8F0;
+          border-radius: 16px; outline: none; transition: all 0.2s; font-weight: 600; color: #1E1E1E;
         }
+        .metaInput:focus { border-color: #FF7A00; box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.1); background: white; }
+        
+        .tableInput {
+          padding: 10px 14px; font-size: 13px; border: 1px solid #E2E8F0;
+          border-radius: 12px; outline: none; transition: all 0.2s;
+        }
+        .tableInput:focus { border-color: #FF7A00; box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.05); }
       `}</style>
-    </form>
+    </div>
   );
 }

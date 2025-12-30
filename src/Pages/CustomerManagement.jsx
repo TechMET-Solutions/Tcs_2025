@@ -1,58 +1,76 @@
 import axios from "axios";
-import { MessageCircle, Plus, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Plus, X, History, Phone, User, Briefcase, MapPin, MessageSquare, ChevronRight } from "lucide-react";
+import { useEffect, useRef,创新, useState } from "react";
 import { Images } from "../assets";
-/* ✅ TOOLTIP COMPONENT */
+
+/* ✅ MODERN TOOLTIP */
 const Tooltip = ({ text, children }) => {
   return (
     <div className="relative group inline-block">
       {children}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black text-white text-xs px-3 py-1 rounded-lg whitespace-nowrap shadow-lg">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-md whitespace-nowrap shadow-xl z-50">
         {text}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
       </div>
     </div>
   );
 };
 
+/* ✅ REFINED INPUT FIELD */
+const InputField = ({ label, name, value, onChange, error, placeholder, icon: Icon }) => (
+  <div className="flex flex-col gap-1.5">
+    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-tight ml-1">{label}</label>
+    <div className="relative group">
+      {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#FA9C42] transition-colors" />}
+      <input
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full ${Icon ? 'pl-11' : 'px-4'} py-3 rounded-2xl bg-white border border-slate-200 transition-all outline-none focus:ring-4 focus:ring-[#FA9C42]/10 focus:border-[#FA9C42] shadow-sm ${error ? "border-red-400 ring-4 ring-red-500/10" : ""}`}
+      />
+    </div>
+    {error && <p className="text-[10px] text-red-500 font-bold mt-0.5 ml-1 uppercase tracking-tight">{error}</p>}
+  </div>
+);
+
+const SelectField = ({ label, name, value, onChange, error, options }) => (
+  <div className="flex flex-col gap-1.5">
+    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-tight ml-1">{label}</label>
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      className={`w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 transition-all outline-none appearance-none cursor-pointer focus:border-[#FA9C42] focus:ring-4 focus:ring-[#FA9C42]/10 shadow-sm ${error ? "border-red-400" : ""}`}
+    >
+      <option value="">Select Option</option>
+      {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+    </select>
+    {error && <p className="text-[10px] text-red-500 font-bold mt-0.5 ml-1 uppercase tracking-tight">{error}</p>}
+  </div>
+);
+
 export default function CustomerManagement() {
   const BASE_URL = "http://localhost:5000/api/users";
-
   const [showModal, setShowModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showUpdateFollowup, setShowUpdateFollowup] = useState(false);
-
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [activeIndex, setActiveIndex] = useState(null);
+  const [customerList, setCustomerList] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [followupUpdate, setFollowupUpdate] = useState({
-    date: "",
-    response: "",
-  });
+  const getTodayDate = () => new Date().toISOString().split('T')[0];
+  const [followupUpdate, setFollowupUpdate] = useState({ date: getTodayDate(), response: "" });
 
   const [customer, setCustomer] = useState({
-  name: "",
-  Last_Name: "",
-  phone: "",
-  email: "",
-  assignedEmployee: "",
-  assignedArchitect: "",
-  status: "New",
-  nextFollowup: "",
-  followupResponse: "",
-  notes: "",
+    name: "", Last_Name: "", phone: "", email: "", assignedEmployee: "",
+    assignedArchitect: "", status: "New", nextFollowup: "", followupResponse: "",
+    notes: "", projectName: "", siteName: "", siteType: "", priority: "Low"
+  });
 
-  // 🔹 NEW FIELDS
-  projectName: "",
-  siteName: "",
-  siteType: "",
-});
-
-
-  const [customerList, setCustomerList] = useState([]);
-
-  /* ✅ STRICT MODE SAFE API CALL (NO RE-RENDER LOOP) */
   const apiCalled = useRef(false);
-
   useEffect(() => {
     if (!apiCalled.current) {
       apiCalled.current = true;
@@ -64,44 +82,33 @@ export default function CustomerManagement() {
     try {
       const res = await axios.get(`${BASE_URL}/list`);
       setCustomerList(res.data.customers || []);
-    } catch (err) {
-      console.log("Fetch Error:", err);
-    }
+    } catch (err) { console.log("Fetch Error:", err); }
   };
 
-  const handleChange = (e) => {
-    setCustomer({ ...customer, [e.target.name]: e.target.value });
+  const handleChange = (e) => setCustomer({ ...customer, [e.target.name]: e.target.value });
+  const handleFollowupInput = (e) => setFollowupUpdate({ ...followupUpdate, [e.target.name]: e.target.value });
+
+  const validate = () => {
+    let newErrors = {};
+    const required = { name: "First name", phone: "Phone", assignedEmployee: "Employee", projectName: "Project" };
+    Object.keys(required).forEach(f => { if (!customer[f]) newErrors[f] = `${required[f]} is required`; });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleFollowupInput = (e) => {
-    setFollowupUpdate({ ...followupUpdate, [e.target.name]: e.target.value });
-  };
-
-  /* ✅ SAVE CUSTOMER */
   const saveCustomer = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
+    setIsSubmitting(true);
     try {
       await axios.post(`${BASE_URL}/add`, customer);
-      await fetchCustomers();
-
+      fetchCustomers();
       setShowModal(false);
-      setCustomer({
-        name: "",
-        phone: "",
-        email: "",
-        assignedEmployee: "",
-        assignedArchitect: "",
-        status: "New",
-        nextFollowup: "",
-        followupResponse: "",
-        notes: "",
-      });
-    } catch (err) {
-      console.log("Save Error:", err);
-    }
+      setErrors({});
+    } catch (err) { setErrors({ server: "Failed to save." }); }
+    finally { setIsSubmitting(false); }
   };
 
-  /* ✅ SAVE FOLLOW-UP */
   const saveNewFollowup = async () => {
     try {
       await axios.post(`${BASE_URL}/followup/add`, {
@@ -109,270 +116,171 @@ export default function CustomerManagement() {
         date: followupUpdate.date,
         response: followupUpdate.response,
       });
-
-      setFollowupUpdate({ date: "", response: "" });
       setShowUpdateFollowup(false);
-    } catch (err) {
-      console.log("Followup Error:", err);
-    }
+      setFollowupUpdate({ date: getTodayDate(), response: "" });
+    } catch (err) { console.log(err); }
   };
 
-  /* ✅ OPEN HISTORY */
   const openHistory = async (item) => {
     try {
       const res = await axios.get(`${BASE_URL}/followups/${item.id}`);
-      setSelectedCustomer({
-        ...item,
-        followups: res.data.followups || [],
-      });
+      setSelectedCustomer({ ...item, followups: res.data.followups || [] });
       setShowHistory(true);
-    } catch (err) {
-      console.log("History Error:", err);
-    }
+    } catch (err) { console.log(err); }
   };
 
   return (
-    <div className="p-6 font-['Lexend']">
+    <div className="min-h-screen bg-[#F8FAFC] p-8 font-['Lexend'] text-slate-800">
+      
+      {/* --- HEADER SECTION --- */}
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">CRM Portal</h1>
+          <p className="text-slate-500 font-medium">Manage your clients and track project follow-ups</p>
+        </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="group flex items-center gap-2 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-xl shadow-slate-200 hover:bg-[#FA9C42] hover:shadow-[#FA9C42]/20 transition-all active:scale-95"
+        >
+          <Plus size={20} className="group-hover:rotate-90 transition-transform" />
+          <span className="font-bold">New Customer</span>
+        </button>
+      </div>
 
-      {/* ✅ HEADER */}
-      {/* <div className="flex justify-between items-center mb-10">
-        <h1 className="text-3xl font-bold flex items-center gap-3 text-gray-800">
-          <Users size={30} className="text-blue-600" />
-          Customer Management (CRM)
-        </h1>
+      {/* --- STATS OVERVIEW (Visual Polish) --- */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        {[
+          { label: "Total Leads", val: customerList.length, color: "text-blue-600" },
+          { label: "Pending Follow-ups", val: "12", color: "text-orange-500" },
+          { label: "Active Projects", val: "08", color: "text-emerald-500" },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex justify-between items-center">
+            <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">{stat.label}</span>
+            <span className={`text-3xl font-black ${stat.color}`}>{stat.val}</span>
+          </div>
+        ))}
+      </div>
 
-        <Tooltip text="Add New Customer">
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-purple-600 text-white px-5 py-3 rounded-xl shadow-lg hover:bg-purple-700"
-          >
-            <Plus size={18} /> Add Customer
-          </button>
-        </Tooltip>
-      </div> */}
-       <div className="flex justify-between items-center mb-10 px-4 py-2 border rounded-xl">
-              <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
-                {/* <Users size={30} className="text-blue-600" /> */}
-          Customer Management (CRM)
-              </h1>
-              <button
-                onClick={() => {
-                  setShowModal(true);
-                  // setIsEditing(false);
-                  // setQuality({ name: "", status: "Available" });
-                }}
-                className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42] hover:bg-orange-500 hover:text-white "
-              >
-                <Plus size={18} /> Add Customer
-              </button>
-            </div>
-
-      {/* ✅ TABLE */}
-      <table className="w-full rounded-2xl overflow-hidden shadow-xl bg-white">
-        <thead>
-          <tr className="bg-[#FA9C42] text-white">
-            {["Customer", "Phone", "Employee", "Architect", "Status", "Next Follow-up", "Actions"].map(h => (
-              <th key={h} className="p-4 text-center text-sm font-semibold py-6 px-2">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {customerList.length === 0 ? (
-            <tr>
-              <td colSpan="7" className="text-center p-10 text-gray-500 italic">
-                No customers added yet.
-              </td>
-            </tr>
-          ) : (
-            customerList.map((item, index) => (
-              <tr key={item.id || index} className=" border-b">
-                <td className="p-4 font-semibold">{item.name}</td>
-                <td className="p-4">{item.phone}</td>
-                <td className="p-4">{item.assignedEmployee}</td>
-                <td className="p-4">{item.assignedArchitect || "-"}</td>
-                <td className="p-4">{item.status}</td>
-                <td className="p-4">{item.nextFollowup || "-"}</td>
-
-                <td className="p-4 flex gap-2">
-                  {/* <Tooltip text="Send Message">
-                    <button className="bg-green-500 text-white px-3 py-1 rounded-lg">
-                      <MessageCircle size={14} />
-                    </button>
-                  </Tooltip> */}
-
-                  <Tooltip text="View History">
-                    <button
-                      onClick={() => openHistory(item)}
-                      className="  px-3 py-1 rounded-lg border border-[#FA9C42] hover:bg-[#FA9C42] hover:text-white cursor-pointer"
-                    >
-                      History
-                    </button>
-                  </Tooltip>
-
-                  <Tooltip text="Add Follow-up">
-                    <button
-                      onClick={() => {
-                        setActiveIndex(index);
-                        setShowUpdateFollowup(true);
-                      }}
-                      className="px-3 py-1 rounded-lg border border-[#FA9C42] hover:bg-[#FA9C42] hover:text-white cursor-pointer"
-                    >
-                      + Follow-up
-                    </button>
-                  </Tooltip>
-                </td>
+      {/* --- DATA TABLE --- */}
+      <div className="max-w-7xl mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Customer Info</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Assignment</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Project Details</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {customerList.length === 0 ? (
+                <tr><td colSpan="4" className="text-center py-20 text-slate-400 font-medium">No records found. Click "New Customer" to start.</td></tr>
+              ) : (
+                customerList.map((item, index) => (
+                  <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-lg group-hover:bg-[#FA9C42]/10 group-hover:text-[#FA9C42] transition-colors">
+                          {item.name[0]}
+                        </div>
+                        <div>
+                          <div className="font-black text-slate-900">{item.name} {item.Last_Name}</div>
+                          <div className="text-sm text-slate-500 flex items-center gap-1"><Phone size={12}/> {item.phone}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Employee</span>
+                        <span className="font-bold text-slate-700">{item.assignedEmployee}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                       <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">{item.siteType || 'N/A'}</span>
+                       <div className="mt-1 font-bold text-slate-700">{item.projectName || 'Unnamed Project'}</div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openHistory(item)} className="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-white hover:shadow-md transition-all">
+                          <History size={18} />
+                        </button>
+                        <button 
+                          onClick={() => { setActiveIndex(index); setShowUpdateFollowup(true); }}
+                          className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-700 hover:border-[#FA9C42] hover:text-[#FA9C42] shadow-sm transition-all"
+                        >
+                          Follow-up <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* ✅ ADD CUSTOMER MODAL */}
+      {/* --- ADD CUSTOMER MODAL (Bento Style) --- */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="w-[804px] bg-[#FFF7EF] p-7 rounded-2xl shadow-2xl">
-            <div className="flex justify-between mb-5">
-              <h2 className="text-[34px] font-bold">Add Customer</h2>
-               <button onClick={() => setShowModal(false)}>
-                             <img
-                               src={Images.Cross}
-                               alt="Close"
-                               className="w-8 h-8"
-                             />
-                           </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-[#FCFCFC] w-full max-w-4xl rounded-[40px] shadow-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-300">
+            <div className="px-10 py-8 flex justify-between items-center border-b border-slate-100">
+              <h2 className="text-2xl font-black">Register New Client</h2>
+              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors"><X size={20}/></button>
             </div>
-
-            <form className=" " onSubmit={saveCustomer}>
-              <div className="flex justify-center gap-10">
-<input name="name" onChange={handleChange} value={customer.name} placeholder="Name" className="border p-2 rounded w-[382px]" required />
-               <input name="Last_Name" onChange={handleChange} value={customer.Last_Name} placeholder="Last Name " className="border p-2 rounded w-[382px]" required />
+            
+            <form onSubmit={saveCustomer} className="p-10 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                <div className="space-y-6">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#FA9C42]">Personal Contact</h3>
+                  <InputField label="First Name" name="name" value={customer.name} onChange={handleChange} error={errors.name} placeholder="e.g. Rahul" icon={User} />
+                  <InputField label="Last Name" name="Last_Name" value={customer.Last_Name} onChange={handleChange} error={errors.Last_Name} placeholder="e.g. Sharma" />
+                  <InputField label="Mobile Number" name="phone" value={customer.phone} onChange={handleChange} error={errors.phone} placeholder="98XXXXXXXX" icon={Phone} />
+                </div>
+                <div className="space-y-6">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#FA9C42]">Project Assignment</h3>
+                  <SelectField label="Employee" name="assignedEmployee" value={customer.assignedEmployee} onChange={handleChange} error={errors.assignedEmployee} options={["Rahul", "Sagar", "Pritesh"]} />
+                  <InputField label="Project Name" name="projectName" value={customer.projectName} onChange={handleChange} error={errors.projectName} placeholder="Skyline Heights" icon={Briefcase} />
+                  <SelectField label="Site Type" name="siteType" value={customer.siteType} onChange={handleChange} options={["Residential", "Commercial"]} />
+                </div>
               </div>
 
-              <div className="flex justify-center gap-10 mt-2">
-<input name="phone" onChange={handleChange} value={customer.phone} placeholder="Phone" className="border p-2 rounded w-[382px]" required />
-              <input name="email" onChange={handleChange} value={customer.email} placeholder="Email" className="border p-2 rounded col-span-2 w-[382px]" />
+              <div className="mt-12 flex justify-end gap-4">
+                <button type="button" onClick={() => setShowModal(false)} className="px-8 py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">Discard</button>
+                <button type="submit" disabled={isSubmitting} className="px-10 py-4 bg-[#FA9C42] text-white font-black rounded-2xl shadow-lg shadow-[#FA9C42]/30 hover:scale-105 active:scale-95 transition-all">
+                  {isSubmitting ? "Creating..." : "Save Record"}
+                </button>
               </div>
-               <div className="flex justify-center gap-10 mt-2">
-<select name="assignedEmployee" onChange={handleChange} value={customer.assignedEmployee} className="border p-2 rounded w-[382px]">
-                <option value="">Select Employee</option>
-                <option>Rahul</option>
-                <option>Sagar</option>
-                <option>Pritesh</option>
-              </select>
-              <select name="assignedArchitect" onChange={handleChange} value={customer.assignedArchitect} className="border p-2 rounded w-[382px]">
-                <option value="">Select Architect</option>
-                <option>Architect 1</option>
-                <option>Architect 2</option>
-              </select>
-
-               </div>
-               <div className="flex justify-center gap-10 mt-2">
-
-<select name="status" onChange={handleChange} value={customer.status} className="border p-2 rounded  w-[382px]">
-                <option>New</option>
-                <option>Pending</option>
-                <option>Hold</option>
-                <option>Quoted</option>
-                <option>Finalized</option>
-              </select>
-              <input type="date" name="nextFollowup" onChange={handleChange} value={customer.nextFollowup} className="border p-2 rounded  w-[382px]" />
-               </div>
-              <div className="mt-5">
- <textarea name="followupResponse" onChange={handleChange} value={customer.followupResponse} className="border p-2 rounded col-span-2 w-[750px]" placeholder="Follow-up response"></textarea>
-              </div>
-              <div className="mt-5">
-                 <textarea name="notes" onChange={handleChange} value={customer.notes} className="border p-2 rounded col-span-2 w-[750px]" placeholder="Notes"></textarea>
-              </div>
-              <div className="flex justify-center gap-10 mt-2">
-  <input
-    name="projectName"
-    onChange={handleChange}
-    value={customer.projectName}
-    placeholder="Project Name"
-    className="border p-2 rounded w-[382px]"
-    required
-  />
-
-  <input
-    name="siteName"
-    onChange={handleChange}
-    value={customer.siteName}
-    placeholder="Site Name"
-    className="border p-2 rounded w-[382px]"
-    required
-  />
-</div><div className="flex justify-center gap-10 mt-2">
-  <select
-    name="siteType"
-    onChange={handleChange}
-    value={customer.siteType}
-    className="border p-2 rounded w-[382px]"
-    required
-  >
-    <option value="">Select Site Type</option>
-    <option value="Residential">Residential</option>
-    <option value="Commercial">Commercial</option>
-    <option value="Industrial">Industrial</option>
-    <option value="Government">Government</option>
-  </select>
-</div>
-
-
-              <div className="flex justify-end ">
-                 <button type="submit" className="col-span-2 bg-[#FA9C42] text-white py-3 rounded-xl w-[134px] h-[48px] mt-2">
-               Save
-              </button>
-             </div>
-
-             
             </form>
           </div>
         </div>
       )}
 
-      {/* ✅ ADD FOLLOW-UP MODAL */}
+      {/* --- FOLLOW-UP MODAL (Compact) --- */}
       {showUpdateFollowup && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-[#FFF7EF] w-[450px] p-6 rounded-xl shadow-2xl">
-            <div className="flex justify-between mb-4">
-              <h2 className="text-lg font-bold">Add New Follow-up</h2>
-              <button onClick={() => setShowUpdateFollowup(false)}><X /></button>
-            </div>
-
-            <input type="date" name="date" value={followupUpdate.date} onChange={handleFollowupInput} className="border p-2 rounded w-full mb-3" />
-            <textarea name="response" value={followupUpdate.response} onChange={handleFollowupInput} className="border p-2 rounded w-full" placeholder="Follow-up response..." />
-
-            <button onClick={saveNewFollowup} className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg">
-              Save Follow-up
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ✅ HISTORY MODAL */}
-      {showHistory && selectedCustomer && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-[#FFF7EF] w-[500px] p-6 rounded-xl shadow-2xl">
-            <div className="flex justify-between mb-4">
-              <h2 className="text-lg font-bold">
-                Follow-up History - {selectedCustomer.name}
-              </h2>
-              <button onClick={() => setShowHistory(false)}><X /></button>
-            </div>
-
-            {selectedCustomer.followups.length === 0 ? (
-              <p className="text-gray-500 italic">No follow-ups yet.</p>
-            ) : (
-              selectedCustomer.followups.map((f, i) => (
-                <div key={i} className="border p-3 rounded-lg mb-3 bg-gray-50">
-                  <p className="text-sm font-semibold">📅 {f.date}</p>
-                  <p className="text-gray-700 text-sm mt-1">
-                    {f.response || "No response"}
-                  </p>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
+           <div className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-3xl animate-in slide-in-from-bottom-4 duration-300">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-black">Log Interaction</h2>
+                <button onClick={() => setShowUpdateFollowup(false)} className="text-slate-400 hover:text-slate-600"><X size={24}/></button>
+              </div>
+              <div className="space-y-5">
+                <InputField label="Date" name="date" value={followupUpdate.date} disabled icon={History} />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Notes / Feedback</label>
+                  <textarea 
+                    name="response" 
+                    value={followupUpdate.response} 
+                    onChange={handleFollowupInput} 
+                    rows={4}
+                    placeholder="Customer interested in premium plan..."
+                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#FA9C42] outline-none transition-all resize-none shadow-inner"
+                  />
                 </div>
-              ))
-            )}
-          </div>
+                <button onClick={saveNewFollowup} className="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-[#FA9C42] transition-colors shadow-lg">Save Follow-up</button>
+              </div>
+           </div>
         </div>
       )}
 

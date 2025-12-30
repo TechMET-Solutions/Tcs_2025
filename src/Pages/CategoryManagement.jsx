@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Edit, Plus, Tags, Trash2, X } from "lucide-react";
+import { Edit, Plus, Tags, Trash2, X, CheckCircle, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Images } from "../assets";
 
@@ -9,55 +9,35 @@ export default function CategoryManagement() {
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const [category, setCategory] = useState({
-    name: "",
-    status: "Available",
-  });
-
   const [categoryList, setCategoryList] = useState([]);
   const [currentId, setCurrentId] = useState(null);
+  const [category, setCategory] = useState({ name: "", status: "Available" });
 
-  // ✅ FETCH ALL CATEGORIES
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/list`);
-      setCategoryList(res.data.categories);
-    } catch (err) {
-      console.error("Fetch Error:", err);
-    }
+      setCategoryList(res.data.categories || []);
+    } catch (err) { console.error("Fetch Error:", err); }
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
-  // ✅ HANDLE INPUT CHANGE
-  const handleChange = (e) => {
-    setCategory({ ...category, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setCategory({ ...category, [e.target.name]: e.target.value });
 
-  // ✅ SAVE CATEGORY (CREATE + UPDATE)
   const saveCategory = async (e) => {
     e.preventDefault();
-
     try {
       if (isEditing) {
         await axios.put(`${BASE_URL}/update/${currentId}`, category);
       } else {
         await axios.post(`${BASE_URL}/create`, category);
       }
-
-      setCategory({ name: "", status: "Available" });
-      setIsEditing(false);
       setShowModal(false);
+      setCategory({ name: "", status: "Available" });
       fetchCategories();
-    } catch (err) {
-      console.error("Save Error:", err);
-    }
+    } catch (err) { console.error("Save Error:", err); }
   };
 
-  // ✅ EDIT CATEGORY
   const editCategory = (item) => {
     setCategory({ name: item.name, status: item.status });
     setCurrentId(item.id);
@@ -65,149 +45,145 @@ export default function CategoryManagement() {
     setShowModal(true);
   };
 
-  // ✅ CONFIRM DELETE
-  const confirmDelete = (item) => {
-    setCurrentId(item.id);
-    setShowDeleteModal(true);
-  };
-
-  // ✅ DELETE CATEGORY
-  const deleteCategory = async () => {
-    try {
-      await axios.delete(`${BASE_URL}/delete/${currentId}`);
-      setShowDeleteModal(false);
-      fetchCategories();
-    } catch (err) {
-      console.error("Delete Error:", err);
-    }
-  };
-
   return (
-    <div className="p-6">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-10 px-4 py-2 border rounded-xl">
-        <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
-          Category Management
-        </h1>
+    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-10 font-['Lexend'] text-slate-800">
+      
+      {/* --- HEADER --- */}
+      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 px-2">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">Category Management</h1>
+          <p className="text-slate-500 font-medium mt-1">Organize and classify your inventory items.</p>
+        </div>
         <button
           onClick={() => {
             setShowModal(true);
             setIsEditing(false);
-            setQuality({ name: "", status: "Available" });
+            setCategory({ name: "", status: "Available" });
           }}
-          className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42]"
+          className="group flex items-center gap-2 bg-[#FA9C42] text-white px-8 py-4 rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95"
         >
-          <Plus size={18} /> Add Category
+          <Plus size={22} className="group-hover:rotate-90 transition-transform" />
+          <span className="font-bold text-lg">Add Category</span>
         </button>
       </div>
 
-      {/* CATEGORY LIST */}
-      <div className="bg-white rounded-xl shadow-xl">
-        <table className="w-full rounded-xl overflow-hidden text-center">
-          <thead className="bg-[#FA9C42] text-white">
-            <tr>
-              <th className="py-6 px-2">Category Name</th>
-              <th className="py-6 px-2">Status</th>
-              <th className="py-6 px-2 text-center">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {categoryList.length === 0 ? (
-              <tr>
-                <td colSpan="3" className="text-center p-6 text-gray-500 italic">
-                  No categories added yet.
-                </td>
+      {/* --- TABLE CONTAINER --- */}
+      <div className="max-w-[1400px] mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-100">
+                <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Index</th>
+                <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Category Name</th>
+                <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Status</th>
+                <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">Actions</th>
               </tr>
-            ) : (
-              categoryList.map((item) => (
-                <tr key={item.id} className="border-t hover:bg-gray-50 transition">
-                  <td className="p-3 font-medium">{item.name}</td>
-
-                  <td className="p-3">
-                    <span
-                      className={`inline-block text-center px-3 py-1 border-2 rounded-lg font-medium
-      w-32
-      ${item.status === "Available"
-                          ? "border-green-600 text-green-700"
-                          : "border-red-600 text-red-700"
-                        }`}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center flex items-center justify-center gap-3">
-                    <button
-                      onClick={() => editCategory(item)}
-                      className="px-3 py-2 rounded-lg text-balck hover:scale-105 transition"
-                    >
-                      <Edit size={20} />
-                    </button>
-
-                    <button
-                      onClick={() => confirmDelete(item)}
-                      className="px-3 py-2 rounded-lg text-red-600 hover:scale-105 transition"
-                    >
-                      <Trash2 size={20} />
-                    </button>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {categoryList.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="text-center py-24 text-slate-400 font-medium italic text-lg">
+                    No categories found. Start by adding a new one.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                categoryList.map((item, index) => (
+                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-10 py-6 text-slate-400 font-mono text-sm">
+                       {String(index + 1).padStart(2, '0')}
+                    </td>
+                    <td className="px-10 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-[#FA9C42]">
+                          <Tags size={22} />
+                        </div>
+                        <span className="font-bold text-slate-800 text-xl">{item.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-10 py-6">
+                      <span className={`inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest border
+                        ${item.status === "Available" 
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                          : "bg-red-50 text-red-600 border-red-100"}`}
+                      >
+                        {item.status === "Available" ? <CheckCircle size={16}/> : <AlertCircle size={16}/>}
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-10 py-6">
+                      <div className="flex justify-end gap-3">
+                        <button 
+                          onClick={() => editCategory(item)}
+                          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
+                        >
+                          <Edit size={18} />
+                          <span className="font-bold text-sm">Modify</span>
+                        </button>
+                        <button 
+                          onClick={() => { setCurrentId(item.id); setShowDeleteModal(true); }}
+                          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"
+                        >
+                          <Trash2 size={18} />
+                          <span className="font-bold text-sm">Remove</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* ADD / EDIT MODAL */}
+      {/* --- ADD/EDIT MODAL --- */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">
-          <div className="bg-white w-[450px] rounded-xl p-6 shadow-xl animate-scaleIn">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                <img src={Images.User} alt="Add User" className="w-8 h-8" />
-                <h2 className="text-xl font-bold text-gray-800">  {isEditing ? "Edit Category" : "Add Category"}</h2>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-[#FCFCFC] w-full max-w-lg rounded-[40px] shadow-3xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="px-10 py-8 flex justify-between items-center border-b border-slate-100">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-100 text-[#FA9C42] rounded-2xl">
+                    <Tags size={24} />
+                </div>
+                <h2 className="text-2xl font-black">{isEditing ? "Edit Category" : "New Category"}</h2>
               </div>
-              <button onClick={() => setShowModal(false)}>
-                <img
-                  src={Images.Cross}
-                  alt="Close"
-                  className="w-8 h-8"
-                />
+              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors">
+                <X size={20}/>
               </button>
             </div>
-
-            <form onSubmit={saveCategory} className="grid gap-4">
-              <div>
-                <label className="font-medium">Category Name</label>
+            
+            <form onSubmit={saveCategory} className="p-10 space-y-8">
+              <div className="space-y-3">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Category Title</label>
                 <input
                   name="name"
                   value={category.name}
                   onChange={handleChange}
-                  placeholder="Enter category name"
-                  className="w-full border-2 rounded-lg px-3 py-2 focus:outline-none border-[#FA9C42]"
+                  placeholder="e.g. Electronics, Furniture..."
+                  className="w-full px-6 py-5 rounded-2xl bg-white border border-slate-200 focus:border-[#FA9C42] focus:ring-4 focus:ring-[#FA9C42]/10 outline-none transition-all font-bold text-lg"
                   required
                 />
               </div>
 
-              <div>
-                <label className="font-medium">Status</label>
+              <div className="space-y-3">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Visibility Status</label>
                 <select
                   name="status"
                   value={category.status}
                   onChange={handleChange}
-                  className="w-full border-2 rounded-lg px-3 py-2 focus:outline-none border-[#FA9C42]"
+                  className="w-full px-6 py-5 rounded-2xl bg-white border border-slate-200 focus:border-[#FA9C42] outline-none cursor-pointer font-bold text-lg transition-all appearance-none"
                 >
                   <option value="Available">Available</option>
                   <option value="Unavailable">Unavailable</option>
                 </select>
               </div>
 
-              <div className="pt-2 flex justify-end mr-5">
-                <button
-                  type="submit"
-                  className="w-[120px] bg-[#f57a00] text-white p-2 rounded-xl font-semibold transition"
-                >
-                  {isEditing ? "Update" : "Save"}
+              <div className="pt-4 flex flex-col gap-4">
+                <button type="submit" className="w-full py-5 bg-[#FA9C42] text-white font-black rounded-2xl shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all text-lg">
+                  {isEditing ? "Update Category" : "Save Category"}
+                </button>
+                <button type="button" onClick={() => setShowModal(false)} className="w-full py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">
+                  Discard Changes
                 </button>
               </div>
             </form>
@@ -215,27 +191,24 @@ export default function CategoryManagement() {
         </div>
       )}
 
-      {/* DELETE CONFIRMATION MODAL */}
+      {/* --- DELETE CONFIRMATION --- */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">
-          <div className="bg-white w-[400px] p-6 rounded-xl shadow-xl animate-scaleIn">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Confirm Delete
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this category? It cannot be undone.
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 rounded-lg border"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={deleteCategory}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
+          <div className="bg-white w-full max-w-md rounded-[32px] p-10 shadow-3xl text-center">
+            <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Trash2 size={40} />
+            </div>
+            <h2 className="text-3xl font-black mb-3">Are you sure?</h2>
+            <p className="text-slate-500 font-medium text-lg mb-10 px-4">This category and its associated data will be permanently removed.</p>
+            <div className="flex gap-4">
+              <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-4 font-bold text-slate-400 hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
+              <button 
+                onClick={async () => {
+                   await axios.delete(`${BASE_URL}/delete/${currentId}`);
+                   setShowDeleteModal(false);
+                   fetchCategories();
+                }} 
+                className="flex-1 py-4 bg-red-500 text-white font-black rounded-2xl shadow-lg shadow-red-100 hover:bg-red-600 transition-all"
               >
                 Delete
               </button>
@@ -243,17 +216,6 @@ export default function CategoryManagement() {
           </div>
         </div>
       )}
-
-      {/* ANIMATION */}
-      <style>{`
-        @keyframes scaleIn {
-          from { transform: scale(0.75); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        .animate-scaleIn {
-          animation: scaleIn 0.25s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

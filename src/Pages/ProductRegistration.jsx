@@ -1,8 +1,8 @@
-import { BarChart, Eye, Package, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
+import { BarChart, Eye, Filter, Layers, MapPin, Maximize, Package, Pencil, Plus, Printer, Search, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Barcode from "react-barcode";
 import QRCode from "react-qr-code";
-import { addProductAPI, getProductAPI } from "../Component/API/productApi";
+import { addProductAPI, getProductAPI, updateProductAPI } from "../Component/API/productApi";
 
 
 export default function ProductRegistration() {
@@ -49,7 +49,11 @@ const [selectedBatches, setSelectedBatches] = useState([]);
 const [showPrintModal, setShowPrintModal] = useState(false);
 const [printProduct, setPrintProduct] = useState(null);
 const [modalMode, setModalMode] = useState("add"); 
-// "add" | "edit" | "view"
+  // "add" | "edit" | "view"
+  
+  const [searchTerm, setSearchTerm] = useState("");
+const [selectedBrand, setSelectedBrand] = useState("");
+const [selectedSize, setSelectedSize] = useState("");
 const [selectedProductId, setSelectedProductId] = useState(null);
   // FETCH PRODUCTS
   const fetchProducts = async () => {
@@ -101,20 +105,78 @@ const [selectedProductId, setSelectedProductId] = useState(null);
     setBatchList(updated);
   };
 
+//   const saveProduct = async (e) => {
+//   e.preventDefault();
+
+//   try {
+//     const formData = new FormData();
+
+//     // ✅ Append all product fields EXCEPT image
+//     Object.keys(product).forEach((key) => {
+//       if (key === "godown") {
+//         formData.append("godown", JSON.stringify(product.godown));
+//       }
+//       else if (key === "image") {
+//         // ❌ DO NOT append image here
+//       }
+//       else {
+//         formData.append(key, product[key]);
+//       }
+//     });
+
+//     // ✅ Append batches
+//     formData.append("batches", JSON.stringify(batchList));
+
+//     // ✅ Append image ONLY ONCE
+//     if (product.image) {
+//       formData.append("image", product.image);
+//     }
+
+//     const res = await addProductAPI(formData);
+
+//     if (res.data.success) {
+//       alert("✅ Product Saved Successfully");
+
+//       fetchProducts();
+
+//       setProduct({
+//         name: "",
+//         size: "",
+//         brand: "",
+//         category: "",
+//         quality: "",
+//         rate: "",
+//         status: "",
+//         link: "",
+//         godown: [],
+//         description: "",
+//         image: null,
+//       });
+
+//       setBatchList([{ batchNo: "", qty: "", location: "" }]);
+//       setShowAddModal(false);
+//     }
+
+//   } catch (err) {
+//     console.error("SAVE PRODUCT ERROR:", err);
+//     alert("❌ Product Save Failed");
+//   }
+  // };
+  
   const saveProduct = async (e) => {
   e.preventDefault();
 
   try {
     const formData = new FormData();
 
-    // ✅ Append all product fields EXCEPT image
+    // ✅ Append product fields
     Object.keys(product).forEach((key) => {
       if (key === "godown") {
         formData.append("godown", JSON.stringify(product.godown));
-      }
+      } 
       else if (key === "image") {
-        // ❌ DO NOT append image here
-      }
+        // ❌ handled separately
+      } 
       else {
         formData.append(key, product[key]);
       }
@@ -123,18 +185,26 @@ const [selectedProductId, setSelectedProductId] = useState(null);
     // ✅ Append batches
     formData.append("batches", JSON.stringify(batchList));
 
-    // ✅ Append image ONLY ONCE
-    if (product.image) {
+    // ✅ Append image once
+    if (product.image instanceof File) {
       formData.append("image", product.image);
     }
 
-    const res = await addProductAPI(formData);
+    let res;
+
+    // 🔀 MODE SWITCH
+    if (modalMode === "edit") {
+      res = await updateProductAPI(selectedProductId, formData);
+    } else {
+      res = await addProductAPI(formData);
+    }
 
     if (res.data.success) {
-      alert("✅ Product Saved Successfully");
+      alert(`✅ Product ${modalMode === "edit" ? "Updated" : "Saved"} Successfully`);
 
       fetchProducts();
 
+      // ♻ Reset form
       setProduct({
         name: "",
         size: "",
@@ -158,6 +228,7 @@ const [selectedProductId, setSelectedProductId] = useState(null);
     alert("❌ Product Save Failed");
   }
 };
+
 const normalizeGodown = (godown) => {
   if (Array.isArray(godown)) return godown;
   if (typeof godown === "string") {
@@ -230,204 +301,224 @@ const deleteProduct = (id) => {
   if (window.confirm("Are you sure you want to delete this product?")) {
     console.log("Delete ID:", id);
   }
-};
+  };
+  
+  const filteredProducts = productList.filter((item) => {
+  return (
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedBrand === "" || item.brand === selectedBrand) &&
+    (selectedSize === "" || item.size === selectedSize)
+  );
+});
   return (
     <div className="p-6">
-
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-semibold text-gray-800">
-          Product Registration
-        </h1>
-
-        {/* <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700"
-        >
-          <Plus size={18} /> Add Product
-        </button> */}
-        <button
-                  onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42]"
-                >
-                  <Plus size={18} /> Add Product
-                </button>
-      </div>
-
-      {/* PRODUCT TABLE */}
-     <div className="bg-white p-5 shadow-xl rounded-xl w-full overflow-x-auto">
-
-        <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
-          <BarChart size={22} /> Inventory List
-        </h2>
-
-     <table className="w-full bg-white rounded-xl overflow-hidden">
-  <thead className="bg-[#FA9C42] text-white">
-    <tr>
-      <th className="py-3 px-2">Image</th>
-      <th className="py-3 px-2">Name</th>
-      <th className="py-3 px-2">Size</th>
-      <th className="py-3 px-2">Brand</th>
-      <th className="py-3 px-2">Quality</th>
-      <th className="py-3 px-2">Category</th>
-      <th className="py-3 px-2">Quantity</th>
-      <th className="py-3 px-2">Rate</th>
-      <th className="py-3 px-2">Godown</th>
-      <th className="py-3 px-2">Status</th>
-      <th className="py-3 px-2">Action</th>
-      <th className="py-3 px-2">Batch Details</th>
-      <th className="py-3 px-2">Barcode</th>
-      <th className="py-3 px-2">QR Code</th>
-      <th className="py-3 px-2">Print</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    {productList.length === 0 ? (
-      <tr>
-        <td colSpan="15" className="text-center p-6 text-gray-500 italic">
-          No products added yet.
-        </td>
-      </tr>
-    ) : (
-      productList.map((item, index) => {
-        const totalQty = item.batches?.reduce(
-          (sum, b) => sum + Number(b.qty || 0),
-          0
-        );
-
-        return (
-          <tr key={index} className="border-t hover:bg-gray-50 transition">
-
-            {/* IMAGE */}
-            <td className="p-2 text-center">
-              {item.image_url ? (
-                <img
-                  src={item.image_url}
-                  alt={item.name}
-                  className="h-12 w-12 rounded-md object-cover mx-auto"
-                />
-              ) : "-"}
-            </td>
-
-            <td className="p-2">{item.name}</td>
-            <td className="p-2">{item.size}</td>
-            <td className="p-2">{item.brand}</td>
-            <td className="p-2">{item.quality}</td>
-            <td className="p-2">{item.category}</td>
-
-            {/* TOTAL QTY */}
-            <td className="p-2 text-center font-semibold">
-              {totalQty}
-            </td>
-
-            <td className="p-2">₹{item.rate}</td>
-            <td className="p-2">{item.godown}</td>
-
-            {/* ✅ STATUS (ALWAYS AVAILABLE) */}
-            <td className="p-2 text-center">
-              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                Available
-              </span>
-            </td>
-
-            {/* ✅ ACTION BUTTONS */}
-           <td className="p-2 text-center">
-  <div className="flex justify-center gap-2">
-
-    <button
-      onClick={() => editProduct(item)}
-      className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center"
-    >
-      <Pencil size={16} />
-    </button>
-
-    <button
-      onClick={() => deleteProduct(item.id)}
-      className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center"
-    >
-      <Trash2 size={16} />
-    </button>
-
-    <button
-      onClick={() => viewProduct(item)}
-      className="w-9 h-9 rounded-full bg-sky-500 hover:bg-sky-600 text-white flex items-center justify-center"
-    >
-      <Eye size={16} />
-    </button>
-
+<div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap items-center gap-4">
+  
+  {/* SEARCH BAR */}
+  <div className="flex-grow min-w-[300px] relative">
+    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+    <input
+      type="text"
+      placeholder="Search product name..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-50 border-2 border-transparent focus:border-[#FA9C42] focus:bg-white outline-none transition-all"
+    />
   </div>
-</td>
 
-            {/* BATCH DETAILS */}
-            <td className="p-2 text-center">
-              {item.batches?.length > 0 ? (
-                <button
-                  className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                  onClick={() => {
-                    setSelectedBatches(item.batches);
-                    setShowBatchModal(true);
-                  }}
-                >
-                  View Batches
-                </button>
-              ) : (
-                <span className="text-gray-400 italic">No Batch</span>
-              )}
-            </td>
+  {/* BRAND FILTER */}
+  <div className="w-[200px] relative">
+    <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+    <select
+      value={selectedBrand}
+      onChange={(e) => setSelectedBrand(e.target.value)}
+      className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border-2 border-transparent focus:border-[#FA9C42] focus:bg-white outline-none transition-all appearance-none text-slate-600 font-medium"
+    >
+      <option value="">All Brands</option>
+      {brandList.map((brand, i) => (
+        <option key={i} value={brand}>{brand}</option>
+      ))}
+    </select>
+  </div>
 
-            {/* BARCODE */}
-            <td className="p-2 text-center">
-              <div
-                className="cursor-pointer inline-block"
-                onClick={() => {
-                  setSelectedBarcode(item.name);
-                  setShowBarcodeModal(true);
-                }}
-              >
-                <Barcode value={item.name} height={40} width={1} />
-              </div>
-            </td>
+  {/* SIZE FILTER */}
+  <div className="w-[180px] relative">
+    <Maximize className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+    <select
+      value={selectedSize}
+      onChange={(e) => setSelectedSize(e.target.value)}
+      className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border-2 border-transparent focus:border-[#FA9C42] focus:bg-white outline-none transition-all appearance-none text-slate-600 font-medium"
+    >
+      <option value="">All Sizes</option>
+      {/* Extracting unique sizes from your product list */}
+      {[...new Set(productList.map(p => p.size))].filter(Boolean).map((size, i) => (
+        <option key={i} value={size}>{size}</option>
+      ))}
+    </select>
+  </div>
 
-            {/* QR CODE */}
-            <td className="p-2 text-center">
-              {item.link ? (
-                <div
-                  className="cursor-pointer inline-block"
-                  onClick={() => {
-                    setSelectedLink(item.link);
-                    setShowQRModal(true);
-                  }}
-                >
-                  <QRCode value={item.link} size={60} />
-                </div>
-              ) : (
-                <span className="text-gray-400">No Link</span>
-              )}
-            </td>
+  {/* RESET BUTTON */}
+  {(searchTerm || selectedBrand || selectedSize) && (
+    <button
+      onClick={() => { setSearchTerm(""); setSelectedBrand(""); setSelectedSize(""); }}
+      className="px-4 py-3 text-[#FA9C42] font-bold hover:bg-[#FA9C42]/5 rounded-xl transition-colors"
+    >
+      Clear Filters
+    </button>
+  )}
+</div>
+      {/* HEADER */}
+     {/* --- HEADER SECTION --- */}
+<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-2">
+  <div>
+    <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">Product Registration</h1>
+    <p className="text-slate-500 font-medium">Manage and track your inventory stock and logistics.</p>
+  </div>
+  <button
+    onClick={() => setShowAddModal(true)}
+    className="group flex items-center gap-3 bg-[#FA9C42] text-white px-8 py-4 rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95"
+  >
+    <Plus size={22} className="group-hover:rotate-90 transition-transform" />
+    <span className="font-bold text-lg">Add Product</span>
+  </button>
+</div>
 
-            {/* PRINT */}
-            <td className="p-3 text-center">
-              <button
-                className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-black"
-                onClick={() => {
-                  setPrintProduct(item);
-                  setShowPrintModal(true);
-                }}
-              >
-                🖨 Print
-              </button>
-            </td>
-
-          </tr>
-        );
-      })
-    )}
-  </tbody>
-</table>
-
-
+{/* --- TABLE CONTAINER --- */}
+<div className="bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden w-full">
+  <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+    <div className="flex items-center gap-3">
+      <div className="p-2 bg-[#FA9C42] text-white rounded-xl shadow-lg">
+        <BarChart size={20} />
       </div>
+      <h2 className="text-xl font-black text-slate-800 tracking-tight">Inventory List</h2>
+    </div>
+    <span className="text-xs font-black text-slate-400 uppercase tracking-[0.1em]">
+      Total: {filteredProducts.length} Products
+    </span>
+  </div>
+
+  <div className="overflow-x-auto">
+    <table className="w-full text-left border-collapse">
+      <thead>
+        <tr className="bg-slate-50/80 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+          <th className="px-6 py-5">Product Insight</th>
+          <th className="px-6 py-5 text-center">Size</th>
+          <th className="px-6 py-5 text-center">Total Stock</th>
+          <th className="px-6 py-5 text-center">Administrative</th>
+          <th className="px-6 py-5 text-center">Batch Details</th>
+          <th className="px-6 py-5 text-center">Logistics</th>
+          <th className="px-6 py-5 text-right">Labeling</th>
+        </tr>
+      </thead>
+
+      <tbody className="divide-y divide-slate-50">
+        {filteredProducts.length === 0 ? (
+          <tr>
+            <td colSpan="7" className="text-center py-24 text-slate-400 font-medium italic text-lg">
+              No products found in the registry.
+            </td>
+          </tr>
+        ) : (
+          filteredProducts.map((item, index) => {
+            const totalQty = item.batches?.reduce((sum, b) => sum + Number(b.qty || 0), 0);
+
+            return (
+              <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
+                {/* IMAGE & NAME */}
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-slate-100 overflow-hidden border-2 border-white shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform">
+                      {item.image_url ? (
+                        <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-slate-300 text-[10px] font-bold">NO IMG</div>
+                      )}
+                    </div>
+                    <span className="font-black text-slate-800 text-lg tracking-tight leading-tight">{item.name}</span>
+                  </div>
+                </td>
+
+                {/* SIZE */}
+                <td className="px-6 py-4 text-center">
+                  <span className="px-3 py-1 bg-slate-100 rounded-lg font-bold text-slate-600 text-sm">
+                    {item.size || "-"}
+                  </span>
+                </td>
+
+                {/* QUANTITY */}
+                <td className="px-6 py-4 text-center">
+                  <div className={`inline-block px-4 py-1.5 rounded-xl font-black text-lg ${totalQty > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
+                    {totalQty}
+                  </div>
+                </td>
+
+                {/* ACTIONS */}
+                <td className="px-6 py-4 text-center">
+                  <div className="flex justify-center gap-2">
+                    <button onClick={() => editProduct(item)} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-100 hover:shadow-md transition-all active:scale-90">
+                      <Pencil size={18} />
+                    </button>
+                    <button onClick={() => deleteProduct(item.id)} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-100 hover:shadow-md transition-all active:scale-90">
+                      <Trash2 size={18} />
+                    </button>
+                    <button onClick={() => viewProduct(item)} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-sky-500 hover:border-sky-100 hover:shadow-md transition-all active:scale-90">
+                      <Eye size={18} />
+                    </button>
+                  </div>
+                </td>
+
+                {/* BATCH DETAILS */}
+                <td className="px-6 py-4 text-center">
+                  {item.batches?.length > 0 ? (
+                    <button
+                      className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                      onClick={() => {
+                        setSelectedBatches(item.batches);
+                        setShowBatchModal(true);
+                      }}
+                    >
+                      View Batches
+                    </button>
+                  ) : (
+                    <span className="text-slate-300 font-bold text-[10px] uppercase tracking-widest italic">No Data</span>
+                  )}
+                </td>
+
+                {/* BARCODE */}
+                <td className="px-6 py-4 text-center">
+                  <div
+                    className="cursor-pointer inline-block opacity-70 hover:opacity-100 transition-opacity p-1"
+                    onClick={() => {
+                      setSelectedBarcode(item.name);
+                      setShowBarcodeModal(true);
+                    }}
+                  >
+                    <Barcode value={item.name} height={30} width={1} fontSize={10} background="transparent" />
+                  </div>
+                </td>
+
+                {/* PRINT */}
+                <td className="px-6 py-4 text-right">
+                  <button
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-black transition-all active:scale-95 shadow-lg"
+                    onClick={() => {
+                      setPrintProduct(item);
+                      setShowPrintModal(true);
+                    }}
+                  >
+                    <Printer size={16} />
+                    <span>Print</span>
+                  </button>
+                </td>
+
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
 {showQRModal && (
   <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
     <div className="bg-[#FFF7EF] p-6 rounded-xl shadow-xl text-center w-[350px]">
@@ -459,274 +550,276 @@ const deleteProduct = (id) => {
 
       {/* ADD PRODUCT MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center">
-          <div className="bg-[#FFF7EF] w-[750px] rounded-xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-  <Package size={20} />
-  {modalMode === "add" && "Add New Product"}
-  {modalMode === "edit" && "Edit Product"}
-  {modalMode === "view" && "View Product"}
-</h2>
-              <button onClick={() => setShowAddModal(false)}>
-                <X size={24} />
-              </button>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md transition-opacity p-4">
+    <div className="w-full max-w-[850px] bg-[#FFF7EF] rounded-[24px] shadow-2xl overflow-hidden border border-white/20 max-h-[95vh] flex flex-col">
+      
+      {/* HEADER */}
+      <div className="px-10 pt-8 pb-4 shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-[#FA9C42]/10 rounded-lg text-[#FA9C42]">
+              <Package size={24} strokeWidth={2.5} />
             </div>
+            <div>
+              <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+                {modalMode === "add" ? "Add New Product" : modalMode === "edit" ? "Edit Product" : "View Product"}
+              </h2>
+              <p className="text-slate-500 text-sm mt-1">Manage inventory details and batch assignments.</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setShowAddModal(false)} 
+            className="p-2 hover:bg-black/5 rounded-full transition-colors group"
+          >
+            <X className="w-6 h-6 text-slate-400 group-hover:text-slate-600" />
+          </button>
+        </div>
+      </div>
 
-            <form onSubmit={saveProduct}>
-
-              {/* PRODUCT FORM */}
-              <div className="grid grid-cols-2 gap-4 ">
-                {/* IMAGE */}
-                <div>
-                  <label>Product Image:</label>
-                  <label className="border rounded p-2 mt-1 bg-gray-50 flex items-center gap-2 cursor-pointer">
-                    <Upload size={18} /> Choose File
-                    <input type="file" className="hidden" onChange={handleImageUpload} />
+      {/* SCROLLABLE FORM AREA */}
+      <form onSubmit={saveProduct} className="px-10 pb-8 overflow-y-auto flex-grow custom-scrollbar">
+        <div className="space-y-8">
+          
+          {/* SECTION: BASIC INFO */}
+          <div className="space-y-5">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#FA9C42] border-b border-[#FA9C42]/10 pb-2">Primary Details</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+              {/* IMAGE UPLOAD WITH PREVIEW */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 ml-1">Product Image</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl bg-white border-2 border-slate-100 overflow-hidden flex items-center justify-center shrink-0">
+                    {product.imagePreview ? (
+                      <img src={product.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <Upload className="text-slate-300" size={20} />
+                    )}
+                  </div>
+                  <label className={`flex-grow flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-all ${modalMode === 'view' ? 'hidden' : 'bg-white border-slate-200 hover:border-[#FA9C42]'}`}>
+                    <span className="text-xs font-bold text-slate-500">Choose Product Image</span>
+                    <input type="file" className="hidden" onChange={handleImageUpload} disabled={modalMode === "view"} />
                   </label>
                 </div>
-
-                {/* NAME */}
-                <div>
-                  <label>Product Name:</label>
-                  <input
-                    name="name"
-                    value={product.name}
-                    disabled={modalMode === "view"}
-                    onChange={handleChange}
-                    className="border rounded p-2 w-full mt-1"
-                    required
-                  />
-                </div>
-
-                {/* SIZE */}
-                <div>
-                  <label>Product Size:</label>
-                  <input
-                    name="size"
-                    value={product.size}
-                    disabled={modalMode === "view"}
-                    onChange={handleChange}
-                    className="border rounded p-2 w-full mt-1"
-                  />
-                </div>
-
-                {/* BRAND */}
-                <div>
-                  <label>Brand Name:</label>
-                  <select
-                    name="brand"
-                    value={product.brand}
-                    disabled={modalMode === "view"}
-                    onChange={handleChange}
-                    className="border rounded p-2 w-full mt-1"
-                    required
-                  >
-                    <option value="">~~SELECT~~</option>
-                    {brandList.map((brand, i) => (
-                      <option key={i} value={brand}>
-                        {brand}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* QUALITY */}
-                <div>
-                  <label>Quality:</label>
-                  <select
-                    name="quality"
-                    value={product.quality}
-                    disabled={modalMode === "view"}
-                    onChange={handleChange}
-                    className="border rounded p-2 w-full mt-1"
-                  >
-                    <option value="">~~SELECT~~</option>
-                    <option>Premium</option>
-                    <option>Standard</option>
-                    <option>Economy</option>
-                  </select>
-                </div>
-
-                {/* CATEGORY */}
-                <div>
-                  <label>Category:</label>
-                  <select
-                    name="category"
-                    disabled={modalMode === "view"}
-                    value={product.category}
-                    onChange={handleChange}
-                    className="border rounded p-2 w-full mt-1"
-                  >
-                    <option value="">~~SELECT~~</option>
-                    <option>Tiles</option>
-                    <option>Marble</option>
-                    <option>Sanitary</option>
-                    <option>Granite</option>
-                  </select>
-                </div>
-
-                {/* RATE */}
-                <div>
-                  <label>Rate:</label>
-                  <input
-                    name="rate"
-                    type="number"
-                    value={product.rate}
-                    disabled={modalMode === "view"}
-                    onChange={handleChange}
-                    className="border rounded p-2 w-full mt-1"
-                  />
-                </div>
-
-                {/* STATUS */}
-                <div>
-                  <label>Status:</label>
-                  <select
-                    name="status"
-                    value={product.status}
-                    disabled={modalMode === "view"}
-                    onChange={handleChange}
-                    className="border rounded p-2 w-full mt-1"
-                  >
-                    <option value="">~~SELECT~~</option>
-                    <option>Available</option>
-                    <option>Unavailable</option>
-                  </select>
-                </div>
-
-                {/* LINK */}
-                <div className="col-span-2">
-                  <label>Upload Link:</label>
-                  <input
-                    name="link"
-                    value={product.link}
-                    disabled={modalMode === "view"}
-                    onChange={handleChange}
-                    className="border rounded p-2 w-full mt-1"
-                    placeholder="Paste link here"
-                  />
-                </div>
-
-                {/* GODOWN */}
-                <div className="col-span-2">
-                  <label>Godown:</label>
-                  <div className="flex gap-4 mt-1">
-                    {["KKW", "MN", "TCS"].map((g) => (
-                      <label key={g} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={product.godown.includes(g)}
-                          disabled={modalMode === "view"}
-                          onChange={() => handleGodownSelect(g)}
-                        />
-                        {g}
-                      </label>
-                    ))}
-                  </div>
-                </div>
               </div>
 
-              {/* BATCH TABLE */}
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-2">Batch Details</h3>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 ml-1">Product Name *</label>
+                <input
+                  name="name"
+                  value={product.name}
+                  onChange={handleChange}
+                  disabled={modalMode === "view"}
+                  placeholder="e.g. Italian Glazed Marble"
+                  className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all font-medium"
+                  required
+                />
+              </div>
+            </div>
 
-                <table className="w-full border rounded-lg bg-white">
-                  <thead className="">
-                    <tr>
-                      <th className="p-2 border">Batch No</th>
-                      <th className="p-2 border">Quantity</th>
-                      <th className="p-2 border">Location</th>
-                      <th className="p-2 border">Action</th>
-                    </tr>
-                  </thead>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 ml-1">Size / Dimension *</label>
+                <input
+                  name="size"
+                  value={product.size}
+                  onChange={handleChange}
+                  disabled={modalMode === "view"}
+                  placeholder="600x1200 mm"
+                  className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 ml-1">Brand Name </label>
+                <select
+                  name="brand"
+                  value={product.brand}
+                  onChange={handleChange}
+                  disabled={modalMode === "view"}
+                  className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all appearance-none"
+                  required
+                >
+                  <option value="">Select Brand</option>
+                  {brandList.map((brand, i) => <option key={i} value={brand}>{brand}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 ml-1">Category</label>
+                <select
+                  name="category"
+                  value={product.category}
+                  onChange={handleChange}
+                  disabled={modalMode === "view"}
+                  className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all appearance-none"
+                >
+                  <option value="">Select Category</option>
+                  <option>Tiles</option>
+                  <option>Marble</option>
+                  <option>Sanitary</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
-                  <tbody>
-                    {batchList.map((batch, index) => (
-                      <tr key={index}>
-                        <td className="p-2 border">
-                          <input
-                            className="border p-2 w-full rounded"
-                            value={batch.batchNo}
-                            disabled={modalMode === "view"}
-                            onChange={(e) =>
-                              handleBatchChange(index, "batchNo", e.target.value)
-                            }
-                          />
-                        </td>
+          {/* SECTION: PRICING & STATUS */}
+          <div className="space-y-5">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#FA9C42] border-b border-[#FA9C42]/10 pb-2">Pricing & Logistics</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 ml-1">Rate (₹)</label>
+                <input
+                  name="rate"
+                  type="number"
+                  value={product.rate}
+                  onChange={handleChange}
+                  disabled={modalMode === "view"}
+                  className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all font-bold text-[#FA9C42]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 ml-1">Quality Grade</label>
+                <select
+                  name="quality"
+                  value={product.quality}
+                  onChange={handleChange}
+                  disabled={modalMode === "view"}
+                  className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all appearance-none"
+                >
+                  <option>Standard</option>
+                  <option>Premium</option>
+                  <option>Economy</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 ml-1">Availability</label>
+                <select
+                  name="status"
+                  value={product.status}
+                  onChange={handleChange}
+                  disabled={modalMode === "view"}
+                  className={`w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all appearance-none font-bold ${product.status === 'Available' ? 'text-green-600' : 'text-red-500'}`}
+                >
+                  <option value="Available">Available</option>
+                  <option value="Unavailable">Unavailable</option>
+                </select>
+              </div>
+            </div>
 
-                        <td className="p-2 border">
-                          <input
-                            className="border p-2 w-full rounded"
-                            value={batch.qty}
-                            disabled={modalMode === "view"}
-                            onChange={(e) =>
-                              handleBatchChange(index, "qty", e.target.value)
-                            }
-                          />
-                        </td>
+            <div className="space-y-3">
+              <label className="text-xs font-semibold text-slate-600 ml-1">Godown Access</label>
+              <div className="flex gap-4">
+                {["KKW", "TCS"].map((g) => (
+                  <label key={g} className={`flex items-center gap-3 px-6 py-3 rounded-xl border-2 transition-all cursor-pointer ${product.godown.includes(g) ? 'bg-[#FA9C42] border-[#FA9C42] text-white shadow-md' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'}`}>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={product.godown.includes(g)}
+                      disabled={modalMode === "view"}
+                      onChange={() => handleGodownSelect(g)}
+                    />
+                    <span className="text-xs font-bold uppercase tracking-widest">{g}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                        <td className="p-2 border">
-                          <input
-                            className="border p-2 w-full rounded"
-                            value={batch.location}
-                            disabled={modalMode === "view"}
-                            onChange={(e) =>
-                              handleBatchChange(index, "location", e.target.value)
-                            }
-                          />
-                        </td>
+          {/* SECTION: BATCH DETAILS */}
+          <div className="space-y-5">
+            <div className="flex items-center justify-between border-b border-[#FA9C42]/10 pb-2">
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#FA9C42]">Stock Batches</h3>
+              {modalMode !== "view" && (
+                <button 
+                  type="button" 
+                  onClick={addBatchRow}
+                  className="text-[10px] bg-slate-800 text-white px-3 py-1 rounded-full hover:bg-black transition-colors"
+                >
+                  + Add Batch
+                </button>
+              )}
+            </div>
 
-                        <td className="p-2 border text-center">
+            <div className="bg-white rounded-2xl border-2 border-slate-100 overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Batch No</th>
+                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Quantity</th>
+                    <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Location</th>
+                    {modalMode !== "view" && <th className="px-4 py-3 text-center text-[10px] font-bold text-slate-400 uppercase">Action</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {batchList.map((batch, index) => (
+                    <tr key={index}>
+                      <td className="p-2">
+                        <input
+                          className="w-full bg-transparent p-2 outline-none text-sm"
+                          value={batch.batchNo}
+                          placeholder="B-001"
+                          disabled={modalMode === "view"}
+                          onChange={(e) => handleBatchChange(index, "batchNo", e.target.value)}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <input
+                          className="w-full bg-transparent p-2 outline-none text-sm"
+                          value={batch.qty}
+                          placeholder="100"
+                          disabled={modalMode === "view"}
+                          onChange={(e) => handleBatchChange(index, "qty", e.target.value)}
+                        />
+                      </td>
+                      <td className="p-2">
+                        <input
+                          className="w-full bg-transparent p-2 outline-none text-sm"
+                          value={batch.location}
+                          placeholder="Aisle 4"
+                          disabled={modalMode === "view"}
+                          onChange={(e) => handleBatchChange(index, "location", e.target.value)}
+                        />
+                      </td>
+                      {modalMode !== "view" && (
+                        <td className="p-2 text-center">
                           <button
                             type="button"
-                            disabled={modalMode === "view"}
-                            className="text-red-600 text-lg"
+                            className="p-2 text-red-300 hover:text-red-500 transition-colors"
                             onClick={() => removeBatchRow(index)}
                           >
-                            🗑
+                            <Trash2 size={16} />
                           </button>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <div className="flex justify-center mt-3">
-                 {modalMode !== "view" && (
-  <div className="flex justify-center mt-3">
-    <button
-      type="button"
-      onClick={addBatchRow}
-      className="bg-blue-600 text-white px-4 py-1 rounded-full text-xl"
-    >
-      +
-    </button>
-  </div>
-)}
-
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <div className="flex justify-end">
-  {modalMode !== "view" && (
-    <button
-      type="submit"
-      className="w-[134px] mt-6 bg-[#FA9C42] text-white py-2 h-[48px] rounded-[8px]"
-    >
-      {modalMode === "edit" ? "Update" : "Save"}
-    </button>
-  )}
-</div>
-
-</div>
-             
-            </form>
-
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* STICKY FOOTER */}
+        <div className="flex items-center justify-end gap-4 mt-10 pt-6 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => setShowAddModal(false)}
+            className="px-8 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all active:scale-95"
+          >
+            {modalMode === "view" ? "Close" : "Cancel"}
+          </button>
+          {modalMode !== "view" && (
+            <button
+              type="submit"
+              className="px-12 py-3 rounded-xl bg-[#FA9C42] text-white font-bold shadow-lg shadow-[#FA9C42]/30 hover:shadow-[#FA9C42]/40 hover:-translate-y-0.5 transition-all active:scale-95"
+            >
+              {modalMode === "edit" ? "Update Product" : "Save Product"}
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  </div>
+)}
 
       {/* BARCODE MODAL */}
       {showBarcodeModal && (
@@ -746,67 +839,88 @@ const deleteProduct = (id) => {
         </div>
       )}
 
-     {showBatchModal && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-[#FFF7EF] w-[600px] rounded-xl shadow-2xl p-6">
-
+   {showBatchModal && (
+  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-md transition-opacity p-4">
+    <div className="w-full max-w-[650px] bg-[#FFF7EF] rounded-[24px] shadow-2xl overflow-hidden border border-white/20 flex flex-col animate-in fade-in zoom-in duration-200">
+      
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">
-          📦 Batch Details
-        </h3>
-        <button
-          className="text-gray-500 hover:text-red-500 text-xl"
-          onClick={() => setShowBatchModal(false)}
+      <div className="px-8 pt-6 pb-4 flex items-center justify-between border-b border-[#FA9C42]/10">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-[#FA9C42]/10 rounded-lg text-[#FA9C42]">
+            <Layers size={22} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h3 className="text-xl font-extrabold text-slate-800 tracking-tight">Batch Inventory</h3>
+            <p className="text-xs text-slate-500 font-medium">Detailed stock breakdown for this product</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => setShowBatchModal(false)} 
+          className="p-2 hover:bg-black/5 rounded-full transition-colors group"
         >
-          ✕
+          <X className="w-5 h-5 text-slate-400 group-hover:text-slate-600" />
         </button>
       </div>
 
-      {/* TABLE */}
-      <div className="max-h-[300px] overflow-auto rounded-lg border bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 sticky top-0">
-            <tr>
-              <th className="p-3 border text-left">Batch No</th>
-              <th className="p-3 border text-left">Quantity</th>
-              <th className="p-3 border text-left">Location</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {selectedBatches.length > 0 ? (
-              selectedBatches.map((b, index) => (
-                <tr
-                  key={index}
-                  className="border-t hover:bg-gray-50 transition"
-                >
-                  <td className="p-3 border">{b.batch_no}</td>
-                  <td className="p-3 border">{b.qty}</td>
-                  <td className="p-3 border">{b.location}</td>
-                </tr>
-              ))
-            ) : (
+      {/* BODY / TABLE */}
+      <div className="p-6">
+        <div className="max-h-[350px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-sm custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
               <tr>
-                <td
-                  colSpan="3"
-                  className="p-4 text-center text-gray-500 italic"
-                >
-                  No batch data available
-                </td>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Batch Number</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Available Qty</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Storage Location</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="divide-y divide-slate-100">
+              {selectedBatches.length > 0 ? (
+                selectedBatches.map((b, index) => (
+                  <tr key={index} className="group hover:bg-[#FA9C42]/5 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-bold text-slate-700 font-mono">
+                        {b.batch_no || b.batchNo}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                        {b.qty} units
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <MapPin size={14} className="text-slate-400" />
+                        <span className="font-medium">{b.location}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="3" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <PackageOpen size={40} className="text-slate-200" />
+                      <p className="text-slate-400 text-sm italic font-medium">No batch data available for this item</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* FOOTER */}
-      <div className="mt-5 text-right">
+      <div className="px-8 py-5 bg-slate-50/50 flex items-center justify-between border-t border-slate-100">
+        <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+          Total Batches: {selectedBatches.length}
+        </div>
         <button
-          className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800"
           onClick={() => setShowBatchModal(false)}
+          className="px-6 py-2 rounded-xl bg-slate-800 text-white text-sm font-bold shadow-lg shadow-slate-900/20 hover:bg-black transition-all active:scale-95"
         >
-          Close
+          Close View
         </button>
       </div>
     </div>
@@ -814,125 +928,130 @@ const deleteProduct = (id) => {
 )}
 
 {showPrintModal && printProduct && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-[#FFF7EF] w-[850px] rounded-2xl shadow-2xl p-6">
+  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 print:p-0 print:bg-white">
+    <div className="bg-[#FFF7EF] w-full max-w-[850px] rounded-3xl shadow-2xl p-8 print:shadow-none print:bg-white print:p-0 print:w-full">
 
-      {/* HEADER (HIDDEN ON PRINT) */}
-      <div className="flex justify-between items-center mb-4 print:hidden">
-        <h2 className="text-xl font-semibold">🖨 Print Product Details</h2>
-        <button onClick={() => setShowPrintModal(false)}>
-          <X size={22} />
+      {/* MODAL HEADER (HIDDEN ON PRINT) */}
+      <div className="flex justify-between items-center mb-6 print:hidden">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+            <Printer size={20} />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800">Print Preview</h2>
+        </div>
+        <button 
+          onClick={() => setShowPrintModal(false)}
+          className="p-2 hover:bg-black/5 rounded-full transition-colors"
+        >
+          <X size={22} className="text-slate-400" />
         </button>
       </div>
 
       {/* ================= PRINT AREA ================= */}
-      <div id="print-area" className="text-black">
-
-        {/* COMPANY HEADER */}
-        <div className="flex justify-between items-center border-b pb-4 mb-6">
+      <div id="print-area" className="bg-white p-8 rounded-2xl border border-slate-100 print:border-none print:p-0 text-slate-900">
+        
+        {/* FORMAL COMPANY HEADER */}
+        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
           <div>
-            <h1 className="text-2xl font-bold tracking-wide">
-              YOUR COMPANY NAME
+            <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+              Your Company Name
             </h1>
-            <p className="text-sm text-gray-600">
-              Address Line, City – Pincode
-            </p>
-            <p className="text-sm text-gray-600">
-              Phone: +91 90000 00000
-            </p>
+            <div className="mt-2 text-sm text-slate-500 space-y-0.5 font-medium">
+              <p>Industrial Estate, Phase II, Nashik – 422001</p>
+              <p>Email: contact@company.com | GSTIN: 27AAAAA0000A1Z5</p>
+              <p>Phone: +91 98765 43210</p>
+            </div>
           </div>
 
           <div className="text-right">
-            <h2 className="text-xl font-semibold uppercase">
-              Product Sheet
-            </h2>
-            <p className="text-sm">
-              Date: {new Date().toLocaleDateString()}
+            <div className="bg-slate-900 text-white px-4 py-1 text-xs font-bold uppercase tracking-widest mb-2 inline-block">
+              Product Specifications
+            </div>
+            <p className="text-sm font-bold text-slate-700">
+              Date: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
           </div>
         </div>
 
-        {/* PRODUCT INFO GRID */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        {/* PRIMARY DETAILS GRID */}
+        <div className="grid grid-cols-2 gap-y-4 gap-x-12 mb-10">
           {[
             ["Product Name", printProduct.name],
-            ["Brand", printProduct.brand],
-            ["Category", printProduct.category],
-            ["Quality", printProduct.quality],
-            ["Rate", `₹ ${printProduct.rate}`],
-            ["Godown", printProduct.godown],
+            ["Dimensions / Size", printProduct.size || "Standard"],
+            ["Brand / Manufacturer", printProduct.brand],
+            ["Product Category", printProduct.category],
+            ["Quality Grade", printProduct.quality],
+            ["Standard Rate", `₹ ${printProduct.rate} /-`],
           ].map(([label, value], i) => (
-            <div
-              key={i}
-              className="border rounded-lg p-3 flex justify-between"
-            >
-              <span className="font-semibold text-gray-700">
-                {label}
-              </span>
-              <span className="text-gray-900">
-                {value}
-              </span>
+            <div key={i} className="flex justify-between items-end border-b border-slate-100 pb-1">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">{label}</span>
+              <span className="text-sm font-bold text-slate-800">{value}</span>
             </div>
           ))}
         </div>
 
-        {/* BATCH DETAILS */}
-        {printProduct.batches?.length > 0 && (
-          <>
-            <h3 className="text-lg font-semibold mb-2">
-              Batch Details
+        {/* BATCH INVENTORY SECTION */}
+        {printProduct.batches?.length > 0 ? (
+          <div className="mb-10">
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-900 mb-4 flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-[#FA9C42]"></div>
+              Current Inventory Batches
             </h3>
 
-            <table className="w-full border border-collapse">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border p-2 text-left">Batch No</th>
-                  <th className="border p-2 text-center">Quantity</th>
-                  <th className="border p-2 text-left">Location</th>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-slate-50">
+                  <th className="border-y border-slate-200 p-3 text-left text-[10px] font-bold uppercase text-slate-500">Batch No.</th>
+                  <th className="border-y border-slate-200 p-3 text-center text-[10px] font-bold uppercase text-slate-500">Quantity</th>
+                  <th className="border-y border-slate-200 p-3 text-left text-[10px] font-bold uppercase text-slate-500">Storage Location</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {printProduct.batches.map((b, i) => (
-                  <tr key={i}>
-                    <td className="border p-2">{b.batch_no}</td>
-                    <td className="border p-2 text-center">{b.qty}</td>
-                    <td className="border p-2">{b.location}</td>
+                  <tr key={i} className="font-mono text-sm">
+                    <td className="p-3 font-bold text-slate-700">{b.batch_no || b.batchNo}</td>
+                    <td className="p-3 text-center font-bold text-blue-600">{b.qty}</td>
+                    <td className="p-3 text-slate-600 uppercase">{b.location}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </>
+          </div>
+        ) : (
+          <div className="py-6 border-2 border-dashed border-slate-100 text-center mb-10">
+            <p className="text-slate-400 text-sm italic">No batch assignments found for this product.</p>
+          </div>
         )}
 
-        {/* FOOTER */}
-        <div className="mt-10 flex justify-between text-sm">
-          <div>
-            <p>Prepared By:</p>
-            <p className="font-semibold mt-1">Authorized Person</p>
+        {/* FORMAL FOOTER */}
+        <div className="mt-20 flex justify-between items-end">
+          <div className="text-[10px] text-slate-400 max-w-[250px]">
+            <p className="font-bold uppercase mb-1">Terms & Notes:</p>
+            <p>This is a computer-generated stock sheet. Prices are subject to change based on market fluctuations. Verify stock physically before dispatch.</p>
           </div>
 
-          <div className="text-right">
-            <p>Signature</p>
-            <div className="mt-4 w-40 border-t"></div>
+          <div className="text-center min-w-[180px]">
+            <div className="h-12 w-full border-b border-slate-300 mb-2"></div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-800">Authorized Signatory</p>
           </div>
         </div>
-
       </div>
       {/* ================= END PRINT AREA ================= */}
 
       {/* ACTION BUTTONS (HIDDEN ON PRINT) */}
-      <div className="flex justify-end gap-3 mt-6 print:hidden">
-        <button
-          onClick={() => window.print()}
-          className="px-5 py-2 bg-blue-600 text-white rounded-lg"
-        >
-          Print
-        </button>
+      <div className="flex justify-end gap-3 mt-8 print:hidden">
         <button
           onClick={() => setShowPrintModal(false)}
-          className="px-5 py-2 bg-gray-600 text-white rounded-lg"
+          className="px-6 py-2.5 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all"
         >
-          Close
+          Cancel
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="flex items-center gap-2 px-10 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-xl shadow-slate-900/20 hover:bg-black transition-all active:scale-95"
+        >
+          <Printer size={18} />
+          Confirm & Print
         </button>
       </div>
 

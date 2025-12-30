@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Badge, Edit, Plus, Trash2, X } from "lucide-react";
+import { Edit, Plus, Trash2, X, CheckCircle, AlertCircle, Award } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Images } from "../assets";
 
@@ -8,57 +8,36 @@ const BASE_URL = "http://localhost:5000/api/brands";
 export default function BrandManagement() {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
-
-  const [brand, setBrand] = useState({
-    name: "",
-    status: "Available",
-  });
-
   const [brandList, setBrandList] = useState([]);
+  const [brand, setBrand] = useState({ name: "", status: "Available" });
 
-  // ✅ FETCH ALL BRANDS
   const fetchBrands = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/list`);
-      setBrandList(res.data.brands);
-    } catch (err) {
-      console.error("Fetch Error:", err);
-    }
+      setBrandList(res.data.brands || []);
+    } catch (err) { console.error("Fetch Error:", err); }
   };
 
-  useEffect(() => {
-    fetchBrands();
-  }, []);
+  useEffect(() => { fetchBrands(); }, []);
 
-  // ✅ HANDLE INPUT
-  const handleChange = (e) => {
-    setBrand({ ...brand, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setBrand({ ...brand, [e.target.name]: e.target.value });
 
-  // ✅ SAVE BRAND (CREATE + UPDATE)
   const saveBrand = async (e) => {
     e.preventDefault();
-
     try {
       if (isEditing) {
         await axios.put(`${BASE_URL}/update/${currentId}`, brand);
       } else {
         await axios.post(`${BASE_URL}/create`, brand);
       }
-
-      setBrand({ name: "", status: "Available" });
-      setIsEditing(false);
       setShowModal(false);
+      setBrand({ name: "", status: "Available" });
       fetchBrands();
-    } catch (err) {
-      console.error("Save Error:", err);
-    }
+    } catch (err) { console.error("Save Error:", err); }
   };
 
-  // ✅ EDIT BRAND
   const editBrand = (item) => {
     setBrand({ name: item.name, status: item.status });
     setCurrentId(item.id);
@@ -66,149 +45,146 @@ export default function BrandManagement() {
     setShowModal(true);
   };
 
-  // ✅ CONFIRM DELETE
-  const confirmDelete = (item) => {
-    setCurrentId(item.id);
-    setShowDeleteModal(true);
-  };
-
-  // ✅ DELETE BRAND
-  const deleteBrand = async () => {
-    try {
-      await axios.delete(`${BASE_URL}/delete/${currentId}`);
-      setShowDeleteModal(false);
-      fetchBrands();
-    } catch (err) {
-      console.error("Delete Error:", err);
-    }
-  };
-
   return (
-    <div className="p-6">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-10 px-4 py-2 border rounded-xl">
-        <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
-          Brand Management
-        </h1>
+    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-10 font-['Lexend'] text-slate-800">
+      
+      {/* --- HEADER --- */}
+      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 px-2">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">Brand Registry</h1>
+          <p className="text-slate-500 font-medium mt-1">Manage and track authorized manufacturer brands.</p>
+        </div>
         <button
           onClick={() => {
             setShowModal(true);
             setIsEditing(false);
             setBrand({ name: "", status: "Available" });
           }}
-          className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42]"
+          className="group flex items-center gap-2 bg-[#FA9C42] text-white px-8 py-4 rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95"
         >
-          <Plus size={18} /> Add Quality
+          <Plus size={22} className="group-hover:rotate-90 transition-transform" />
+          <span className="font-bold text-lg">Add Brand</span>
         </button>
       </div>
 
-      {/* BRAND LIST */}
-      <div className="w-full rounded-2xl text-center overflow-hidden shadow">
-        <table className="w-full rounded-xl overflow-hidden">
-          <thead className="bg-[#FA9C42] text-white text-center">
-            <tr>
-              <th className="py-6 px-2">Brand Name</th>
-              <th className="py-6 px-2">Status</th>
-              <th className="p-3 text-center">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {brandList.length === 0 ? (
-              <tr>
-                <td colSpan="3" className="text-center p-6 text-gray-500 italic">
-                  No brand added yet.
-                </td>
+      {/* --- LARGE DATA TABLE --- */}
+      <div className="max-w-[1400px] mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-100 text-center">
+                <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400 text-left">Brand Identity</th>
+                <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Current Status</th>
+                <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">Administrative Actions</th>
               </tr>
-            ) : (
-              brandList.map((item) => (
-                <tr key={item.id} className="border-t hover:bg-gray-50 transition">
-                  <td className="p-3 font-medium">{item.name}</td>
-
-                  <td className="p-3">
-                    <span
-                      className={`inline-block text-center px-3 py-1 border-2 rounded-lg font-medium
-      w-32
-      ${item.status === "Available"
-                          ? "border-green-600 text-green-700"
-                          : "border-red-600 text-red-700"
-                        }`}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center flex justify-center gap-3">
-                    <button
-                      onClick={() => editBrand(item)}
-                      className="px-3 py-2 rounded-lg text-balck hover:scale-105 transition"
-                    >
-                      <Edit size={20} />
-                    </button>
-
-                    <button
-                      onClick={() => confirmDelete(item)}
-                      className="px-3 py-2 rounded-lg text-red-600 hover:scale-105 transition"
-                    >
-                      <Trash2 size={20} />
-                    </button>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {brandList.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="text-center py-24 text-slate-400 font-medium italic text-lg">
+                    No brands found in the registry.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                brandList.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-10 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-[#FA9C42] shadow-inner">
+                          <Award size={26} />
+                        </div>
+                        <div>
+                          <span className="font-black text-slate-800 text-xl block">{item.name}</span>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Authorized Partner</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-10 py-6 text-center">
+                      <span className={`inline-flex items-center gap-2 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest border
+                        ${item.status === "Available" 
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                          : "bg-red-50 text-red-600 border-red-100"}`}
+                      >
+                        {item.status === "Available" ? <CheckCircle size={16}/> : <AlertCircle size={16}/>}
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-10 py-6">
+                      <div className="flex justify-end gap-4">
+                        <button 
+                          onClick={() => editBrand(item)}
+                          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
+                        >
+                          <Edit size={18} />
+                          <span className="font-bold text-sm">Modify</span>
+                        </button>
+                        <button 
+                          onClick={() => { setCurrentId(item.id); setShowDeleteModal(true); }}
+                          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"
+                        >
+                          <Trash2 size={18} />
+                          <span className="font-bold text-sm">Remove</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* ADD / EDIT MODAL */}
+      {/* --- MODAL: ADD/EDIT --- */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">
-          <div className="bg-[#FFF7EF] w-[450px] rounded-xl p-6 shadow-xl animate-scaleIn">
-            <div className="flex justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <img src={Images.User} alt="Add User" className="w-8 h-8" />
-                <h2 className="text-xl font-bold text-gray-800"> {isEditing ? "Edit Brand" : "Add Brand"}</h2>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-[#FCFCFC] w-full max-w-lg rounded-[40px] shadow-3xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="px-10 py-8 flex justify-between items-center border-b border-slate-100">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-100 text-[#FA9C42] rounded-2xl">
+                    <Award size={24} />
+                </div>
+                <h2 className="text-2xl font-black uppercase tracking-tight">{isEditing ? "Modify Brand" : "Register Brand"}</h2>
               </div>
-              <button onClick={() => setShowModal(false)}>
-                <img
-                  src={Images.Cross}
-                  alt="Close"
-                  className="w-8 h-8"
-                />
+              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors">
+                <X size={20}/>
               </button>
             </div>
-
-            <form onSubmit={saveBrand} className="grid gap-4">
-              <div>
-                <label className="font-medium">Brand Name</label>
+            
+            <form onSubmit={saveBrand} className="p-10 space-y-8">
+              <div className="space-y-3">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Brand Name</label>
                 <input
                   name="name"
                   value={brand.name}
                   onChange={handleChange}
-                  placeholder="Enter brand name"
-                  className="w-full mt-1 border-2 rounded-lg px-3 py-2 focus:outline-none border-[#FA9C42]"
+                  placeholder="e.g. Nike, Samsung, Apple..."
+                  className="w-full px-6 py-5 rounded-2xl bg-white border border-slate-200 focus:border-[#FA9C42] focus:ring-4 focus:ring-[#FA9C42]/10 outline-none transition-all font-bold text-lg"
                   required
                 />
               </div>
 
-              <div>
-                <label className="font-medium">Status</label>
-                <select
-                  name="status"
-                  value={brand.status}
-                  onChange={handleChange}
-                  className="w-full mt-1 border-2 rounded-lg px-3 py-2 focus:outline-none border-[#FA9C42]"
-                >
-                  <option value="Available">Available</option>
-                  <option value="Unavailable">Unavailable</option>
-                </select>
+              <div className="space-y-3">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Market Status</label>
+                <div className="relative">
+                    <select
+                        name="status"
+                        value={brand.status}
+                        onChange={handleChange}
+                        className="w-full px-6 py-5 rounded-2xl bg-white border border-slate-200 focus:border-[#FA9C42] outline-none appearance-none cursor-pointer font-bold text-lg transition-all"
+                    >
+                        <option value="Available">Available</option>
+                        <option value="Unavailable">Unavailable</option>
+                    </select>
+                </div>
               </div>
 
-              <div className="pt-2 flex justify-end mr-5">
-                <button
-                  type="submit"
-                  className="w-[120px] bg-[#f57a00] text-white p-2 rounded-xl font-semibold transition"
-                >
-                  {isEditing ? "Update" : "Save"}
+              <div className="pt-4 flex flex-col gap-4">
+                <button type="submit" className="w-full py-5 bg-[#FA9C42] text-white font-black rounded-2xl shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all text-lg uppercase tracking-widest">
+                  {isEditing ? "Update Registry" : "Complete Registration"}
+                </button>
+                <button type="button" onClick={() => setShowModal(false)} className="w-full py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">
+                  Discard Changes
                 </button>
               </div>
             </form>
@@ -216,26 +192,26 @@ export default function BrandManagement() {
         </div>
       )}
 
-      {/* DELETE MODAL */}
+      {/* --- MODAL: DELETE --- */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">
-          <div className="bg-white w-[400px] p-6 rounded-xl shadow-xl animate-scaleIn">
-            <h2 className="text-xl font-semibold mb-3">Delete Brand?</h2>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this brand? This action cannot be undone.
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
+          <div className="bg-white w-full max-w-md rounded-[32px] p-10 shadow-3xl text-center">
+            <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Trash2 size={40} />
+            </div>
+            <h2 className="text-3xl font-black mb-3 text-slate-900">Remove Brand?</h2>
+            <p className="text-slate-500 font-medium text-lg mb-10 px-4 leading-relaxed">
+              This will remove the brand from the registry. All associated products may be affected.
             </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 rounded-lg border"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={deleteBrand}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+            <div className="flex gap-4">
+              <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-4 font-bold text-slate-400 hover:bg-slate-50 rounded-2xl transition-all">Go Back</button>
+              <button 
+                onClick={async () => {
+                   await axios.delete(`${BASE_URL}/delete/${currentId}`);
+                   setShowDeleteModal(false);
+                   fetchBrands();
+                }} 
+                className="flex-1 py-4 bg-red-500 text-white font-black rounded-2xl shadow-lg shadow-red-100 hover:bg-red-600 transition-all"
               >
                 Delete
               </button>
@@ -243,17 +219,6 @@ export default function BrandManagement() {
           </div>
         </div>
       )}
-
-      {/* ANIMATION */}
-      <style>{`
-        @keyframes scaleIn {
-          from { transform: scale(0.8); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        .animate-scaleIn {
-          animation: scaleIn 0.25s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

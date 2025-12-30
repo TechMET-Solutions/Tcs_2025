@@ -16,3 +16,9 @@ export const addProductAPI = (data) => {
 export const getProductAPI = () => {
     return axios.get(`${BASE_URL}/list`);
 };
+
+export const updateProductAPI = (id, formData) => {
+  return axios.put(`${BASE_URL}/products/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};

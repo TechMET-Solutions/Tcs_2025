@@ -1,24 +1,16 @@
-import {
-  Plus,
-  X
+import React, { useEffect, useState } from "react";
+import { 
+  Plus, X, Eye, EyeOff, CheckCircle2, Upload, 
+  Users, Edit3, Trash2, Ban, CheckCircle, ShieldAlert
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-  createEmployeeAPI,
-  getEmployeesAPI,
-} from "../Component/API/employeeApi";
-import { useNavigate } from "react-router-dom";
+import { createEmployeeAPI, getEmployeesAPI } from "../Component/API/employeeApi";
 
 export default function EmployeeRegistration() {
   const [showModal, setShowModal] = useState(false);
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewType, setReviewType] = useState(""); // rating | feedback
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-const [documents, setDocuments] = useState({
-  aadhar: null,
-  pancard: null,
-});
-
+  const [modalMode, setModalMode] = useState("add"); 
+  const [showPass, setShowPass] = useState(false);
+  const [employeeList, setEmployeeList] = useState([]);
+  
   const [employee, setEmployee] = useState({
     name: "",
     email: "",
@@ -29,365 +21,234 @@ const [documents, setDocuments] = useState({
     salary: "",
     expense: "",
     advance: "",
+    aadhar: null,
+    pancard: null,
+    status: "active" // added status field
   });
-const navigate = useNavigate();
-  const [employeeList, setEmployeeList] = useState([]);
 
-  // ===================== INPUT =====================
+  const fetchEmployeesFromDB = async () => {
+    try {
+      const res = await getEmployeesAPI();
+      if (res.data.success) setEmployeeList(res.data.employees);
+    } catch (err) { console.log(err); }
+  };
+
+  useEffect(() => { fetchEmployeesFromDB(); }, []);
+
   const handleChange = (e) => {
     setEmployee({ ...employee, [e.target.name]: e.target.value });
   };
 
-  // ===================== FETCH =====================
-  const fetchEmployeesFromDB = async () => {
-    try {
-      const res = await getEmployeesAPI();
-      if (res.data.success) {
-        setEmployeeList(res.data.employees);
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    setEmployee((prev) => ({ ...prev, [name]: files[0] }));
+  };
+
+  const handleEdit = (item) => {
+    setEmployee(item);
+    setModalMode("edit");
+    setShowModal(true);
+  };
+
+  // NEW: Toggle Block/Unblock Status
+  const handleToggleStatus = (id) => {
+    setEmployeeList(prev => prev.map(emp => {
+      if (emp.id === id) {
+        const newStatus = emp.status === "active" ? "blocked" : "active";
+        return { ...emp, status: newStatus };
       }
-    } catch (err) {
-      console.log(err);
+      return emp;
+    }));
+  };
+
+  const handleDelete = async (id) => {
+    if(window.confirm("Are you sure you want to delete this employee?")) {
+        setEmployeeList(employeeList.filter(emp => emp.id !== id));
     }
   };
 
-  useEffect(() => {
-    fetchEmployeesFromDB();
-  }, []);
-
-  // ===================== SAVE =====================
   const saveEmployee = async (e) => {
     e.preventDefault();
-
     try {
-      await createEmployeeAPI(employee);
+      if (modalMode === "add") {
+        await createEmployeeAPI(employee);
+      } else {
+        // await updateEmployeeAPI(employee.id, employee);
+      }
       fetchEmployeesFromDB();
       setShowModal(false);
-    } catch (err) {
-      console.log(err);
-    }
-
-    setEmployee({
-      name: "",
-      email: "",
-      password: "",
-      commission: "",
-      birthdate: "",
-      phone: "",
-      salary: "",
-      expense: "",
-      advance: "",
-    });
+      resetForm();
+    } catch (err) { console.log(err); }
   };
-const handleFileChange = (e) => {
-  const { name, files } = e.target;
 
-  setDocuments((prev) => ({
-    ...prev,
-    [name]: files[0],
-  }));
-};
+  const resetForm = () => {
+    setEmployee({ name: "", email: "", password: "", commission: "", birthdate: "", phone: "", salary: "", expense: "", advance: "", aadhar: null, pancard: null, status: "active" });
+  };
 
   return (
-    <div className="p-6">
-
-      {/* HEADER */}
-      {/* <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-semibold flex items-center gap-2">
-          <User /> Employee Registration
-        </h2>
-
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg"
-        >
-          <Plus size={18} /> Add Employee
-        </button>
-      </div> */}
- <div className="flex justify-between items-center mb-10 px-4 py-2 border rounded-xl">
-              <h1 className="text-2xl font-semibold flex items-center gap-3 text-gray-800">
-                {/* <Users size={30} className="text-blue-600" /> */}
-        Employee Registration
-        </h1>
-        <div className="flex gap-10">
- <button
-  onClick={() => navigate("/employee-reviews")}
-  className="flex items-center gap-2 text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42] hover:bg-orange-500 hover:text-white"
->
-   Employee Rating
-</button>
-              <button
-                onClick={() => {
-                  setShowModal(true);
-                  // setIsEditing(false);
-                  // setQuality({ name: "", status: "Available" });
-                }}
-                className="flex items-center gap-2  text-[#FA9C42] px-4 py-2 rounded-lg border border-[#FA9C42] hover:bg-orange-500 hover:text-white "
-              >
-                <Plus size={18} /> Add Employee
-              </button>
+    <div className="p-8 bg-[#fcfcfc] min-h-screen">
+      {/* HEADER SECTION */}
+      <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Employee Directory</h1>
+          <p className="text-slate-400 text-sm mt-1 font-medium">Manage team members, payroll, and access status</p>
         </div>
-      
-            </div>
-      {/* TABLE */}
-      <table className="w-full bg-white rounded-xl shadow overflow-hidden">
-        <thead className="bg-gray-100">
-          <tr>
-            {[
-              "Name",
-              "Email",
-              "Phone",
-              "Commission",
-              "Salary",
-              "Expense",
-              "Birthdate",
-             
-            ].map((h) => (
-              <th key={h} className="p-4 text-center bg-[#FA9C42] text-white py-6 px-2 ">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {employeeList.length === 0 ? (
-            <tr>
-              <td colSpan="8" className="text-center p-6 text-gray-400">
-                No employees found
-              </td>
-            </tr>
-          ) : (
-            employeeList.map((item, index) => (
-              <tr key={index} className="border-t hover:bg-gray-50">
-                <td className="p-4">{item.name}</td>
-                <td className="p-4">{item.email}</td>
-                <td className="p-4">{item.phone}</td>
-                <td className="p-4">{item.commission}%</td>
-                <td className="p-4">₹{item.salary}</td>
-                <td className="p-4">₹{item.expense}</td>
-                <td className="p-4">{item.birthdate}</td>
-
-               
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-
-      {/* ADD EMPLOYEE MODAL */}
-     {showModal && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white w-[700px] rounded-xl p-6 shadow-xl">
-      
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold">Add Employee</h3>
-        <X
-          className="cursor-pointer"
-          onClick={() => setShowModal(false)}
-        />
+        <button 
+          onClick={() => { setModalMode("add"); resetForm(); setShowModal(true); }} 
+          className="flex items-center gap-2 bg-[#FA9C42] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-[#e88b32] transition-all active:scale-95"
+        >
+          <Plus size={20} strokeWidth={3} /> Add New Employee
+        </button>
       </div>
 
-      <form onSubmit={saveEmployee} className="space-y-5">
-
-        {/* ROW 1 */}
-        <div className="flex gap-8 justify-center">
-          <div>
-            <label>Name</label>
-            <input
-              type="text"
-              name="name"
-              value={employee.name}
-              onChange={handleChange}
-              className="border p-2 w-[260px] rounded mt-1"
-              required
-            />
-          </div>
-
-          <div>
-            <label>Last Name</label>
-            <input
-              type="text"
-              name="Last_Name"
-              value={employee.Last_Name}
-              onChange={handleChange}
-              className="border p-2 w-[260px] rounded mt-1"
-              required
-            />
-          </div>
-        </div>
-
-        {/* ROW 2 */}
-        <div className="flex gap-8 justify-center">
-          <div>
-            <label>Mobile No</label>
-            <input
-              type="text"
-              name="phone"
-              value={employee.phone}
-              onChange={handleChange}
-              className="border p-2 w-[260px] rounded mt-1"
-              required
-            />
-          </div>
-
-          <div>
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={employee.email}
-              onChange={handleChange}
-              className="border p-2 w-[260px] rounded mt-1"
-              required
-            />
-          </div>
-        </div>
-
-        {/* ROW 3 */}
-        <div className="flex gap-8 justify-center">
-          <div>
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={employee.password}
-              onChange={handleChange}
-              className="border p-2 w-[260px] rounded mt-1"
-              required
-            />
-          </div>
-
-          <div>
-            <label>Commission (%)</label>
-            <input
-              type="number"
-              name="commission"
-              value={employee.commission}
-              onChange={handleChange}
-              className="border p-2 w-[260px] rounded mt-1"
-            />
-          </div>
-        </div>
-
-        {/* ROW 4 */}
-        <div className="flex gap-8 justify-center">
-          <div>
-            <label>Birthdate</label>
-            <input
-              type="date"
-              name="birthdate"
-              value={employee.birthdate}
-              onChange={handleChange}
-              className="border p-2 w-[260px] rounded mt-1"
-            />
-          </div>
-
-          <div>
-            <label>Salary</label>
-            <input
-              type="number"
-              name="salary"
-              value={employee.salary}
-              onChange={handleChange}
-              className="border p-2 w-[260px] rounded mt-1"
-            />
-          </div>
-        </div>
-
-        {/* ROW 5 – DOCUMENT UPLOAD */}
-        <div className="flex gap-8 justify-center">
-          <div>
-            <label>Upload Aadhar Photo</label>
-            <input
-              type="file"
-              name="aadhar"
-              onChange={handleFileChange}
-              className="border p-2 w-[260px] rounded mt-1"
-            />
-          </div>
-
-          <div>
-            <label>Upload Pancard Photo</label>
-            <input
-              type="file"
-              name="pancard"
-              onChange={handleFileChange}
-              className="border p-2 w-[260px] rounded mt-1"
-            />
-          </div>
-        </div>
-
-        {/* SUBMIT */}
-        <div className="flex justify-center mt-6">
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-lg"
-          >
-            Save Employee
-          </button>
-        </div>
-
-      </form>
-    </div>
-  </div>
-)}
-
-      {/* RATING / FEEDBACK MODAL */}
-      {showReviewModal && selectedEmployee && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-[500px] rounded-xl p-6">
-            <div className="flex justify-between mb-3">
-              <h3 className="text-lg font-semibold">
-                {reviewType === "rating"
-                  ? "⭐ Client Ratings"
-                  : "💬 Client Feedback"}
-              </h3>
-              <X onClick={() => setShowReviewModal(false)} />
-            </div>
-
-            <p className="text-sm mb-4">
-              Employee: <strong>{selectedEmployee.name}</strong>
-            </p>
-
-            {reviewType === "rating" ? (
-              <div className="space-y-2">
-                {[5, 4, 5].map((r, i) => (
-                  <div
-                    key={i}
-                    className="flex justify-between border p-3 rounded"
-                  >
-                    <span>Client {i + 1}</span>
-                    <span>{"⭐".repeat(r)}</span>
+      {/* TABLE SECTION */}
+      <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-100">
+              {["Employee Details", "Phone", "Salary", "Status", "Actions"].map((h) => (
+                <th key={h} className="p-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {employeeList.map((item, index) => (
+              <tr key={index} className={`hover:bg-slate-50/80 transition-all ${item.status === 'blocked' ? 'bg-slate-50/50' : ''}`}>
+                <td className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm ${item.status === 'blocked' ? 'bg-slate-200 text-slate-500' : 'bg-orange-100 text-[#FA9C42]'}`}>
+                      {item.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className={`font-bold ${item.status === 'blocked' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{item.name}</p>
+                      <p className="text-xs text-slate-400">{item.email}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-[250px] overflow-auto">
-                {[
-                  "Very professional",
-                  "Great communication",
-                  "Handled project smoothly",
-                ].map((msg, i) => (
-                  <div key={i} className="border p-3 rounded bg-gray-50">
-                    {msg}
-                  </div>
-                ))}
-              </div>
-            )}
+                </td>
+                <td className="p-5 text-sm font-medium text-slate-600">{item.phone}</td>
+                <td className="p-5">
+                  <span className="font-bold text-slate-700">₹{item.salary}</span>
+                </td>
+                <td className="p-5">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {item.status}
+                  </span>
+                </td>
+                <td className="p-5">
+                  <div className="flex gap-2">
+                    {/* TOGGLE STATUS BUTTON */}
+                    <button 
+                      onClick={() => handleToggleStatus(item.id)}
+                      className={`p-2 rounded-lg transition-all ${item.status === 'active' ? 'text-slate-300 hover:text-red-500 hover:bg-red-50' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
+                      title={item.status === 'active' ? "Block Employee" : "Unblock Employee"}
+                    >
+                      {item.status === 'active' ? <Ban size={18} /> : <CheckCircle size={18} />}
+                    </button>
+                    
+                    {/* EDIT BUTTON */}
+                    <button onClick={() => handleEdit(item)} className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
+                      <Edit3 size={18}/>
+                    </button>
 
-            <div className="text-right mt-4">
-              <button
-                onClick={() => setShowReviewModal(false)}
-                className="bg-gray-700 text-white px-4 py-2 rounded"
-              >
-                Close
+                    {/* DELETE BUTTON */}
+                    <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                      <Trash2 size={18}/>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* MODAL SECTION - RESTORED ALL FIELDS */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
+          <div className="w-full max-w-[850px] bg-[#FFF7EF] rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-white/20">
+            <div className="px-10 pt-8 pb-4 shrink-0 flex justify-between items-center bg-white/40 border-b border-orange-100">
+              <div>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+                  {modalMode === "edit" ? "Update Profile" : "New Registration"}
+                </h2>
+                <p className="text-slate-500 text-sm font-medium mt-1">Complete all fields to manage employee data</p>
+              </div>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                <X className="text-slate-400" />
               </button>
             </div>
+
+            <form onSubmit={saveEmployee} className="px-10 pb-10 pt-6 overflow-y-auto flex-grow custom-scrollbar">
+              <div className="space-y-10">
+                
+                {/* SECTION 1: PERSONAL */}
+                <div className="space-y-4">
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FA9C42] border-b border-orange-100 pb-2">Personal Information</h3>
+                  <div className="grid grid-cols-2 gap-5">
+                    <input name="name" value={employee.name} onChange={handleChange} placeholder="Full Name" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
+                    <input name="phone" value={employee.phone} onChange={handleChange} placeholder="Mobile Number" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
+                    <input type="date" name="birthdate" value={employee.birthdate} onChange={handleChange} className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium text-slate-500" />
+                    <input name="email" value={employee.email} onChange={handleChange} placeholder="Email Address" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
+                  </div>
+                </div>
+
+                {/* SECTION 2: SYSTEM & PAYROLL */}
+                <div className="space-y-4">
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FA9C42] border-b border-orange-100 pb-2">Payroll & Access</h3>
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="relative">
+                      <input type={showPass ? "text" : "password"} name="password" value={employee.password} onChange={handleChange} placeholder="Access Password" 
+                             className="w-full p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
+                      <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-5 text-slate-300 hover:text-orange-500">
+                        {showPass ? <EyeOff size={18}/> : <Eye size={18}/>}
+                      </button>
+                    </div>
+                    <input type="number" name="salary" value={employee.salary} onChange={handleChange} placeholder="Monthly Salary (₹)" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-bold text-green-600" />
+                    <input type="number" name="expense" value={employee.expense} onChange={handleChange} placeholder="Allowed Expense" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" />
+                    <input type="number" name="advance" value={employee.advance} onChange={handleChange} placeholder="Salary Advance" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" />
+                    <input type="number" name="commission" value={employee.commission} onChange={handleChange} placeholder="Commission (%)" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" />
+                  </div>
+                </div>
+
+                {/* SECTION 3: DOCUMENTS */}
+                <div className="space-y-4">
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FA9C42] border-b border-orange-100 pb-2">Verification Documents</h3>
+                  <div className="grid grid-cols-2 gap-8">
+                    {['aadhar', 'pancard'].map((doc) => (
+                      <label key={doc} className={`flex flex-col items-center justify-center h-36 border-2 border-dashed rounded-3xl cursor-pointer transition-all ${employee[doc] ? 'bg-green-50 border-green-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                        {employee[doc] ? (
+                          <>
+                            <div className="bg-green-500 p-2 rounded-full mb-2 shadow-lg shadow-green-200">
+                              <CheckCircle2 className="text-white" size={20} />
+                            </div>
+                            <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest">{employee[doc].name.substring(0, 15)}...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="text-slate-300 mb-2" size={24} />
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Upload {doc}</span>
+                          </>
+                        )}
+                        <input type="file" name={doc} onChange={handleFileChange} className="hidden" />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* STICKY FOOTER ACTION */}
+              <div className="flex justify-end gap-4 mt-12 border-t border-slate-100 pt-8">
+                <button type="button" onClick={() => setShowModal(false)} className="px-8 py-3 text-slate-400 font-bold hover:text-slate-600 transition-colors">Discard</button>
+                <button type="submit" className="px-12 py-3 bg-[#FA9C42] text-white rounded-2xl font-black shadow-xl shadow-orange-200 hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-wider text-sm">
+                  {modalMode === "edit" ? "Update Member" : "Create Profile"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }
