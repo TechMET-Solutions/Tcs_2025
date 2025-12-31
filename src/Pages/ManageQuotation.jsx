@@ -2,6 +2,7 @@ import { CheckCircle, CreditCard, FileText, Search, Trash2, Truck, X } from "luc
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllQuotations } from "../Component/API/quotationApi";
+import QuotationHeader from "./QuotationHeader";
 
 export default function ManageQuotation() {
   const [quotationList, setQuotationList] = useState([]);
@@ -104,7 +105,7 @@ const navigate = useNavigate();
     <div className="min-h-screen bg-[#FDFDFD] p-6 md:p-10 font-['Lexend'] text-slate-700">
       
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-10 bg-white p-6 rounded-[30px] shadow-sm border border-slate-100 gap-4">
+      {/* <div className="flex flex-col md:flex-row justify-between items-center mb-10 bg-white p-6 rounded-[30px] shadow-sm border border-slate-100 gap-4">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-orange-50 rounded-2xl text-orange-500"><FileText size={28} /></div>
           <div>
@@ -117,7 +118,8 @@ const navigate = useNavigate();
           <Search size={20} className="text-slate-400" />
           <input className="outline-none w-full bg-transparent font-medium text-sm" placeholder="Search client..." onChange={(e) => setSearch(e.target.value)} />
         </div>
-      </div>
+      </div> */}
+      <QuotationHeader />
 
       {/* TABLE */}
       <div className="bg-white rounded-[35px] shadow-sm border border-slate-100 overflow-hidden">
@@ -153,6 +155,7 @@ const navigate = useNavigate();
                     <div className="w-[1px] bg-slate-100 mx-1"></div>
                     <button onClick={() => openQuotationPDF(q.id, "qcode")} className="print-btn">Code</button>
                     <button onClick={() => openQuotationPDF(q.id, "qname")} className="print-btn">Name</button>
+                    
                   </div>
                 </td>
               </tr>
