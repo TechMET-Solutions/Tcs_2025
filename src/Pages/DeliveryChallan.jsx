@@ -36,7 +36,9 @@ export default function DeliveryChallan() {
   const printChallan = (id) => {
     window.open(`http://localhost:5000/api/Quotation/delivery-challan/print/${id}`, "_blank");
   };
-
+ const printChallan2 = (id) => {
+    window.open(`http://localhost:5000/api/Quotation/delivery-challan/printreturn/${id}`, "_blank");
+  };
   const openTrackingModal = (id) => {
     setTrackingChallanId(id);
     setShowTrackingModal(true);
@@ -140,6 +142,13 @@ export default function DeliveryChallan() {
                       >
                         <Printer size={18} />
                         <span>Print DC</span>
+                      </button>
+                      <button
+                        onClick={() => printChallan2(item.id)}
+                        className="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
+                      >
+                        <Printer size={18} />
+                        <span>Print DC for Return</span>
                       </button>
                     </td>
 

@@ -1,7 +1,17 @@
 import axios from "axios";
-import { Plus, X, History, Phone, User, Briefcase, MapPin, MessageSquare, ChevronRight } from "lucide-react";
-import { useEffect, useRef,创新, useState } from "react";
-import { Images } from "../assets";
+import {
+  Briefcase,
+  ChevronRight,
+  Edit2,
+  History,
+  Mail,
+  MapPin,
+  Phone,
+  Plus,
+  User,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 /* ✅ MODERN TOOLTIP */
 const Tooltip = ({ text, children }) => {
@@ -60,13 +70,13 @@ export default function CustomerManagement() {
   const [customerList, setCustomerList] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [isEditing, setIsEditing] = useState(false);
   const getTodayDate = () => new Date().toISOString().split('T')[0];
   const [followupUpdate, setFollowupUpdate] = useState({ date: getTodayDate(), response: "" });
 
   const [customer, setCustomer] = useState({
     name: "", Last_Name: "", phone: "", email: "", assignedEmployee: "",
-    assignedArchitect: "", status: "New", nextFollowup: "", followupResponse: "",
+    assignedArchitect: "", status: "New", 
     notes: "", projectName: "", siteName: "", siteType: "", priority: "Low"
   });
 
@@ -97,17 +107,26 @@ export default function CustomerManagement() {
   };
 
   const saveCustomer = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setIsSubmitting(true);
-    try {
+  e.preventDefault();
+  if (!validate()) return;
+  setIsSubmitting(true);
+  try {
+    if (isEditing) {
+      // UPDATE EXISTING
+      await axios.put(`${BASE_URL}/update/${customer.id}`, customer);
+    } else {
+      // CREATE NEW
       await axios.post(`${BASE_URL}/add`, customer);
-      fetchCustomers();
-      setShowModal(false);
-      setErrors({});
-    } catch (err) { setErrors({ server: "Failed to save." }); }
-    finally { setIsSubmitting(false); }
-  };
+    }
+    fetchCustomers();
+    setShowModal(false);
+    setErrors({});
+  } catch (err) { 
+    setErrors({ server: "Operation failed." }); 
+  } finally { 
+    setIsSubmitting(false); 
+  }
+};
 
   const saveNewFollowup = async () => {
     try {
@@ -128,18 +147,32 @@ export default function CustomerManagement() {
       setShowHistory(true);
     } catch (err) { console.log(err); }
   };
+const handleOpenModal = () => {
+  setIsEditing(false);
+  setCustomer({
+    name: "", Last_Name: "", phone: "", email: "", assignedEmployee: "",
+    assignedArchitect: "", status: "New", 
+    notes: "", projectName: "", siteName: "", siteType: "", priority: "Low"
+  });
+  setShowModal(true);
+};
 
+  const handleEdit = (item) => {
+  setIsEditing(true);
+  setCustomer(item); // Populate form with existing data
+  setShowModal(true);
+};
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-8 font-['Lexend'] text-slate-800">
       
       {/* --- HEADER SECTION --- */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+      <div className=" mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900">CRM Portal</h1>
           <p className="text-slate-500 font-medium">Manage your clients and track project follow-ups</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={()=>handleOpenModal()}
           className="group flex items-center gap-2 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-xl shadow-slate-200 hover:bg-[#FA9C42] hover:shadow-[#FA9C42]/20 transition-all active:scale-95"
         >
           <Plus size={20} className="group-hover:rotate-90 transition-transform" />
@@ -148,11 +181,10 @@ export default function CustomerManagement() {
       </div>
 
       {/* --- STATS OVERVIEW (Visual Polish) --- */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         {[
           { label: "Total Leads", val: customerList.length, color: "text-blue-600" },
-          { label: "Pending Follow-ups", val: "12", color: "text-orange-500" },
-          { label: "Active Projects", val: "08", color: "text-emerald-500" },
+          
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex justify-between items-center">
             <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">{stat.label}</span>
@@ -162,7 +194,7 @@ export default function CustomerManagement() {
       </div>
 
       {/* --- DATA TABLE --- */}
-      <div className="max-w-7xl mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden">
+      <div className=" mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -173,91 +205,271 @@ export default function CustomerManagement() {
                 <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
-              {customerList.length === 0 ? (
-                <tr><td colSpan="4" className="text-center py-20 text-slate-400 font-medium">No records found. Click "New Customer" to start.</td></tr>
-              ) : (
-                customerList.map((item, index) => (
-                  <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-lg group-hover:bg-[#FA9C42]/10 group-hover:text-[#FA9C42] transition-colors">
-                          {item.name[0]}
-                        </div>
-                        <div>
-                          <div className="font-black text-slate-900">{item.name} {item.Last_Name}</div>
-                          <div className="text-sm text-slate-500 flex items-center gap-1"><Phone size={12}/> {item.phone}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Employee</span>
-                        <span className="font-bold text-slate-700">{item.assignedEmployee}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                       <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">{item.siteType || 'N/A'}</span>
-                       <div className="mt-1 font-bold text-slate-700">{item.projectName || 'Unnamed Project'}</div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openHistory(item)} className="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-white hover:shadow-md transition-all">
-                          <History size={18} />
-                        </button>
-                        <button 
-                          onClick={() => { setActiveIndex(index); setShowUpdateFollowup(true); }}
-                          className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-700 hover:border-[#FA9C42] hover:text-[#FA9C42] shadow-sm transition-all"
-                        >
-                          Follow-up <ChevronRight size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
+           <tbody className="divide-y divide-slate-50">
+  {customerList.length === 0 ? (
+    <tr>
+      <td colSpan="4" className="text-center py-20 text-slate-400 font-medium">
+        No records found. Click "New Customer" to start.
+      </td>
+    </tr>
+  ) : (
+    customerList.map((item, index) => (
+      <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
+        <td className="px-8 py-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-lg group-hover:bg-[#FA9C42]/10 group-hover:text-[#FA9C42] transition-colors">
+              {item.name[0]}
+            </div>
+            <div>
+              <div className="font-black text-slate-900">
+                {item.name} {item.Last_Name}
+              </div>
+              <div className="text-sm text-slate-500 flex items-center gap-1">
+                <Phone size={12} /> {item.phone}
+              </div>
+            </div>
+          </div>
+        </td>
+        <td className="px-8 py-6">
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+              Employee
+            </span>
+            <span className="font-bold text-slate-700">
+              {item.assignedEmployee}
+            </span>
+          </div>
+        </td>
+        <td className="px-8 py-6">
+          <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">
+            {item.siteType || "N/A"}
+          </span>
+          <div className="mt-1 font-bold text-slate-700">
+            {item.projectName || "Unnamed Project"}
+          </div>
+        </td>
+
+        {/* --- ACTIONS COLUMN: ALWAYS VISIBLE --- */}
+        <td className="px-8 py-6">
+          <div className="flex justify-end gap-3 transition-opacity">
+            <button
+    onClick={() => handleEdit(item)}
+    title="Edit Details"
+    className="p-2.5 rounded-xl border border-slate-200 text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95"
+  >
+    <Edit2 size={18} />
+  </button>
+            <button
+              onClick={() => openHistory(item)}
+              title="View History"
+              className="p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:shadow-md transition-all active:scale-95"
+            >
+              <History size={18} />
+            </button>
+            <button
+              onClick={() => {
+                setActiveIndex(index);
+                setShowUpdateFollowup(true);
+              }}
+              className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-700 hover:border-[#FA9C42] hover:text-[#FA9C42] hover:shadow-md transition-all active:scale-95"
+            >
+              Follow-up <ChevronRight size={16} />
+            </button>
+          </div>
+        </td>
+        {/* -------------------------------------- */}
+      </tr>
+    ))
+  )}
+</tbody>
           </table>
         </div>
       </div>
 
       {/* --- ADD CUSTOMER MODAL (Bento Style) --- */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-[#FCFCFC] w-full max-w-4xl rounded-[40px] shadow-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-300">
-            <div className="px-10 py-8 flex justify-between items-center border-b border-slate-100">
-              <h2 className="text-2xl font-black">Register New Client</h2>
-              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors"><X size={20}/></button>
+     {showModal && (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div className="bg-[#FCFCFC] w-full max-w-5xl rounded-[40px] shadow-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-300">
+      
+      {/* Header */}
+      <div className="px-10 py-8 flex justify-between items-center border-b border-slate-100 bg-white">
+        <div>
+         <h2 className="text-2xl font-black text-slate-900">
+  {isEditing ? "Edit Client Details" : "Register New Client"}
+</h2>
+          <p className="text-slate-500 text-sm font-medium">Fill in the details to create a new project record</p>
+        </div>
+        <button 
+          onClick={() => setShowModal(false)} 
+          className="p-3 bg-slate-100 rounded-full hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+        >
+          <X size={20}/>
+        </button>
+      </div>
+      
+      <form onSubmit={saveCustomer} className="p-10 overflow-y-auto custom-scrollbar bg-[#FCFCFC]">
+        <div className="space-y-12">
+          
+          {/* SECTION 1: PERSONAL CONTACT */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="col-span-1">
+              <h3 className="text-sm font-black uppercase tracking-widest text-[#FA9C42]">Personal Contact</h3>
+              <p className="text-slate-400 text-xs mt-2 leading-relaxed">Basic information about the client and how to reach them.</p>
             </div>
-            
-            <form onSubmit={saveCustomer} className="p-10 overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-                <div className="space-y-6">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#FA9C42]">Personal Contact</h3>
-                  <InputField label="First Name" name="name" value={customer.name} onChange={handleChange} error={errors.name} placeholder="e.g. Rahul" icon={User} />
-                  <InputField label="Last Name" name="Last_Name" value={customer.Last_Name} onChange={handleChange} error={errors.Last_Name} placeholder="e.g. Sharma" />
-                  <InputField label="Mobile Number" name="phone" value={customer.phone} onChange={handleChange} error={errors.phone} placeholder="98XXXXXXXX" icon={Phone} />
-                </div>
-                <div className="space-y-6">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#FA9C42]">Project Assignment</h3>
-                  <SelectField label="Employee" name="assignedEmployee" value={customer.assignedEmployee} onChange={handleChange} error={errors.assignedEmployee} options={["Rahul", "Sagar", "Pritesh"]} />
-                  <InputField label="Project Name" name="projectName" value={customer.projectName} onChange={handleChange} error={errors.projectName} placeholder="Skyline Heights" icon={Briefcase} />
-                  <SelectField label="Site Type" name="siteType" value={customer.siteType} onChange={handleChange} options={["Residential", "Commercial"]} />
-                </div>
-              </div>
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputField label="First Name" name="name" value={customer.name} onChange={handleChange} error={errors.name} placeholder="e.g. Rahul" icon={User} />
+              <InputField label="Last Name" name="Last_Name" value={customer.Last_Name} onChange={handleChange} error={errors.Last_Name} placeholder="e.g. Sharma" />
+              <InputField label="Mobile Number" name="phone" value={customer.phone} onChange={handleChange} error={errors.phone} placeholder="98XXXXXXXX" icon={Phone} />
+              <InputField label="Email Address" name="email" value={customer.email} onChange={handleChange} error={errors.email} placeholder="rahul@example.com" icon={Mail} />
+            </div>
+          </div>
 
-              <div className="mt-12 flex justify-end gap-4">
-                <button type="button" onClick={() => setShowModal(false)} className="px-8 py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">Discard</button>
-                <button type="submit" disabled={isSubmitting} className="px-10 py-4 bg-[#FA9C42] text-white font-black rounded-2xl shadow-lg shadow-[#FA9C42]/30 hover:scale-105 active:scale-95 transition-all">
-                  {isSubmitting ? "Creating..." : "Save Record"}
-                </button>
+          <hr className="border-slate-100" />
+
+          {/* SECTION 2: PROJECT SPECIFICS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="col-span-1">
+              <h3 className="text-sm font-black uppercase tracking-widest text-[#FA9C42]">Project Details</h3>
+              <p className="text-slate-400 text-xs mt-2 leading-relaxed">Specifics about the construction site or project location.</p>
+            </div>
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputField label="Project Name" name="projectName" value={customer.projectName} onChange={handleChange} placeholder="e.g. Skyline Heights" icon={Briefcase} />
+              <InputField label="Site Name/Location" name="siteName" value={customer.siteName} onChange={handleChange} placeholder="e.g. Bandra West" icon={MapPin} />
+              <SelectField label="Site Type" name="siteType" value={customer.siteType} onChange={handleChange} options={["Residential", "Commercial", "Industrial", "Other"]} />
+              <SelectField label="Priority Level" name="priority" value={customer.priority} onChange={handleChange} options={["Low", "Medium", "High", "Urgent"]} />
+            </div>
+          </div>
+
+          <hr className="border-slate-100" />
+
+          {/* SECTION 3: ASSIGNMENT & NOTES */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="col-span-1">
+              <h3 className="text-sm font-black uppercase tracking-widest text-[#FA9C42]">Internal Assignment</h3>
+              <p className="text-slate-400 text-xs mt-2 leading-relaxed">Assign team members and add administrative remarks.</p>
+            </div>
+            <div className="md:col-span-2 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <SelectField label="Assigned Employee" name="assignedEmployee" value={customer.assignedEmployee} onChange={handleChange} options={["Rahul", "Sagar", "Pritesh"]} />
+                <SelectField label="Associated Architect" name="assignedArchitect" value={customer.assignedArchitect} onChange={handleChange} options={["Ar. Mehta", "Ar. Deshmukh", "None"]} />
               </div>
-            </form>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Additional Notes</label>
+                <textarea 
+                  name="notes"
+                  value={customer.notes}
+                  onChange={handleChange}
+                  placeholder="Any specific requirements or follow-up instructions..."
+                  className="w-full p-4 min-h-[120px] bg-slate-50 border border-slate-100 rounded-3xl focus:ring-4 focus:ring-[#FA9C42]/10 focus:border-[#FA9C42] outline-none transition-all resize-none text-slate-700 font-medium"
+                ></textarea>
+              </div>
+            </div>
           </div>
         </div>
-      )}
 
+        {/* Footer Actions */}
+        <div className="mt-12 pt-8 border-t border-slate-100 flex justify-end items-center gap-6">
+          <button 
+            type="button" 
+            onClick={() => setShowModal(false)} 
+            className="font-bold text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            Discard Changes
+          </button>
+          <button 
+  type="submit" 
+  disabled={isSubmitting} 
+  className="group relative px-12 py-4 bg-[#FA9C42] text-white font-black rounded-2xl shadow-xl shadow-[#FA9C42]/20 hover:bg-[#e88b32] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:bg-slate-300 disabled:shadow-none"
+>
+  <span className="flex items-center gap-2">
+    {/* Dynamic Text Logic */}
+    {isSubmitting 
+      ? (isEditing ? "Updating..." : "Creating...") 
+      : (isEditing ? "Update Record" : "Confirm & Save Record")
+    }
+    
+    {/* Dynamic Icon Logic */}
+    {!isSubmitting && (
+      <ChevronRight 
+        size={18} 
+        className="group-hover:translate-x-1 transition-transform" 
+      />
+    )}
+  </span>
+</button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
       {/* --- FOLLOW-UP MODAL (Compact) --- */}
+      {/* --- HISTORY SLIDE-OVER / MODAL --- */}
+{showHistory && selectedCustomer && (
+  <div className="fixed inset-0 z-[120] flex justify-end bg-slate-900/40 backdrop-blur-sm">
+    <div className="bg-white w-full max-w-lg h-full shadow-2xl animate-in slide-in-from-right duration-500 flex flex-col">
+      
+      {/* Header */}
+      <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+        <div>
+          <h2 className="text-2xl font-black text-slate-900">Interaction History</h2>
+          <p className="text-slate-500 text-sm font-medium">Timeline for {selectedCustomer.name}</p>
+        </div>
+        <button 
+          onClick={() => setShowHistory(false)} 
+          className="p-3 bg-white rounded-full shadow-sm hover:text-red-500 transition-colors"
+        >
+          <X size={20}/>
+        </button>
+      </div>
+
+      {/* Timeline Content */}
+      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        {selectedCustomer.followups && selectedCustomer.followups.length > 0 ? (
+          <div className="relative border-l-2 border-slate-100 ml-3 space-y-10">
+            {selectedCustomer.followups.map((log, idx) => (
+              <div key={idx} className="relative pl-8">
+                {/* Timeline Dot */}
+                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white bg-[#FA9C42] shadow-sm"></div>
+                
+                <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 hover:border-[#FA9C42]/30 transition-colors">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#FA9C42] bg-[#FA9C42]/10 px-3 py-1 rounded-full">
+                      {new Date(log.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </span>
+                    <History size={14} className="text-slate-300" />
+                  </div>
+                  <p className="text-slate-700 font-medium leading-relaxed">
+                    {log.response || "No notes provided for this interaction."}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center">
+              <History size={32} className="text-slate-200" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-400">No History Found</p>
+              <p className="text-sm text-slate-300">Start a follow-up to see logs here.</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="p-8 border-t border-slate-100 bg-slate-50/30">
+        <button 
+          onClick={() => setShowHistory(false)}
+          className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all"
+        >
+          Close History
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       {showUpdateFollowup && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
            <div className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-3xl animate-in slide-in-from-bottom-4 duration-300">

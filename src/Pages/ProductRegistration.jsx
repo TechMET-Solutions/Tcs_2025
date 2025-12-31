@@ -104,7 +104,10 @@ const [selectedProductId, setSelectedProductId] = useState(null);
     updated.splice(index, 1);
     setBatchList(updated);
   };
-
+  const Handleclose = () => {
+    setShowAddModal(false)
+    setModalMode("add")
+}
 //   const saveProduct = async (e) => {
 //   e.preventDefault();
 
@@ -802,7 +805,7 @@ const deleteProduct = (id) => {
         <div className="flex items-center justify-end gap-4 mt-10 pt-6 border-t border-slate-100">
           <button
             type="button"
-            onClick={() => setShowAddModal(false)}
+            onClick={() => Handleclose()}
             className="px-8 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all active:scale-95"
           >
             {modalMode === "view" ? "Close" : "Cancel"}
@@ -928,11 +931,14 @@ const deleteProduct = (id) => {
 )}
 
 {showPrintModal && printProduct && (
+  /* 1. Backdrop: Fixed h-[200px] to inset-0 to allow full screen centering */
   <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 print:p-0 print:bg-white">
-    <div className="bg-[#FFF7EF] w-full max-w-[850px] rounded-3xl shadow-2xl p-8 print:shadow-none print:bg-white print:p-0 print:w-full">
+    
+    {/* 2. Main Container: Added fixed height and overflow scroll */}
+    <div className="bg-[#FFF7EF] w-full max-w-[850px] rounded-3xl shadow-2xl flex flex-col max-h-[700px] print:max-h-none print:shadow-none print:bg-white print:w-full">
 
-      {/* MODAL HEADER (HIDDEN ON PRINT) */}
-      <div className="flex justify-between items-center mb-6 print:hidden">
+      {/* MODAL HEADER (STAYS FIXED AT TOP) */}
+      <div className="px-8 pt-8 pb-4 flex justify-between items-center shrink-0 print:hidden">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
             <Printer size={20} />
@@ -947,99 +953,103 @@ const deleteProduct = (id) => {
         </button>
       </div>
 
-      {/* ================= PRINT AREA ================= */}
-      <div id="print-area" className="bg-white p-8 rounded-2xl border border-slate-100 print:border-none print:p-0 text-slate-900">
+      {/* 3. SCROLLABLE AREA: Added overflow-y-auto and custom scrollbar */}
+      <div className="px-8 pb-4 overflow-y-auto flex-grow custom-scrollbar print:overflow-visible print:p-0">
         
-        {/* FORMAL COMPANY HEADER */}
-        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
-          <div>
-            <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
-              Your Company Name
-            </h1>
-            <div className="mt-2 text-sm text-slate-500 space-y-0.5 font-medium">
-              <p>Industrial Estate, Phase II, Nashik – 422001</p>
-              <p>Email: contact@company.com | GSTIN: 27AAAAA0000A1Z5</p>
-              <p>Phone: +91 98765 43210</p>
+        {/* ================= PRINT AREA ================= */}
+        <div id="print-area" className="bg-white p-8 rounded-2xl border border-slate-100 print:border-none print:p-0 text-slate-900">
+          
+          {/* FORMAL COMPANY HEADER */}
+          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
+            <div>
+              <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+                Your Company Name
+              </h1>
+              <div className="mt-2 text-sm text-slate-500 space-y-0.5 font-medium">
+                <p>Industrial Estate, Phase II, Nashik – 422001</p>
+                <p>Email: contact@company.com | GSTIN: 27AAAAA0000A1Z5</p>
+                <p>Phone: +91 98765 43210</p>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <div className="bg-slate-900 text-white px-4 py-1 text-xs font-bold uppercase tracking-widest mb-2 inline-block">
+                Product Specifications
+              </div>
+              <p className="text-sm font-bold text-slate-700">
+                Date: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+              </p>
             </div>
           </div>
 
-          <div className="text-right">
-            <div className="bg-slate-900 text-white px-4 py-1 text-xs font-bold uppercase tracking-widest mb-2 inline-block">
-              Product Specifications
-            </div>
-            <p className="text-sm font-bold text-slate-700">
-              Date: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
-            </p>
+          {/* PRIMARY DETAILS GRID */}
+          <div className="grid grid-cols-2 gap-y-4 gap-x-12 mb-10">
+            {[
+              ["Product Name", printProduct.name],
+              ["Dimensions / Size", printProduct.size || "Standard"],
+              ["Brand / Manufacturer", printProduct.brand],
+              ["Product Category", printProduct.category],
+              ["Quality Grade", printProduct.quality],
+              ["Standard Rate", `₹ ${printProduct.rate} /-`],
+            ].map(([label, value], i) => (
+              <div key={i} className="flex justify-between items-end border-b border-slate-100 pb-1">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">{label}</span>
+                <span className="text-sm font-bold text-slate-800">{value}</span>
+              </div>
+            ))}
           </div>
-        </div>
 
-        {/* PRIMARY DETAILS GRID */}
-        <div className="grid grid-cols-2 gap-y-4 gap-x-12 mb-10">
-          {[
-            ["Product Name", printProduct.name],
-            ["Dimensions / Size", printProduct.size || "Standard"],
-            ["Brand / Manufacturer", printProduct.brand],
-            ["Product Category", printProduct.category],
-            ["Quality Grade", printProduct.quality],
-            ["Standard Rate", `₹ ${printProduct.rate} /-`],
-          ].map(([label, value], i) => (
-            <div key={i} className="flex justify-between items-end border-b border-slate-100 pb-1">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">{label}</span>
-              <span className="text-sm font-bold text-slate-800">{value}</span>
-            </div>
-          ))}
-        </div>
+          {/* BATCH INVENTORY SECTION */}
+          {printProduct.batches?.length > 0 ? (
+            <div className="mb-10">
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-900 mb-4 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-[#FA9C42]"></div>
+                Current Inventory Batches
+              </h3>
 
-        {/* BATCH INVENTORY SECTION */}
-        {printProduct.batches?.length > 0 ? (
-          <div className="mb-10">
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-900 mb-4 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-[#FA9C42]"></div>
-              Current Inventory Batches
-            </h3>
-
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-slate-50">
-                  <th className="border-y border-slate-200 p-3 text-left text-[10px] font-bold uppercase text-slate-500">Batch No.</th>
-                  <th className="border-y border-slate-200 p-3 text-center text-[10px] font-bold uppercase text-slate-500">Quantity</th>
-                  <th className="border-y border-slate-200 p-3 text-left text-[10px] font-bold uppercase text-slate-500">Storage Location</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {printProduct.batches.map((b, i) => (
-                  <tr key={i} className="font-mono text-sm">
-                    <td className="p-3 font-bold text-slate-700">{b.batch_no || b.batchNo}</td>
-                    <td className="p-3 text-center font-bold text-blue-600">{b.qty}</td>
-                    <td className="p-3 text-slate-600 uppercase">{b.location}</td>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="border-y border-slate-200 p-3 text-left text-[10px] font-bold uppercase text-slate-500">Batch No.</th>
+                    <th className="border-y border-slate-200 p-3 text-center text-[10px] font-bold uppercase text-slate-500">Quantity</th>
+                    <th className="border-y border-slate-200 p-3 text-left text-[10px] font-bold uppercase text-slate-500">Storage Location</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="py-6 border-2 border-dashed border-slate-100 text-center mb-10">
-            <p className="text-slate-400 text-sm italic">No batch assignments found for this product.</p>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {printProduct.batches.map((b, i) => (
+                    <tr key={i} className="font-mono text-sm">
+                      <td className="p-3 font-bold text-slate-700">{b.batch_no || b.batchNo}</td>
+                      <td className="p-3 text-center font-bold text-blue-600">{b.qty}</td>
+                      <td className="p-3 text-slate-600 uppercase">{b.location}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-6 border-2 border-dashed border-slate-100 text-center mb-10">
+              <p className="text-slate-400 text-sm italic">No batch assignments found for this product.</p>
+            </div>
+          )}
 
-        {/* FORMAL FOOTER */}
-        <div className="mt-20 flex justify-between items-end">
-          <div className="text-[10px] text-slate-400 max-w-[250px]">
-            <p className="font-bold uppercase mb-1">Terms & Notes:</p>
-            <p>This is a computer-generated stock sheet. Prices are subject to change based on market fluctuations. Verify stock physically before dispatch.</p>
-          </div>
+          {/* FORMAL FOOTER */}
+          <div className="mt-20 flex justify-between items-end">
+            <div className="text-[10px] text-slate-400 max-w-[250px]">
+              <p className="font-bold uppercase mb-1">Terms & Notes:</p>
+              <p>This is a computer-generated stock sheet. Verify stock physically before dispatch.</p>
+            </div>
 
-          <div className="text-center min-w-[180px]">
-            <div className="h-12 w-full border-b border-slate-300 mb-2"></div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-800">Authorized Signatory</p>
+            <div className="text-center min-w-[180px]">
+              <div className="h-12 w-full border-b border-slate-300 mb-2"></div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-800">Authorized Signatory</p>
+            </div>
           </div>
         </div>
       </div>
-      {/* ================= END PRINT AREA ================= */}
+      {/* ================= END SCROLLABLE AREA ================= */}
 
-      {/* ACTION BUTTONS (HIDDEN ON PRINT) */}
-      <div className="flex justify-end gap-3 mt-8 print:hidden">
+      {/* ACTION BUTTONS (STAYS FIXED AT BOTTOM) */}
+      <div className="p-8 border-t border-slate-100 shrink-0 flex justify-end gap-3 print:hidden">
         <button
           onClick={() => setShowPrintModal(false)}
           className="px-6 py-2.5 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all"
@@ -1058,7 +1068,6 @@ const deleteProduct = (id) => {
     </div>
   </div>
 )}
-
 
     </div>
   );

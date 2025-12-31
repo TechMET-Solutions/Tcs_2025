@@ -1,9 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { 
-  Plus, X, Eye, EyeOff, CheckCircle2, Upload, 
-  Users, Edit3, Trash2, Ban, CheckCircle, ShieldAlert
+import {
+  Ban, CheckCircle,
+  CheckCircle2,
+  Edit3,
+  Eye, EyeOff,
+  Plus,
+  Trash2,
+  Upload,
+  X
 } from "lucide-react";
-import { createEmployeeAPI, getEmployeesAPI } from "../Component/API/employeeApi";
+import { useEffect, useState } from "react";
+import { createEmployeeAPI, deleteEmployeeAPI, getEmployeesAPI, toggleStatusAPI, updateEmployeeAPI } from "../Component/API/employeeApi";
 
 export default function EmployeeRegistration() {
   const [showModal, setShowModal] = useState(false);
@@ -20,12 +26,12 @@ export default function EmployeeRegistration() {
     phone: "",
     salary: "",
     expense: "",
-    advance: "",
     aadhar: null,
     pancard: null,
     status: "active" // added status field
   });
 
+  console.log(employee,"employee")
   const fetchEmployeesFromDB = async () => {
     try {
       const res = await getEmployeesAPI();
@@ -51,35 +57,51 @@ export default function EmployeeRegistration() {
   };
 
   // NEW: Toggle Block/Unblock Status
-  const handleToggleStatus = (id) => {
-    setEmployeeList(prev => prev.map(emp => {
-      if (emp.id === id) {
-        const newStatus = emp.status === "active" ? "blocked" : "active";
-        return { ...emp, status: newStatus };
-      }
-      return emp;
-    }));
-  };
-
-  const handleDelete = async (id) => {
-    if(window.confirm("Are you sure you want to delete this employee?")) {
-        setEmployeeList(employeeList.filter(emp => emp.id !== id));
+const handleToggleStatus = async (id, currentStatus) => {
+  // Determine the new status to send
+  debugger
+    const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
+    
+    try {
+        const response = await toggleStatusAPI(id, newStatus);
+        
+        if (response.data.success) {
+            // Update the local state list so the button changes instantly
+            setEmployeeList(prevList => 
+                prevList.map(emp => 
+                    emp.id === id ? { ...emp, status: newStatus } : emp
+                )
+            );
+            // Optional: Add a toast notification here
+        }
+    } catch (error) {
+        console.error("Failed to update status:", error);
+        alert("Error updating status. Please try again.");
     }
-  };
+};
 
-  const saveEmployee = async (e) => {
+ const handleDelete = async (id) => {
+    if (window.confirm("Delete this employee?")) {
+        try {
+            await deleteEmployeeAPI(id);
+            fetchEmployeesFromDB();
+        } catch (err) { console.log(err); }
+    }
+};
+
+ const saveEmployee = async (e) => {
     e.preventDefault();
     try {
-      if (modalMode === "add") {
-        await createEmployeeAPI(employee);
-      } else {
-        // await updateEmployeeAPI(employee.id, employee);
-      }
-      fetchEmployeesFromDB();
-      setShowModal(false);
-      resetForm();
+        if (modalMode === "add") {
+            await createEmployeeAPI(employee);
+        } else {
+            await updateEmployeeAPI(employee.id, employee);
+        }
+        fetchEmployeesFromDB();
+        setShowModal(false);
+        resetForm();
     } catch (err) { console.log(err); }
-  };
+};
 
   const resetForm = () => {
     setEmployee({ name: "", email: "", password: "", commission: "", birthdate: "", phone: "", salary: "", expense: "", advance: "", aadhar: null, pancard: null, status: "active" });
@@ -140,7 +162,7 @@ export default function EmployeeRegistration() {
                   <div className="flex gap-2">
                     {/* TOGGLE STATUS BUTTON */}
                     <button 
-                      onClick={() => handleToggleStatus(item.id)}
+                      onClick={() => handleToggleStatus(item.id,item.status)}
                       className={`p-2 rounded-lg transition-all ${item.status === 'active' ? 'text-slate-300 hover:text-red-500 hover:bg-red-50' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
                       title={item.status === 'active' ? "Block Employee" : "Unblock Employee"}
                     >
@@ -207,35 +229,73 @@ export default function EmployeeRegistration() {
                     </div>
                     <input type="number" name="salary" value={employee.salary} onChange={handleChange} placeholder="Monthly Salary (₹)" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-bold text-green-600" />
                     <input type="number" name="expense" value={employee.expense} onChange={handleChange} placeholder="Allowed Expense" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" />
-                    <input type="number" name="advance" value={employee.advance} onChange={handleChange} placeholder="Salary Advance" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" />
+                    
                     <input type="number" name="commission" value={employee.commission} onChange={handleChange} placeholder="Commission (%)" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" />
                   </div>
                 </div>
 
                 {/* SECTION 3: DOCUMENTS */}
                 <div className="space-y-4">
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FA9C42] border-b border-orange-100 pb-2">Verification Documents</h3>
-                  <div className="grid grid-cols-2 gap-8">
-                    {['aadhar', 'pancard'].map((doc) => (
-                      <label key={doc} className={`flex flex-col items-center justify-center h-36 border-2 border-dashed rounded-3xl cursor-pointer transition-all ${employee[doc] ? 'bg-green-50 border-green-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-                        {employee[doc] ? (
-                          <>
-                            <div className="bg-green-500 p-2 rounded-full mb-2 shadow-lg shadow-green-200">
-                              <CheckCircle2 className="text-white" size={20} />
-                            </div>
-                            <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest">{employee[doc].name.substring(0, 15)}...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="text-slate-300 mb-2" size={24} />
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Upload {doc}</span>
-                          </>
-                        )}
-                        <input type="file" name={doc} onChange={handleFileChange} className="hidden" />
-                      </label>
-                    ))}
-                  </div>
+  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FA9C42] border-b border-orange-100 pb-2">Verification Documents</h3>
+  <div className="grid grid-cols-2 gap-8">
+    {['aadhar', 'pancard'].map((doc) => {
+      // 1. Identify the file state (newly picked file)
+      const selectedFile = employee[doc]; 
+      
+      // 2. Identify the existing URL from your JSON (aadhar_url or pancard_url)
+      const existingUrl = doc === 'aadhar' ? employee.aadhar_url : employee.pancard_url;
+
+      // 3. Determine what to show in the preview
+      let previewSrc = null;
+      if (selectedFile instanceof File) {
+        previewSrc = URL.createObjectURL(selectedFile);
+      } else if (existingUrl) {
+        previewSrc = existingUrl;
+      }
+
+      return (
+        <label key={doc} className={`relative group flex flex-col items-center justify-center h-44 border-2 border-dashed rounded-3xl cursor-pointer transition-all overflow-hidden ${previewSrc ? 'border-green-300 bg-green-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
+          {previewSrc ? (
+            <>
+              {/* Actual Image Preview */}
+              <img 
+                src={previewSrc} 
+                alt={doc} 
+                className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
+              />
+              
+              {/* Hover Overlay to signal they can change the image */}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="text-white" size={20} />
+                  <span className="text-[10px] text-white font-bold uppercase tracking-widest">Change {doc}</span>
                 </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="absolute top-3 right-3 bg-green-500 p-1 rounded-full shadow-lg z-10">
+                <CheckCircle2 className="text-white" size={14} />
+              </div>
+            </>
+          ) : (
+            <>
+              <Upload className="text-slate-300 mb-2 group-hover:scale-110 transition-transform" size={24} />
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Upload {doc}</span>
+            </>
+          )}
+          
+          <input 
+            type="file" 
+            name={doc} 
+            onChange={handleFileChange} 
+            className="hidden" 
+            accept="image/*" 
+          />
+        </label>
+      );
+    })}
+  </div>
+</div>
               </div>
 
               {/* STICKY FOOTER ACTION */}
