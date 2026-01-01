@@ -1,6 +1,7 @@
-import { CheckCircle, CreditCard, FileText, Search, Trash2, Truck, X } from "lucide-react";
+import { CheckCircle, CreditCard, FileText, Trash2, Truck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { sendPaymentRequest } from "../Component/API/paymentApi";
 import { getAllQuotations } from "../Component/API/quotationApi";
 import QuotationHeader from "./QuotationHeader";
 
@@ -80,8 +81,8 @@ const navigate = useNavigate();
       amount: "", paymentType: "", remark: "",
       date: new Date().toISOString().slice(0, 10),
       grandTotal: q.grandTotal,
-      paid: q.paid || 0,
-      due: q.grandTotal - (q.paid || 0),
+      paid: q.paid_amount || 0,
+      due: q.due_amount,
     });
     setOpenPayModal(true);
   };
@@ -100,7 +101,22 @@ const navigate = useNavigate();
   };
 
   const openQuotationPDF = (id, mode) => window.open(`http://localhost:5000/api/Quotation/print/${id}?mode=${mode}`, "_blank");
-
+const handleSavePaymentRequest = async () => {
+    try {
+        const payload = {
+            quotation_id: selectedQuotation.id,
+            amount: paymentData.amount,
+            paymentType: paymentData.paymentType,
+            remark: paymentData.remark,
+            
+        };
+        await sendPaymentRequest(payload);
+        alert("Request sent to Admin for approval");
+        setOpenPayModal(false);
+    } catch (err) {
+        alert("Error sending request");
+    }
+};
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-6 md:p-10 font-['Lexend'] text-slate-700">
       
@@ -119,14 +135,14 @@ const navigate = useNavigate();
           <input className="outline-none w-full bg-transparent font-medium text-sm" placeholder="Search client..." onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div> */}
-      <QuotationHeader />
+      <QuotationHeader fetchQuotations={fetchQuotations} />
 
       {/* TABLE */}
       <div className="bg-white rounded-[35px] shadow-sm border border-slate-100 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50">
-              {["ID", "Client Details", "Date", "Status", "Amount", "Actions"].map((h) => (
+              {["ID", "Client Details", "Date", "Status", "Grand Total", "Paid Amount","Due Amount", "Actions"].map((h) => (
                 <th key={h} className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
               ))}
             </tr>
@@ -142,6 +158,8 @@ const navigate = useNavigate();
                 <td className="p-6 text-sm font-medium text-slate-500">{new Date(q.createdAt).toLocaleDateString('en-GB')}</td>
                 <td className="p-6"><span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">Active</span></td>
                 <td className="p-6 text-base font-black text-slate-800">₹{q.grandTotal.toLocaleString()}</td>
+                 <td className="p-6 text-base font-black text-slate-800">₹{q.paid_amount.toLocaleString()}</td>
+                  <td className="p-6 text-base font-black text-slate-800">₹{q.due_amount.toLocaleString()}</td>
                 <td className="p-6">
                   <div className="flex flex-wrap gap-2">
                     <button 
@@ -225,35 +243,80 @@ const navigate = useNavigate();
       )}
 
       {/* --- PAYMENT MODAL (Simplified UI) --- */}
-      {openPayModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-white p-8 w-full max-w-md rounded-[40px] shadow-2xl animate-in zoom-in duration-200">
-            <div className="flex justify-between items-center mb-6">
-               <h3 className="text-xl font-black text-slate-800 flex items-center gap-2 italic"><CreditCard className="text-blue-500"/> Settlement</h3>
-               <button onClick={() => setOpenPayModal(false)} className="p-2 text-slate-300 hover:text-red-500"><X size={20}/></button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-6">
-               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-[9px] font-black text-slate-400 uppercase">Grand Total</p>
-                  <p className="text-lg font-black text-slate-800">₹{paymentData.grandTotal}</p>
-               </div>
-               <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                  <p className="text-[9px] font-black text-orange-400 uppercase">Due</p>
-                  <p className="text-lg font-black text-orange-600">₹{paymentData.due}</p>
-               </div>
-            </div>
-            <div className="space-y-4">
-              <div><label className="modal-label">Payment Method</label>
-                <select className="lux-modal-input"><option>Cash</option><option>UPI</option></select>
-              </div>
-              <div><label className="modal-label">Amount</label>
-                <input className="lux-modal-input" type="number" placeholder="Enter amount" />
-              </div>
-            </div>
-            <button className="w-full mt-8 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-100">Save Payment</button>
-          </div>
+     {openPayModal && (
+  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+    <div className="bg-white p-8 w-full max-w-md rounded-[40px] shadow-2xl animate-in zoom-in duration-200">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-black text-slate-800 flex items-center gap-2 italic">
+          <CreditCard className="text-blue-500" /> Settlement
+        </h3>
+        <button onClick={() => setOpenPayModal(false)} className="p-2 text-slate-300 hover:text-red-500">
+          <X size={20} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+          <p className="text-[9px] font-black text-slate-400 uppercase">Paid Amount</p>
+          <p className="text-lg font-black text-slate-800">₹{paymentData.paid}</p>
         </div>
-      )}
+        <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+          <p className="text-[9px] font-black text-orange-400 uppercase">Due Amount</p>
+          <p className="text-lg font-black text-orange-600">₹{paymentData.due}</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {/* Payment Method Select */}
+        <div>
+          <label className="modal-label">Payment Method</label>
+          <select 
+            className="lux-modal-input"
+            value={paymentData.paymentType}
+            onChange={(e) => setPaymentData({ ...paymentData, paymentType: e.target.value })}
+          >
+            <option value="">Select Method</option>
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+          </select>
+        </div>
+
+        {/* Amount Input */}
+        <div>
+          <label className="modal-label">Amount</label>
+          <input 
+            className="lux-modal-input" 
+            type="number" 
+            placeholder="Enter amount" 
+            value={paymentData.amount}
+            onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+          />
+        </div>
+
+        {/* Remark Input (Optional but recommended) */}
+        <div>
+          <label className="modal-label">Remark</label>
+          <input 
+            className="lux-modal-input" 
+            type="text" 
+            placeholder="e.g. Received by hand" 
+            value={paymentData.remark}
+            onChange={(e) => setPaymentData({ ...paymentData, remark: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <button 
+        className="w-full mt-8 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-100 disabled:bg-slate-300" 
+        onClick={handleSavePaymentRequest}
+        disabled={!paymentData.amount || !paymentData.paymentType}
+      >
+        Save Payment
+      </button>
+    </div>
+  </div>
+)}
 
       {/* --- DC MODAL (Simplified UI) --- */}
       {openDCModal && (

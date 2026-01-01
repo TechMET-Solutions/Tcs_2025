@@ -1,21 +1,56 @@
-import React, { useState } from 'react';
-import { FileText, Search, Bell, Check, X, CreditCard } from 'lucide-react';
+import { Bell, Check, CreditCard, FileText, Search, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getPendingRequests, updateRequestStatus } from '../Component/API/paymentApi';
 
-const QuotationHeader = () => {
+const QuotationHeader = ({fetchQuotations}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState("");
-  
-  // Example data based on your database structure
-  const [requests, setRequests] = useState([
-    { id: 1, name: "Sumit Pathak", amount: "5000", date: "2025-11-27", status: "pending" },
-    { id: 2, name: "Yogesh", amount: "1200", date: "2025-12-18", status: "pending" }
-  ]);
+  const [requests, setRequests] = useState([]);
 
-  const handleStatusUpdate = (id, newStatus) => {
-    // Here you would call your API (e.g., /api/payment/status)
-    setRequests(requests.filter(req => req.id !== id));
-    console.log(`Request ${id} marked as ${newStatus}`);
-  };
+
+// Fetch requests whenever the modal is opened
+
+
+const fetchRequests = async () => {
+  try {
+    const res = await getPendingRequests();
+    if (res.data.success) {
+      setRequests(res.data.requests);
+    }
+  } catch (error) {
+    console.error("Error fetching requests:", error);
+  }
+};
+useEffect(() => {
+  if (isModalOpen) {
+    fetchRequests();
+  }
+}, [isModalOpen]);
+const handleStatusUpdate = async (requestId, status) => {
+  try {
+    const res = await updateRequestStatus(requestId, status);
+    if (res.data.success) {
+      alert(res.data.message);
+      // Refresh the list locally
+      setRequests(prev => prev.filter(req => req.id !== requestId));
+      // Optional: if you are on the ManageQuotation page, refresh that list too
+      if (typeof fetchQuotations === 'function') fetchQuotations();
+    }
+  } catch (error) {
+    alert("Action failed: " + error.message);
+  }
+};
+  // Example data based on your database structure
+//   const [requests, setRequests] = useState([
+//     { id: 1, name: "Sumit Pathak", amount: "5000", date: "2025-11-27", status: "pending" },
+//     { id: 2, name: "Yogesh", amount: "1200", date: "2025-12-18", status: "pending" }
+//   ]);
+
+//   const handleStatusUpdate = (id, newStatus) => {
+//     // Here you would call your API (e.g., /api/payment/status)
+//     setRequests(requests.filter(req => req.id !== id));
+//     console.log(`Request ${id} marked as ${newStatus}`);
+//   };
 
   return (
     <div className="relative">
@@ -53,61 +88,93 @@ const QuotationHeader = () => {
       </div>
 
       {/* --- MODAL OVERLAY --- */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white w-full max-w-lg rounded-[30px] shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-            {/* Modal Header */}
-            <div className="p-6 border-b border-slate-50 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-50 text-orange-500 rounded-lg"><CreditCard size={20}/></div>
-                <h2 className="text-xl font-bold text-slate-800">Payment Requests</h2>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                <X size={20} className="text-slate-400" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 max-h-[400px] overflow-y-auto">
-              {requests.length === 0 ? (
-                <p className="text-center text-slate-400 py-10">No pending requests found.</p>
-              ) : (
-                <div className="space-y-4">
-                  {requests.map((req) => (
-                    <div key={req.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
-                      <div>
-                        <h4 className="font-bold text-slate-800">{req.name}</h4>
-                        <p className="text-xs text-slate-500">{req.date} • <span className="font-bold text-orange-600">₹{req.amount}</span></p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => handleStatusUpdate(req.id, 'rejected')}
-                          className="p-2 bg-white text-red-500 border border-red-100 rounded-xl hover:bg-red-50 transition-colors shadow-sm"
-                        >
-                          <X size={18} />
-                        </button>
-                        <button 
-                          onClick={() => handleStatusUpdate(req.id, 'approved')}
-                          className="p-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors shadow-md shadow-green-100"
-                        >
-                          <Check size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-6 bg-slate-50/50 rounded-b-[30px] text-center">
-              <button onClick={() => setIsModalOpen(false)} className="text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors">
-                Close Panel
-              </button>
-            </div>
-          </div>
+ {isModalOpen && (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden border border-slate-100">
+      
+      {/* Header - Using your Logo/Sidebar Orange */}
+      <div className="bg-[#ff7300] p-6 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <CreditCard className="text-white" size={24} />
+          <h2 className="text-xl font-bold text-white tracking-tight">Payment Requests</h2>
         </div>
-      )}
+        <button onClick={() => setIsModalOpen(false)} className="text-white/80 hover:text-white transition-colors">
+          <X size={24} />
+        </button>
+      </div>
+
+      {/* List Content */}
+      <div className="max-h-[400px] overflow-y-auto bg-white">
+        {requests.length === 0 ? (
+          <div className="py-12 text-center text-slate-400 font-medium">
+            No pending requests found.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-50">
+            {requests.map((req) => (
+              <div key={req.id} className="p-5 hover:bg-slate-50 transition-colors">
+                
+                {/* Meta Row: ID & Date */}
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] font-black bg-slate-800 text-white px-2 py-0.5 rounded uppercase">
+                    Quotation #{req.quotation_id}
+                  </span>
+                  <span className="text-xs text-slate-400 font-bold">
+                    {new Date(req.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+
+                {/* Client & Amount */}
+                <div className="flex justify-between items-end mb-4">
+                  <div>
+                    <h4 className="text-lg font-bold text-slate-800 leading-none capitalize">{req.client_name}</h4>
+                    <p className="text-xs text-[#ff7300] font-bold mt-1 uppercase tracking-wider">{req.payment_type}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-black text-slate-900">₹{Number(req.amount).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {/* Remark */}
+                {req.remark && (
+                  <div className="mb-4 text-xs text-slate-500 italic bg-slate-100 p-3 rounded-lg border-l-4 border-slate-300">
+                    "{req.remark}"
+                  </div>
+                )}
+
+                {/* Buttons - Matching Sidebar Styles */}
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => handleStatusUpdate(req.id, 'rejected')}
+                    className="flex-1 py-2.5 rounded-xl border-2 border-slate-100 text-slate-400 font-bold text-sm hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all"
+                  >
+                    Reject
+                  </button>
+                  <button 
+                    onClick={() => handleStatusUpdate(req.id, 'approved')}
+                    className="flex-[2] py-2.5 rounded-xl bg-[#ff7300] text-white font-bold text-sm hover:bg-[#e66700] shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-2"
+                  >
+                    Approve Payment <Check size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="p-4 bg-slate-50 border-t border-slate-100 text-center">
+        <button 
+          onClick={() => setIsModalOpen(false)} 
+          className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest"
+        >
+          Close Panel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };
