@@ -139,7 +139,7 @@ useEffect(() => {
   const saveQuotation = async () => {
     try {
       const payload = { 
-        clientDetails: { name: clientName, contactNo: clientContact, email: clientEmail, address: clientAddress, gstNo: clientGst }, 
+        clientDetails: { name: clientName, contactNo: clientContact, email: clientEmail, address: clientAddress, gstNo: clientGst, architect:selectedArchitect }, 
         headerSection, bottomSection, rows, itemTotal, additionalDiscount, grandTotal, feedback 
       };
 
