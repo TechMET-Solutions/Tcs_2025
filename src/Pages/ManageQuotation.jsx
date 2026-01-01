@@ -1,4 +1,4 @@
-import { CheckCircle, CreditCard, FileText, Trash2, Truck, X } from "lucide-react";
+import { CheckCircle, ChevronRight, CreditCard, FileText, Trash2, Truck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendPaymentRequest } from "../Component/API/paymentApi";
@@ -24,7 +24,21 @@ const navigate = useNavigate();
     date: new Date().toISOString().slice(0, 10),
     grandTotal: 0, paid: 0, due: 0,
   });
+// 1. Driver Details State
+const [driverDetails, setDriverDetails] = useState({
+    deliveryBoy: '',
+    contact: '',
+    tempo: ''
+});
 
+// 2. Handle Box Update for the specific product
+const handleBoxUpdate = (productId, value) => {
+    setDcItems(prev => prev.map(item => 
+        item.productId === productId 
+        ? { ...item, dispatchBoxes: value } 
+        : item
+    ));
+};
   useEffect(() => {
     fetchQuotations();
   }, []);
@@ -39,7 +53,57 @@ const navigate = useNavigate();
   const filteredData = quotationList.filter((q) =>
     q.clientName?.toLowerCase().includes(search.toLowerCase())
   );
+const handleSubmitDC = async () => {
+    // 1. Filter items where dispatchBoxes > 0
+    const itemsToDispatch = dcItems
+        .filter(item => item.dispatchBoxes > 0)
+        .map(item => ({
+            productId: item.productId,
+            productName: item.productName,
+            dispatchBoxes: parseInt(item.dispatchBoxes),
+            // remainingStock sent to backend is: currentStock - what we are sending now
+            remainingStock: item.currentStock - parseInt(item.dispatchBoxes) 
+        }));
 
+    if (itemsToDispatch.length === 0) {
+        alert("Please enter boxes for at least one item.");
+        return;
+    }
+
+    // 2. Construct the exact JSON structure your backend expects
+    const payload = {
+        quotationId: selectedQuotation.id, // Ensure this is available
+        client: selectedQuotation.clientName,
+        contact: selectedQuotation.contactNo,
+        address: selectedQuotation.address,
+        driverDetails: {
+            deliveryBoy: driverDetails.deliveryBoy,
+            contact: driverDetails.contact,
+            tempo: driverDetails.tempo
+        },
+        items: itemsToDispatch
+    };
+
+    try {
+        const response = await fetch('http://localhost:5000/api/Quotation/generate-dc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert("DC Created Successfully!");
+            setOpenDCModal(false);
+            // Refresh quotations to update the numbers on the main screen
+            fetchQuotations(); 
+        } else {
+            alert("Error: " + data.error);
+        }
+    } catch (error) {
+        console.error("Submission error:", error);
+    }
+};
   // --- EDIT LOGIC ---
   const handleEditClick = (q) => {
     setEditData({
@@ -320,40 +384,90 @@ const handleSavePaymentRequest = async () => {
 
       {/* --- DC MODAL (Simplified UI) --- */}
       {openDCModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[40px] shadow-2xl flex flex-col">
-            <div className="p-8 border-b flex justify-between items-center bg-orange-50/30">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-white rounded-xl text-orange-500 shadow-sm"><Truck size={24}/></div>
-                <h2 className="text-xl font-black text-slate-800 uppercase italic tracking-tighter">Dispatch Challan</h2>
-              </div>
-              <button onClick={() => setOpenDCModal(false)} className="p-2 text-slate-300 hover:text-red-500"><X size={24}/></button>
-            </div>
-            <div className="p-8 overflow-y-auto space-y-6">
-              <div className="grid grid-cols-3 gap-4">
-                {["Delivery Boy", "Contact", "Vehicle No"].map(l => (
-                  <div key={l}><label className="modal-label">{l}</label><input className="lux-modal-input" /></div>
-                ))}
-              </div>
-              <div className="space-y-2">
-                {dcItems.map((p, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="font-bold text-slate-700 w-1/3">{p.productName}</span>
-                    <div className="flex gap-4">
-                      <div className="text-center"><label className="text-[8px] block font-black text-slate-400">Dispatch</label><input type="number" className="w-16 p-1 rounded-lg border" /></div>
-                      <div className="text-center"><label className="text-[8px] block font-black text-slate-400">Qty/Box</label><input type="number" className="w-16 p-1 rounded-lg border" /></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="p-8 border-t flex justify-end gap-4">
-               <button onClick={() => setOpenDCModal(false)} className="px-8 font-black text-slate-400 text-[10px]">Cancel</button>
-               <button className="px-10 py-4 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-orange-100">Create DC</button>
-            </div>
-          </div>
+  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+    <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[40px] shadow-2xl flex flex-col">
+      
+      {/* Header */}
+      <div className="p-8 border-b flex justify-between items-center bg-orange-50/30">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-white rounded-xl text-orange-500 shadow-sm"><Truck size={24}/></div>
+          <h2 className="text-xl font-black text-slate-800 uppercase italic tracking-tighter">Dispatch Challan</h2>
         </div>
-      )}
+        <button onClick={() => setOpenDCModal(false)} className="p-2 text-slate-300 hover:text-red-500"><X size={24}/></button>
+      </div>
+
+      <div className="p-8 overflow-y-auto space-y-6">
+        {/* Driver/Delivery Details */}
+        <div className="grid grid-cols-3 gap-4">
+           <div>
+              <label className="modal-label">Delivery Boy</label>
+              <input className="lux-modal-input" placeholder="Name" onChange={(e) => setDriverDetails({...driverDetails, deliveryBoy: e.target.value})} />
+           </div>
+           <div>
+              <label className="modal-label">Contact</label>
+              <input className="lux-modal-input" placeholder="Phone" onChange={(e) => setDriverDetails({...driverDetails, contact: e.target.value})} />
+           </div>
+           <div>
+              <label className="modal-label">Vehicle No (Tempo)</label>
+              <input className="lux-modal-input" placeholder="MH-15..." onChange={(e) => setDriverDetails({...driverDetails, tempo: e.target.value})} />
+           </div>
+        </div>
+
+        {/* Item Selection - BOX ONLY */}
+       <div className="space-y-3">
+  <h3 className="text-[10px] font-black uppercase text-slate-400">Items for Dispatch</h3>
+  {dcItems.map((p, i) => (
+    <div key={i} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-orange-200 transition-all">
+      <div className="flex flex-col gap-1">
+        {/* Physical Stock in Warehouse */}
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${p.currentStock > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <span className="text-[10px] font-bold text-slate-500 uppercase">
+            In Warehouse: <span className="text-slate-900">{p.currentStock} Boxes</span>
+          </span>
+        </div>
+
+        <span className="font-bold text-slate-700 text-lg leading-tight">{p.productName}</span>
+        
+        {/* Quote Progress */}
+        <div className="flex gap-2">
+          <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
+            Pending in Quote: {p.remainingBoxes} Boxes
+          </span>
+        </div>
+      </div>
+      
+      <div className="flex flex-col items-end">
+        <label className="text-[10px] font-black text-slate-400 uppercase mb-1">Dispatch Now</label>
+        <div className="flex items-center bg-white rounded-xl border border-slate-200 px-3 py-2 shadow-sm">
+          <input 
+            type="number" 
+            className="w-20 text-center font-black text-slate-800 outline-none" 
+            placeholder="0"
+            // Ensure they don't dispatch more than what they physically have
+            max={p.currentStock} 
+            onChange={(e) => handleBoxUpdate(p.productId, e.target.value)}
+          />
+          <span className="text-[10px] ml-2 font-bold text-slate-300">BOX</span>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+      </div>
+
+      <div className="p-8 border-t flex justify-end gap-4 bg-slate-50/50">
+          <button onClick={() => setOpenDCModal(false)} className="px-8 font-black text-slate-400 text-[10px] uppercase">Cancel</button>
+          <button 
+            onClick={handleSubmitDC}
+            className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg hover:bg-orange-600 transition-all flex items-center gap-2"
+          >
+            Generate Challan <ChevronRight size={14}/>
+          </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* STYLES */}
       <style>{`
