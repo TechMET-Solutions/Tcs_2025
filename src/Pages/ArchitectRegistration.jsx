@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 // Importing all necessary icons
-import { 
-  Plus, X, UserCircle, Phone, Percent, 
-  Calendar, Award, Search, Edit3, Trash2, Users 
+import {
+  Plus, X, UserCircle, Phone, Percent,
+  Calendar, Award, Search, Edit3, Trash2, Users
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { formatIndianDate } from "../utils/formatIndianDate";
 
 const BASE_URL = "http://localhost:5000/api/architects";
 
@@ -17,7 +18,7 @@ export default function ArchitectRegistration() {
   const [architectList, setArchitectList] = useState([]);
   const navigate = useNavigate();
   const [architect, setArchitect] = useState({
-    name: "",
+    firstname: "",
     lastname: "",
     whatsapp: "",
     commission: "",
@@ -25,6 +26,7 @@ export default function ArchitectRegistration() {
     loyaltyPoints: "",
     remark: ""
   });
+
 
   // --- API CALLS ---
   const fetchArchitects = async () => {
@@ -47,12 +49,18 @@ export default function ArchitectRegistration() {
 
   const handleOpenAddModal = () => {
     setArchitect({
-      name: "", lastname: "", whatsapp: "",
-      commission: "", birthdate: "", loyaltyPoints: "", remark: ""
+      firstname: "",
+      lastname: "",
+      whatsapp: "",
+      commission: "",
+      birthdate: "",
+      loyaltyPoints: "",
+      remark: ""
     });
     setModalMode("add");
     setShowModal(true);
   };
+
 
   const handleOpenEditModal = (data) => {
     setArchitect(data);
@@ -61,29 +69,41 @@ export default function ArchitectRegistration() {
   };
 
   const saveArchitect = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  try {
+    if (modalMode === "add") {
+      await axios.post(`${BASE_URL}/create`, architect);
+    } else {
+      await axios.put(`${BASE_URL}/update/${architect.id}`, architect);
+    }
+    fetchArchitects();
+    setShowModal(false);
+  } catch (err) {
+    console.error("Save Error:", err);
+  }
+  };
+  
+  const deleteArchitect = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this architect?")) return;
     try {
-      if (modalMode === "add") {
-        await axios.post(`${BASE_URL}/create`, architect);
-      } else {
-        await axios.put(`${BASE_URL}/update/${architect.id}`, architect);
-      }
+      await axios.delete(`${BASE_URL}/delete/${id}`);
       fetchArchitects();
-      setShowModal(false);
     } catch (err) {
-      console.error("Save Error:", err);
+      console.error("Delete Error:", err);
     }
   };
 
+
   // --- FILTER LOGIC ---
-  const filteredList = architectList.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredList = architectList.filter(item =>
+    item.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.lastname?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+
   return (
     <div className="p-8 bg-[#fdfaf7] min-h-screen">
-      
+
       {/* PAGE HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-4">
@@ -100,7 +120,7 @@ export default function ArchitectRegistration() {
           {/* SEARCH BAR */}
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
+            <input
               type="text"
               placeholder="Search by name..."
               value={searchTerm}
@@ -145,16 +165,17 @@ export default function ArchitectRegistration() {
               ) : (
                 filteredList.map((item) => (
                   <tr key={item.id} className="hover:bg-[#FA9C42]/5 transition-colors group">
-                   <td className="py-4 px-6 cursor-pointer" onClick={() => navigate(`/architect/${item.id}`)}>
-  <div className="flex items-center gap-3">
-    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-[#FA9C42] group-hover:text-white transition-all">
-      <UserCircle size={20} />
-    </div>
-    <span className="font-bold text-slate-700 hover:text-[#FA9C42] underline decoration-dotted">
-       {item.name} {item.lastname}
-    </span>
-  </div>
-</td>
+                    <td className="py-4 px-6 cursor-pointer" onClick={() => navigate(`/architect/${item.id}`)}>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-[#FA9C42] group-hover:text-white transition-all">
+                          <UserCircle size={20} />
+                        </div>
+                        <span className="font-bold text-slate-700 hover:text-[#FA9C42] underline decoration-dotted">
+                          {item.firstname} {item.lastname}
+                        </span>
+
+                      </div>
+                    </td>
                     <td className="py-4 px-6 text-sm font-medium text-slate-600">
                       <div className="flex items-center gap-2">
                         <Phone size={14} className="text-green-500" /> {item.whatsapp}
@@ -165,7 +186,7 @@ export default function ArchitectRegistration() {
                         {item.commission}%
                       </span>
                     </td>
-                    <td className="py-4 px-6 text-sm text-slate-500 font-medium">{item.birthdate}</td>
+                    <td className="py-4 px-6 text-sm text-slate-500 font-medium">{formatIndianDate(item.birthdate)}</td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-1.5 text-blue-600 font-bold">
                         <Award size={16} /> {item.loyaltyPoints}
@@ -173,13 +194,15 @@ export default function ArchitectRegistration() {
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
+                        <button
                           onClick={() => handleOpenEditModal(item)}
                           className="p-2 hover:bg-white rounded-lg shadow-sm border border-slate-100 text-slate-400 hover:text-[#FA9C42]"
                         >
                           <Edit3 size={16} />
                         </button>
-                        <button className="p-2 hover:bg-white rounded-lg shadow-sm border border-slate-100 text-slate-400 hover:text-red-500">
+                        <button
+                          onClick={() => deleteArchitect(item.id)}
+                          className="p-2 hover:bg-white rounded-lg shadow-sm border border-slate-100 text-slate-400 hover:text-red-500">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -196,7 +219,7 @@ export default function ArchitectRegistration() {
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md transition-opacity p-4">
           <div className="w-full max-w-[650px] bg-[#FFF7EF] rounded-[28px] shadow-2xl overflow-hidden border border-white/20 animate-in fade-in zoom-in duration-200">
-            
+
             {/* MODAL HEADER */}
             <div className="px-10 pt-8 pb-4">
               <div className="flex items-center justify-between">
@@ -224,11 +247,25 @@ export default function ArchitectRegistration() {
               <div className="grid grid-cols-2 gap-x-6 gap-y-5">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">First Name *</label>
-                  <input name="name" value={architect.name} onChange={handleChange} placeholder="e.g. Rahul" className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] focus:ring-4 focus:ring-[#FA9C42]/5 outline-none transition-all font-medium text-slate-700" required />
+                  <input
+                    name="firstname"
+                    value={architect.firstname}
+                    onChange={handleChange}
+                    placeholder="e.g. Rahul"
+                    className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42]"
+                    required
+                  />
+
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">Last Name *</label>
-                  <input name="lastname" value={architect.lastname} onChange={handleChange} placeholder="e.g. Mehta" className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium text-slate-700" required />
+                  <input 
+                  name="lastname" 
+                  value={architect.lastname} 
+                  onChange={handleChange} 
+                  placeholder="e.g. Mehta" 
+                  className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium text-slate-700" 
+                  required />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">WhatsApp *</label>

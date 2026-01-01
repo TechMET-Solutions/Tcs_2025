@@ -20,7 +20,23 @@ export default function AddQuotation() {
   const [clientAddress, setClientAddress] = useState("");
   const [clientGst, setClientGst] = useState(""); 
   const [attendedBy, setAttendedBy] = useState("");
-  const [architect, setArchitect] = useState("");
+const [architects, setArchitects] = useState([]); // List from API
+const [selectedArchitect, setSelectedArchitect] = useState(""); // The ID of selected architect
+
+useEffect(() => {
+  const fetchArchitects = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/architects/list');
+      if (response.data.success) {
+        setArchitects(response.data.architects);
+      }
+    } catch (error) {
+      console.error("Error fetching architects:", error);
+    }
+  };
+
+  fetchArchitects();
+}, []);
   const [additionalDiscount, setAdditionalDiscount] = useState(0);
 
   const [products, setProducts] = useState([]);
@@ -172,31 +188,55 @@ export default function AddQuotation() {
           <div className="lg:col-span-8 space-y-10">
             
             {/* CLIENT INFO */}
-            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="p-3 bg-orange-50 rounded-2xl text-[#FF7A00]"><User size={24}/></div>
-                <h3 className="text-xl font-black text-slate-800 tracking-tight">Client Details</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Client Full Name</label>
-                  <input className="lux-input" placeholder="Type here..." value={clientName} onChange={(e) => setClientName(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-orange-400 uppercase tracking-widest ml-1">Client GST Number</label>
-                  <input className="lux-input border-orange-100" placeholder="27XXXXX..." value={clientGst} onChange={(e) => setClientGst(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contact Number</label>
-                  <input className="lux-input" placeholder="+91" value={clientContact} onChange={(e) => setClientContact(e.target.value)} />
-                </div>
-                <div className="md:col-span-2 space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Site Address</label>
-                  <input className="lux-input" placeholder="Full location..." value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} />
-                </div>
-              </div>
-            </div>
+         <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100">
+  <div className="flex items-center gap-3 mb-8">
+    <div className="p-3 bg-orange-50 rounded-2xl text-[#FF7A00]"><User size={24}/></div>
+    <h3 className="text-xl font-black text-slate-800 tracking-tight">Client Details</h3>
+  </div>
+  
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {/* Client Full Name */}
+    <div className="md:col-span-2 space-y-1">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Client Full Name</label>
+      <input className="lux-input" placeholder="Type here..." value={clientName} onChange={(e) => setClientName(e.target.value)} />
+    </div>
+
+    {/* Architect Dropdown - Dynamic */}
+    <div className="space-y-1">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Select Architect</label>
+      <select 
+        className="lux-input bg-white" 
+        value={selectedArchitect} 
+        onChange={(e) => setSelectedArchitect(e.target.value)}
+      >
+        <option value="">Choose Architect...</option>
+        {architects.map((arch) => (
+          <option key={arch.id} value={arch.id}>
+            {arch.firstname} {arch.lastname}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    {/* Client GST Number */}
+    <div className="space-y-1">
+      <label className="text-[10px] font-black text-orange-400 uppercase tracking-widest ml-1">Client GST Number</label>
+      <input className="lux-input border-orange-100" placeholder="27XXXXX..." value={clientGst} onChange={(e) => setClientGst(e.target.value)} />
+    </div>
+
+    {/* Contact Number */}
+    <div className="space-y-1">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contact Number</label>
+      <input className="lux-input" placeholder="+91" value={clientContact} onChange={(e) => setClientContact(e.target.value)} />
+    </div>
+
+    {/* Site Address */}
+    <div className="md:col-span-2 space-y-1">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Site Address</label>
+      <input className="lux-input" placeholder="Full location..." value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} />
+    </div>
+  </div>
+</div>
 
             {/* INTRO NOTE */}
             <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100">
