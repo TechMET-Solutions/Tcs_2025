@@ -136,26 +136,49 @@ useEffect(() => {
   const grandTotal = (itemTotal - Number(additionalDiscount)).toFixed(2);
 
   // ---------------- SAVE / UPDATE LOGIC ----------------
+  
   const saveQuotation = async () => {
+    debugger
     try {
-      const payload = { 
-        clientDetails: { name: clientName, contactNo: clientContact, email: clientEmail, address: clientAddress, gstNo: clientGst, architect:selectedArchitect }, 
-        headerSection, bottomSection, rows, itemTotal, additionalDiscount, grandTotal, feedback 
+      const payload = {
+        quotationId: isEditMode ? editData.id : undefined,
+        clientDetails: {
+          name: clientName,
+          contactNo: clientContact,
+          email: clientEmail,
+          address: clientAddress,
+          gstNo: clientGst,
+          attendedBy,
+          architect: selectedArchitect
+        },
+        headerSection,
+        bottomSection,
+        rows,
+        grandTotal: Number(grandTotal)
       };
 
       if (isEditMode) {
-        await axios.put(`http://localhost:5000/api/Quotation/update/${editData.id}`, payload);
+        await axios.put(
+          `http://localhost:5000/api/Quotation/updateQuotation/${editData.id}`,
+          payload
+        );
         alert("Quotation Updated Successfully!");
       } else {
-        await axios.post("http://localhost:5000/api/Quotation/saveQuotation", payload);
+        await axios.post(
+          "http://localhost:5000/api/Quotation/saveQuotation",
+          payload
+        );
         alert("Quotation Saved Successfully!");
       }
+
       navigate("/quotation/manage");
-    } catch (err) { 
-      alert("Error processing quotation"); 
+
+    } catch (err) {
       console.error(err);
+      alert("Error processing quotation");
     }
   };
+
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-4 md:p-10 font-['Lexend'] text-slate-700">
