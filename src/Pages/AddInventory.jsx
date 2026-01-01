@@ -1,6 +1,6 @@
-import { Plus, Trash2, Calendar, User, Phone, Package, Info, CheckCircle2, ShoppingBag, X } from "lucide-react";
+import { Calendar, CheckCircle2, Info, Phone, Plus, Trash2, User } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { addPurchaseAPI } from "../Component/API/inventoryApi";
 import { getProductAPI } from "../Component/API/productApi";
 
@@ -9,7 +9,13 @@ export default function AddInventory() {
   const [products, setProducts] = useState([]);
   const [rows, setRows] = useState([]);
   const [subTotal, setSubTotal] = useState(0);
+const location = useLocation();
+  
+  // 1. Extract the passed data
+  const editData = location.state?.data; 
+  const isEditMode = !!editData;
 
+  console.log(editData,isEditMode,"data")
   // Brand Colors from your screenshots
   const BRAND_ORANGE = "#FF7A00";
   const SIDEBAR_DARK = "#1E1E1E";
@@ -34,7 +40,42 @@ export default function AddInventory() {
     cov: 1, batches: [], batchNo: "", availQty: 0, qty: "", total: 0,
     godown: "KKW", filteredProducts: [],
   };
+  useEffect(() => {
+  if (isEditMode && editData && products.length > 0) {
+    // 1. Populate Metadata (Matching your JSON keys)
+    setPurchaseMeta({
+      purchaseDate: editData.purchase_date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+      clientName: editData.client_name || "",
+      clientContact: editData.client_contact || "",
+      billNo: editData.bill_no || "",
+    });
 
+    // 2. Populate Rows
+    if (editData.items && editData.items.length > 0) {
+      const mappedRows = editData.items.map(item => {
+        // Find the product details from the 'products' state using the product_id
+        const productInfo = products.find(p => p.id === item.product_id) || {};
+
+        return {
+          productId: item.product_id, // Match JSON key: product_id
+          productName: productInfo.name || "Unknown Product",
+          size: productInfo.size || "",
+          quality: productInfo.quality || "",
+          rate: item.rate,
+          cov: item.cov || 1,
+          batchNo: item.batch_no || "", // Match JSON key: batch_no
+          availQty: 0, // Will be updated if user selects batch
+          qty: item.qty,
+          total: Number(item.total),
+          godown: item.godown || "KKW",
+          batches: productInfo.batches || [], // Fill batches from master product list
+          filteredProducts: []
+        };
+      });
+      setRows(mappedRows);
+    }
+  }
+}, [isEditMode, editData, products]); // Added products to dependency to ensure info is available
   useEffect(() => {
     getProductAPI().then((res) => {
       setProducts(res.data.products || []);

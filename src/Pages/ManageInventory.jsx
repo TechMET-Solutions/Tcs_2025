@@ -105,7 +105,7 @@ export default function ManageInventory() {
 
               <div className="grid grid-cols-3 gap-3">
                 <button onClick={() => { setSelectedPurchase(p); setShowModal(true); }} className="btn-action hover:bg-slate-100"><Eye size={18}/></button>
-                <button onClick={() => navigate("/inventory/add", { state: { editId: p.id } })} className="btn-action hover:bg-orange-50 hover:text-[#FF7A00]"><Edit3 size={18}/></button>
+                <button onClick={() => navigate("/inventory/add", { state: { data: p } })} className="btn-action hover:bg-orange-50 hover:text-[#FF7A00]"><Edit3 size={18}/></button>
                 <button className="btn-action hover:bg-red-50 hover:text-red-500"><Trash2 size={18}/></button>
               </div>
             </div>
