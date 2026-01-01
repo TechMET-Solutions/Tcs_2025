@@ -69,7 +69,7 @@ useEffect(() => {
       setClientAddress(editData.address || "");
       setClientGst(editData.gstNo || ""); 
       setAttendedBy(editData.attendedBy || "");
-      setArchitect(editData.architect || "");
+     setSelectedArchitect(editData.architect || "");
       
       setHeaderSection(editData.headerSection || "");
       setBottomSection(editData.bottomSection || "");
