@@ -2,6 +2,7 @@ import {
   BadgeCheck,
   ChevronDown,
   ChevronRight,
+  DraftingCompass,
   FileChartColumn,
   FilePlus,
   FileSignature,
@@ -51,7 +52,7 @@ export default function Sidebar() {
     { label: "Category Management", icon: <Grid2X2 />, path: "/Category-Management" },
     { label: "Brand Management", icon: <Tag />, path: "/Brand-Management" },
     { label: "Product Registration", icon: <Package />, path: "/product-registration" },
-    { label: "Architect Registration", icon: <Package />, path: "/Architect-Registration" },
+    { label: "Architect Registration", icon: <DraftingCompass />, path: "/Architect-Registration" },
   ];
 
   const inventorySubMenu = [
