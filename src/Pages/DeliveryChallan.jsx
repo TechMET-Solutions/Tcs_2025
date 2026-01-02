@@ -2,6 +2,10 @@ import { ClipboardList, Printer, Trash2, MapPin, ExternalLink, Calendar, User, T
 import { useEffect, useState } from "react";
 import { getAllDeliveryChallan } from "../Component/API/quotationApi";
 import axios from "axios";
+import {
+  getTrackingByChallan, addTracking,
+  deleteTracking
+} from "../Component/API/trackingApi";
 
 const API_URL = "http://localhost:5000/api/Quotation"
 
@@ -12,10 +16,9 @@ export default function DeliveryChallan() {
   const [trackingDate, setTrackingDate] = useState("");
   const [trackingStatus, setTrackingStatus] = useState("");
 
-  const [trackingList] = useState([
-    { id: 1, date: "2025-01-01 10:00 AM", status: "Preparing For Dispatch" },
-    { id: 2, date: "2025-01-02 12:00 PM", status: "Dispatched" }
-  ]);
+  const [trackingList, setTrackingList] = useState([]);
+  const [loadingTracking, setLoadingTracking] = useState(false);
+
 
   useEffect(() => {
     fetchChallans();
@@ -32,27 +35,78 @@ export default function DeliveryChallan() {
     }
   };
 
-  const handleDeleteItem = async (itemId) => {
+  const handleDeleteItem = async (challanId) => {
+    if (!window.confirm("Delete this delivery challan?")) return;
     debugger
-    if (!window.confirm("Delete this item?")) return;
-
     try {
       await axios.delete(
-        `${API_URL}/deleteQuotation/${itemId}`
+        `${API_URL}/delivery-challan/delete/${challanId}`
       );
 
-      // Instantly update UI
+      // Update UI immediately
       setChallanList(prev =>
-        prev.filter(item => item.id !== itemId)
+        prev.filter(item => item.id !== challanId)
       );
 
-      console.log("Item deleted:", itemId);
+      console.log("Challan deleted:", challanId);
 
     } catch (error) {
       console.error("Delete failed:", error);
-      alert("Failed to delete item");
+      alert("Failed to delete delivery challan");
     }
   };
+
+
+  const openTrackingModal = async (id) => {
+    setTrackingChallanId(id);
+    setShowTrackingModal(true);
+    setLoadingTracking(true);
+
+    try {
+      const res = await getTrackingByChallan(id);
+      setTrackingList(res.data);
+    } catch (err) {
+      console.error("Failed to load tracking", err);
+    } finally {
+      setLoadingTracking(false);
+    }
+  };
+
+  const handleAddTracking = async () => {
+    debugger
+    if (!trackingDate || !trackingStatus || trackingStatus === "~~ SELECT ~~") {
+      alert("Please select date and status");
+      return;
+    }
+
+    try {
+      const payload = {
+        challanId: trackingChallanId,
+        status: trackingStatus,
+        trackedAt: trackingDate
+      };
+
+      const res = await addTracking(payload);
+
+      // Refresh list instantly
+      setTrackingList(prev => [
+        {
+          id: res.data.id,
+          status: trackingStatus,
+          tracked_at: trackingDate
+        },
+        ...prev
+      ]);
+
+      setTrackingDate("");
+      setTrackingStatus("");
+
+    } catch (err) {
+      console.error("Add tracking failed", err);
+      alert("Failed to add tracking");
+    }
+  };
+
 
 
 
@@ -67,10 +121,19 @@ export default function DeliveryChallan() {
   const printChallan2 = (id) => {
     window.open(`http://localhost:5000/api/Quotation/delivery-challan/printreturn/${id}`, "_blank");
   };
-  const openTrackingModal = (id) => {
-    setTrackingChallanId(id);
-    setShowTrackingModal(true);
+
+  const handleDeleteTracking = async (id) => {
+    if (!window.confirm("Delete this tracking step?")) return;
+
+    try {
+      await deleteTracking(id);
+      setTrackingList(prev => prev.filter(t => t.id !== id));
+    } catch (err) {
+      console.error("Delete tracking failed", err);
+      alert("Failed to delete tracking");
+    }
   };
+
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] p-6 md:p-12 font-['Lexend'] text-slate-800">
@@ -123,77 +186,77 @@ export default function DeliveryChallan() {
                   </td>
                 </tr>
               ) : (
-                  challanList.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="group hover:bg-slate-50/60 transition-colors duration-300"
-                    >
-                      {/* INFO */}
-                      <td className="px-10 py-5 whitespace-nowrap">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xl font-black text-slate-900 tracking-tight">
-                            CH-{item.id}
-                          </span>
-                          <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-wide">
-                            <Calendar size={13} className="text-orange-400" />
-                            {new Date(item.createdAt).toLocaleDateString()}
-                          </div>
+                challanList.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="group hover:bg-slate-50/60 transition-colors duration-300"
+                  >
+                    {/* INFO */}
+                    <td className="px-10 py-5 whitespace-nowrap">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xl font-black text-slate-900 tracking-tight">
+                          CH-{item.id}
+                        </span>
+                        <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-wide">
+                          <Calendar size={13} className="text-orange-400" />
+                          {new Date(item.createdAt).toLocaleDateString()}
                         </div>
-                      </td>
+                      </div>
+                    </td>
 
-                      {/* CLIENT */}
-                      <td className="px-8 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                            <User size={16} className="text-slate-400" />
-                          </div>
-                          <span className="font-bold text-slate-800 text-base">
-                            {item.client}
-                          </span>
+                    {/* CLIENT */}
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                          <User size={16} className="text-slate-400" />
                         </div>
-                      </td>
+                        <span className="font-bold text-slate-800 text-base">
+                          {item.client}
+                        </span>
+                      </div>
+                    </td>
 
-                      {/* STATUS */}
-                      <td className="px-6 py-5 text-center">
+                    {/* STATUS */}
+                    <td className="px-6 py-5 text-center">
+                      <button
+                        onClick={() => openTrackingModal(item.id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-900 hover:text-white transition-all active:scale-95"
+                      >
+                        <MapPin size={14} />
+                        Update Timeline
+                      </button>
+                    </td>
+
+                    {/* QUICK ACTION */}
+                    <td className="p-5 text-center">
+                      <button
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="p-3 rounded-2xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all active:scale-95">
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+
+                    {/* PRINT */}
+                    <td className="px-10 py-5 text-right">
+                      <div className="flex items-center justify-end gap-3">
                         <button
-                          onClick={() => openTrackingModal(item.id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-900 hover:text-white transition-all active:scale-95"
+                          onClick={() => printChallan(item.id)}
+                          className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all shadow-md active:scale-95"
                         >
-                          <MapPin size={14} />
-                          Update Timeline
+                          <Printer size={14} />
+                          Print DC
                         </button>
-                      </td>
 
-                      {/* QUICK ACTION */}
-                      <td className="p-5 text-center">
                         <button
-                          onClick={() => handleDeleteItem(item.id)}
-                          className="p-3 rounded-2xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all active:scale-95">
-                          <Trash2 size={16} />
+                          onClick={() => printChallan2(item.id)}
+                          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition"
+                        >
+                          <Printer size={12} />
+                          Return
                         </button>
-                      </td>
-
-                      {/* PRINT */}
-                      <td className="px-10 py-5 text-right">
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            onClick={() => printChallan(item.id)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all shadow-md active:scale-95"
-                          >
-                            <Printer size={14} />
-                            Print DC
-                          </button>
-
-                          <button
-                            onClick={() => printChallan2(item.id)}
-                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition"
-                          >
-                            <Printer size={12} />
-                            Return
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                      </div>
+                    </td>
+                  </tr>
 
                   // <tr key={item.id} className="group hover:bg-slate-50/50 transition-all duration-500">
 
@@ -317,7 +380,7 @@ export default function DeliveryChallan() {
               </div>
             </div>
 
-            <div className="bg-slate-50 rounded-[32px] p-6 border border-slate-100 max-h-[200px] overflow-y-auto mb-10 custom-scrollbar">
+            {/* <div className="bg-slate-50 rounded-[32px] p-6 border border-slate-100 max-h-[200px] overflow-y-auto mb-10 custom-scrollbar">
               {trackingList.map((t) => (
                 <div key={t.id} className="flex justify-between items-center py-4 border-b border-slate-200/50 last:border-0">
                   <div className="flex gap-4 items-center">
@@ -330,7 +393,42 @@ export default function DeliveryChallan() {
                   <button className="text-slate-300 hover:text-red-500 transition-colors p-2"><Trash2 size={18} /></button>
                 </div>
               ))}
+            </div> */}
+
+            <div className="bg-slate-50 rounded-[32px] p-6 border border-slate-100 max-h-[200px] overflow-y-auto mb-10 custom-scrollbar">
+              {loadingTracking ? (
+                <p className="text-center text-slate-400 font-bold">Loading...</p>
+              ) : trackingList.length === 0 ? (
+                <p className="text-center text-slate-400 font-bold">No tracking records</p>
+              ) : (
+                trackingList.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex justify-between items-center py-4 border-b border-slate-200/50 last:border-0"
+                  >
+                    <div className="flex gap-4 items-center">
+                      <div className="h-2 w-2 rounded-full bg-orange-500"></div>
+                      <div>
+                        <p className="text-sm font-black text-slate-800 leading-none">
+                          {t.status}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">
+                          {new Date(t.tracked_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleDeleteTracking(t.id)}
+                      className="text-slate-300 hover:text-red-500 transition-colors p-2"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
+
 
             <div className="flex flex-col sm:flex-row justify-end gap-4">
               <button
@@ -340,7 +438,7 @@ export default function DeliveryChallan() {
                 Go Back
               </button>
               <button
-                onClick={() => alert("Syncing Status...")}
+                onClick={handleAddTracking}
                 className="px-10 py-5 bg-orange-500 text-white rounded-[24px] font-black text-xs uppercase tracking-widest hover:bg-slate-900 shadow-xl shadow-orange-200 transition-all active:scale-95"
               >
                 Confirm Update
