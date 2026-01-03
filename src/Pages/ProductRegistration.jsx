@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Barcode from "react-barcode";
 import QRCode from "react-qr-code";
 import { addProductAPI, getProductAPI, updateProductAPI } from "../Component/API/productApi";
+import axios from "axios";
 
 
 export default function ProductRegistration() {
@@ -13,14 +14,10 @@ export default function ProductRegistration() {
   const [showQRModal, setShowQRModal] = useState(false);
 
   // Brand List
-  const [brandList] = useState([
-    "Kajaria",
-    "Somany",
-    "Johnson",
-    "Asian Granito",
-    "Simpolo",
-    "Qutone",
-  ]);
+  const [brandList, setBrandList] = useState([]);
+  const [categoryList, setCategoryList] = useState([]);
+  const [qualityList, setQualityList] = useState([]);
+
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [selectedBatches, setSelectedBatches] = useState([]);
 
@@ -71,6 +68,54 @@ export default function ProductRegistration() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  const fetchBrands = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/brands/list");
+      if (data.success) {
+        setBrandList(data.brands);
+      }
+
+    } catch (err) {
+      console.error("Failed to fetch brands", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchBrands();
+  })
+
+  const fetchCategories = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/categories/list");
+      if (data.success) {
+        setCategoryList(data.categories);
+      }
+      console.log("setCategoryList", data.categories)
+
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  };
+
+  const fetchQualities = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/qualities/list");
+      if (data.success) {
+        setQualityList(data.qualities);
+      }
+    } catch (err) {
+      console.error("Failed to fetch qualities", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  })
+
+  useEffect(() => {
+    fetchQualities();
+  })
 
   // Form handlers
   const handleChange = (e) => {
@@ -338,8 +383,10 @@ export default function ProductRegistration() {
             className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border-2 border-transparent focus:border-[#FA9C42] focus:bg-white outline-none transition-all appearance-none text-slate-600 font-medium"
           >
             <option value="">All Brands</option>
-            {brandList.map((brand, i) => (
-              <option key={i} value={brand}>{brand}</option>
+            {brandList
+              .filter((brand) => brand.status === "Available")
+              .map((brand, i) => (
+              <option key={i} value={brand}>{brand.name}</option>
             ))}
           </select>
         </div>
@@ -596,7 +643,7 @@ export default function ProductRegistration() {
       {/* ADD PRODUCT MODAL */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md transition-opacity p-4">
-          <div className="w-full max-w-[850px] bg-[#FFF7EF] rounded-[24px] shadow-2xl overflow-hidden border border-white/20 max-h-[95vh] flex flex-col">
+          <div className="w-full max-w-[850px] bg-[#FFF7EF] rounded-3xl shadow-2xl overflow-hidden border border-white/20 max-h-[95vh] flex flex-col">
 
             {/* HEADER */}
             <div className="px-10 pt-8 pb-4 shrink-0">
@@ -681,12 +728,19 @@ export default function ProductRegistration() {
                         value={product.brand}
                         onChange={handleChange}
                         disabled={modalMode === "view"}
-                        className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all appearance-none"
+                        className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all"
                         required
                       >
                         <option value="">Select Brand</option>
-                        {brandList.map((brand, i) => <option key={i} value={brand}>{brand}</option>)}
+                        {brandList
+                          .filter((brand) => brand.status === "Available")
+                          .map((brand) => (
+                            <option key={brand.id} value={brand.id}>
+                              {brand.name}
+                            </option>
+                          ))}
                       </select>
+
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-slate-600 ml-1">Category</label>
@@ -695,13 +749,18 @@ export default function ProductRegistration() {
                         value={product.category}
                         onChange={handleChange}
                         disabled={modalMode === "view"}
-                        className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all appearance-none"
+                        className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all"
                       >
                         <option value="">Select Category</option>
-                        <option>Tiles</option>
-                        <option>Marble</option>
-                        <option>Sanitary</option>
+                        {categoryList
+                          .filter((cat) => cat.status === "Available")
+                          .map((cat) => (
+                          <option key={cat.id} value={cat.name}>
+                            {cat.name}
+                          </option>
+                        ))}
                       </select>
+
                     </div>
                   </div>
                 </div>
@@ -728,12 +787,18 @@ export default function ProductRegistration() {
                         value={product.quality}
                         onChange={handleChange}
                         disabled={modalMode === "view"}
-                        className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all appearance-none"
+                        className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all"
                       >
-                        <option>Standard</option>
-                        <option>Premium</option>
-                        <option>Economy</option>
+                        <option value="">Select Quality</option>
+                        {qualityList
+                          .filter((q) => q.status === "Available")
+                          .map((q) => (
+                          <option key={q.id} value={q.name}>
+                            {q.name}
+                          </option>
+                        ))}
                       </select>
+
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-slate-600 ml-1">Availability</label>
