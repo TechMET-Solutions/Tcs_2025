@@ -193,16 +193,16 @@ export default function ArchitectRegistration() {
                       </div>
                     </td>
                     <td className="py-4 px-6 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2 transition-opacity">
                         <button
                           onClick={() => handleOpenEditModal(item)}
-                          className="p-2 hover:bg-white rounded-lg shadow-sm border border-slate-100 text-slate-400 hover:text-[#FA9C42]"
+                          className="p-2 hover:bg-white rounded-lg shadow-sm border border-slate-100 text-slate-400 hover:text-[#FA9C42] hover:border-[#FA9C42] "
                         >
                           <Edit3 size={16} />
                         </button>
                         <button
                           onClick={() => deleteArchitect(item.id)}
-                          className="p-2 hover:bg-white rounded-lg shadow-sm border border-slate-100 text-slate-400 hover:text-red-500">
+                          className="p-2 hover:bg-white rounded-lg shadow-sm border border-slate-100 text-slate-400 hover:text-red-500 hover:border-red-500">
                           <Trash2 size={16} />
                         </button>
                       </div>
