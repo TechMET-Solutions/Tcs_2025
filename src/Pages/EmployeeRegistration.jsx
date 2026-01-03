@@ -1,5 +1,8 @@
+import axios from "axios";
 import {
-  Ban, CheckCircle,
+  Ban,
+  Camera,
+  CheckCircle,
   CheckCircle2,
   Edit3,
   Eye, EyeOff,
@@ -9,7 +12,7 @@ import {
   X
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { createEmployeeAPI, deleteEmployeeAPI, getEmployeesAPI, toggleStatusAPI, updateEmployeeAPI } from "../Component/API/employeeApi";
+import { deleteEmployeeAPI, getEmployeesAPI, toggleStatusAPI } from "../Component/API/employeeApi";
 
 export default function EmployeeRegistration() {
   const [showModal, setShowModal] = useState(false);
@@ -28,7 +31,8 @@ export default function EmployeeRegistration() {
     expense: "",
     aadhar: null,
     pancard: null,
-    status: "active" // added status field
+    status: "active", // added status field
+    profile: null,
   });
 
   console.log(employee,"employee")
@@ -88,19 +92,46 @@ const handleToggleStatus = async (id, currentStatus) => {
         } catch (err) { console.log(err); }
     }
 };
-
- const saveEmployee = async (e) => {
+const saveEmployee = async (e) => {
     e.preventDefault();
+    const formData = new FormData();
+
+    // 1. Append Text Fields
+    const textFields = [
+        'name', 'email', 'password', 'commission', 'birthdate', 
+        'phone', 'salary', 'expense', 'advance', 'status'
+    ];
+
+    textFields.forEach(field => {
+        formData.append(field, employee[field] ?? "");
+    });
+
+    // 2. Append File Objects (Names must match backend upload.fields)
+    if (employee.aadhar instanceof File) formData.append("aadhar", employee.aadhar);
+    if (employee.pancard instanceof File) formData.append("pancard", employee.pancard);
+    if (employee.profile instanceof File) formData.append("profile", employee.profile);
+
     try {
+        // IMPORTANT: Ensure your axios call uses these headers
+        const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+        
+        let response;
         if (modalMode === "add") {
-            await createEmployeeAPI(employee);
+            response = await axios.post("http://localhost:5000/api/employees/add", formData, config);
         } else {
-            await updateEmployeeAPI(employee.id, employee);
+            response = await axios.put(`http://localhost:5000/api/employees/update/${employee.id}`, formData, config);
         }
-        fetchEmployeesFromDB();
-        setShowModal(false);
-        resetForm();
-    } catch (err) { console.log(err); }
+
+        if (response.data.success) {
+            fetchEmployeesFromDB();
+            setShowModal(false);
+            resetForm();
+            alert("Employee Profile Created Successfully!");
+        }
+    } catch (err) {
+        console.error("Submission Error:", err.response?.data || err.message);
+        alert(err.response?.data?.error || "Failed to save employee");
+    }
 };
 
   const resetForm = () => {
@@ -295,6 +326,32 @@ const handleToggleStatus = async (id, currentStatus) => {
       );
     })}
   </div>
+</div>
+<div className="flex flex-col items-center mb-6">
+  <label className="relative cursor-pointer group">
+    <div className="w-32 h-32 rounded-full border-4 border-orange-100 overflow-hidden bg-slate-100 flex items-center justify-center transition-all group-hover:border-[#FA9C42]">
+      {employee.profile ? (
+        <img 
+          src={employee.profile instanceof File ? URL.createObjectURL(employee.profile) : employee.profile_url} 
+          className="w-full h-full object-cover" 
+          alt="Profile" 
+        />
+      ) : (
+        <Camera className="text-slate-300" size={40} />
+      )}
+    </div>
+    <div className="absolute bottom-0 right-0 bg-[#FA9C42] p-2 rounded-full text-white shadow-lg">
+      <Upload size={16} />
+    </div>
+    <input 
+      type="file" 
+      name="profile" 
+      onChange={handleFileChange} 
+      className="hidden" 
+      accept="image/*" 
+    />
+  </label>
+  <p className="text-[10px] font-bold uppercase text-slate-400 mt-2 tracking-widest">Face Reference Photo</p>
 </div>
               </div>
 

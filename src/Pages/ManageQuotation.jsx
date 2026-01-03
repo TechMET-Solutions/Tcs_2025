@@ -348,13 +348,28 @@ const handleSavePaymentRequest = async () => {
 
         {/* Amount Input */}
         <div>
-          <label className="modal-label">Amount</label>
+          <div className="flex justify-between items-center mb-1">
+            <label className="modal-label">Amount</label>
+            {Number(paymentData.amount) > Number(paymentData.due) && (
+              <span className="text-[10px] font-bold text-red-500 animate-pulse">
+                CANNOT EXCEED DUE!
+              </span>
+            )}
+          </div>
           <input 
-            className="lux-modal-input" 
+            className={`lux-modal-input transition-colors ${
+              Number(paymentData.amount) > Number(paymentData.due) 
+              ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-200' 
+              : ''
+            }`} 
             type="number" 
             placeholder="Enter amount" 
             value={paymentData.amount}
-            onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+            onChange={(e) => {
+              const val = e.target.value;
+              // Update state normally, validation is handled by the button and styling
+              setPaymentData({ ...paymentData, amount: val });
+            }}
           />
         </div>
 
