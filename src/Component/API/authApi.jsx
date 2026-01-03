@@ -1,6 +1,7 @@
 import axios from "axios";
+import { BASEURL } from "./Url";
 
-const BASE_URL = "http://localhost:5000/api/employees";
+const BASE_URL = `${BASEURL}/api/employees`;
 
 export const loginAPI = async (data) => {
     const res = await axios.post(`${BASE_URL}/login`, data);

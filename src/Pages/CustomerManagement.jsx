@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { BASEURL } from "../Component/API/Url";
 
 /* ✅ MODERN TOOLTIP */
 const Tooltip = ({ text, children }) => {
@@ -61,7 +62,7 @@ const SelectField = ({ label, name, value, onChange, error, options }) => (
 );
 
 export default function CustomerManagement() {
-  const BASE_URL = "http://localhost:5000/api/users";
+  const BASE_URL = `${BASEURL}/api/users`;
   const [showModal, setShowModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showUpdateFollowup, setShowUpdateFollowup] = useState(false);

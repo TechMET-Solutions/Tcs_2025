@@ -1,6 +1,7 @@
 import axios from "axios";
+import { BASEURL } from "./Url";
 
-const BASE_URL = "http://localhost:5000/api/tracking";
+const BASE_URL = `${BASEURL}/api/tracking`;
 
 export const getTrackingByChallan = (challanId) =>
     axios.get(`${BASE_URL}/${challanId}`);

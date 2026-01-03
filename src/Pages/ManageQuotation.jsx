@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { sendPaymentRequest } from "../Component/API/paymentApi";
 import { getAllQuotations } from "../Component/API/quotationApi";
 import QuotationHeader from "./QuotationHeader";
+import { BASEURL } from "../Component/API/Url";
 
 export default function ManageQuotation() {
   const [quotationList, setQuotationList] = useState([]);
@@ -85,7 +86,7 @@ const handleSubmitDC = async () => {
     };
 
     try {
-        const response = await fetch('http://localhost:5000/api/Quotation/generate-dc', {
+        const response = await fetch(`${BASEURL}/api/Quotation/generate-dc`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -164,7 +165,7 @@ const handleSubmitDC = async () => {
     setOpenDCModal(true);
   };
 
-  const openQuotationPDF = (id, mode) => window.open(`http://localhost:5000/api/Quotation/print/${id}?mode=${mode}`, "_blank");
+  const openQuotationPDF = (id, mode) => window.open(`${BASEURL}/api/Quotation/print/${id}?mode=${mode}`, "_blank");
 const handleSavePaymentRequest = async () => {
     try {
         const payload = {

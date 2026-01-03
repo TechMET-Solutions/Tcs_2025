@@ -1,6 +1,7 @@
 import axios from "axios";
+import { BASEURL } from "./Url";
 
-const BASE_URL = "http://localhost:5000/api/customers";
+const BASE_URL = `${BASEURL}/api/customers`;
 
 export const addCustomer = (data) => {
   return axios.post(`${BASE_URL}/add`, data);

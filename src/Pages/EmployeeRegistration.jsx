@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { deleteEmployeeAPI, getEmployeesAPI, toggleStatusAPI } from "../Component/API/employeeApi";
+import { BASEURL } from "../Component/API/Url";
 
 export default function EmployeeRegistration() {
   const [showModal, setShowModal] = useState(false);
@@ -117,9 +118,9 @@ const saveEmployee = async (e) => {
         
         let response;
         if (modalMode === "add") {
-            response = await axios.post("http://localhost:5000/api/employees/add", formData, config);
+            response = await axios.post(`${BASEURL}/api/employees/add`, formData, config);
         } else {
-            response = await axios.put(`http://localhost:5000/api/employees/update/${employee.id}`, formData, config);
+            response = await axios.put(`${BASEURL}api/employees/update/${employee.id}`, formData, config);
         }
 
         if (response.data.success) {
@@ -242,7 +243,14 @@ const saveEmployee = async (e) => {
                   <div className="grid grid-cols-2 gap-5">
                     <input name="name" value={employee.name} onChange={handleChange} placeholder="Full Name" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
                     <input name="phone" value={employee.phone} onChange={handleChange} placeholder="Mobile Number" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
-                    <input type="date" name="birthdate" value={employee.birthdate} onChange={handleChange} className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium text-slate-500" />
+                    <input 
+  type="date" 
+  name="birthdate" 
+  // This split ensures that if the date is ISO, it only takes the YYYY-MM-DD part
+  value={employee.birthdate ? employee.birthdate.split("T")[0] : ""} 
+  onChange={handleChange} 
+  className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium text-slate-500" 
+/>
                     <input name="email" value={employee.email} onChange={handleChange} placeholder="Email Address" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
                   </div>
                 </div>

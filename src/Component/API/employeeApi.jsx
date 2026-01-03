@@ -1,7 +1,8 @@
 import axios from "axios";
+import { BASEURL } from "./Url";
 
-const BASE_URL = "http://localhost:5000/api/employees";
-
+const BASE_URL = `${BASEURL}/api/employees`;
+const BASE_URL_ROLE = `${BASEURL}/api/roles`;
 // Utility to handle FormData for file uploads
 const prepareFormData = (data) => {
     const formData = new FormData();
@@ -20,11 +21,5 @@ export const deleteEmployeeAPI = (id) => axios.delete(`${BASE_URL}/delete/${id}`
 export const toggleStatusAPI = (id, status) => axios.patch(`${BASE_URL}/status/${id}`, { status });
 export const getEmployeesAPI = () => axios.get(`${BASE_URL}/list`);
 
-// --- Employee Roles ---
-export const saveEmployeeRolesAPI = (payload) => {
-    return axios.post(`${BASE_URL}/save`, payload);
-};
-
-export const getEmployeeRolesAPI = (employeeId) => {
-    return axios.get(`${BASE_URL}/${employeeId}`);
-};
+export const getEmployeeRolesAPI = (id) => axios.get(`${BASE_URL_ROLE}/get-employee-roles/${id}`);
+export const saveEmployeeRolesAPI = (data) => axios.post(`${BASE_URL_ROLE}/save-employee-roles`, data);

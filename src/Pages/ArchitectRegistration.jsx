@@ -1,14 +1,26 @@
-import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useEffect, useState } from "react";
 // Importing all necessary icons
 import {
-  Plus, X, UserCircle, Phone, Percent,
-  Calendar, Award, Search, Edit3, Trash2, Users
+  Award,
+  Calendar,
+  Edit3,
+  Percent,
+  Phone,
+  Plus,
+  Search,
+  Trash2,
+  UserCircle,
+  Users,
+  X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatIndianDate } from "../utils/formatIndianDate";
 
-const BASE_URL = "http://localhost:5000/api/architects";
+import { BASEURL } from "../Component/API/Url";
+
+const BASE_URL = `${BASEURL}/api/architects`;
+
 
 export default function ArchitectRegistration() {
   // --- STATE ---

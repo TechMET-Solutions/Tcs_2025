@@ -6,8 +6,9 @@ import {
   getTrackingByChallan, addTracking,
   deleteTracking
 } from "../Component/API/trackingApi";
+import { BASEURL } from "../Component/API/Url";
 
-const API_URL = "http://localhost:5000/api/Quotation"
+const API_URL = `${BASEURL}/api/Quotation`
 
 export default function DeliveryChallan() {
   const [challanList, setChallanList] = useState([]);
@@ -116,10 +117,10 @@ export default function DeliveryChallan() {
 
   const printChallan = (id) => {
     debugger
-    window.open(`http://localhost:5000/api/Quotation/delivery-challan/print/${id}`, "_blank");
+    window.open(`${BASEURL}/api/Quotation/delivery-challan/print/${id}`, "_blank");
   };
   const printChallan2 = (id) => {
-    window.open(`http://localhost:5000/api/Quotation/delivery-challan/printreturn/${id}`, "_blank");
+    window.open(`${BASEURL}/api/Quotation/delivery-challan/printreturn/${id}`, "_blank");
   };
 
   const handleDeleteTracking = async (id) => {

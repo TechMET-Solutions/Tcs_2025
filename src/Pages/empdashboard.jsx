@@ -4,6 +4,7 @@ import {
   User, FileText, Clock, PhoneCall, LogOut, 
   CheckCircle, AlertCircle, Calendar, Briefcase, Mail 
 } from "lucide-react";
+import { BASEURL } from "../Component/API/Url";
 
 const EmpDashboard = ({ user }) => {
   // State Management
@@ -26,8 +27,8 @@ const EmpDashboard = ({ user }) => {
       setLoading(true);
       // Fetch Status, Stats, and Followups in parallel for better performance
       const [statusRes, dataRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/employees/status/${STATIC_USER_ID}`),
-        axios.get(`http://localhost:5000/api/employees/dashboard-summary/${STATIC_USER_ID}`)
+        axios.get(`${BASEURL}/api/employees/status/${STATIC_USER_ID}`),
+        axios.get(`${BASEURL}/api/employees/dashboard-summary/${STATIC_USER_ID}`)
       ]);
 
       if (statusRes.data.success) {
@@ -50,7 +51,7 @@ const EmpDashboard = ({ user }) => {
     setLoading(true);
     setMessage("");
     try {
-      const response = await axios.post("http://localhost:5000/api/employees/punch", {
+      const response = await axios.post(`${BASEURL}/api/employees/punch`, {
         employeeId: STATIC_USER_ID,
         status: type
       });

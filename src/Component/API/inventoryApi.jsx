@@ -1,6 +1,7 @@
 import axios from "axios";
+import { BASEURL } from "./Url";
 
-const BASE_URL = "http://localhost:5000/api/purchase";
+const BASE_URL = `${BASEURL}/api/purchase`;
 
 export const addPurchaseAPI = (data) => {
   return axios.post(`${BASE_URL}/add`, data);

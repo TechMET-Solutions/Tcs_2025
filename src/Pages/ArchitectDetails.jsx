@@ -1,7 +1,8 @@
 import axios from "axios";
 import { ArrowLeft, Calculator, History, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { BASEURL } from "../Component/API/Url";
 
 export default function ArchitectDetails() {
   const { id } = useParams(); 
@@ -19,14 +20,14 @@ export default function ArchitectDetails() {
     setLoading(true);
     try {
       // Fetch Quotations
-      const qRes = await axios.get(`http://localhost:5000/api/Quotation/getArchitectQuotations/${id}`);
+      const qRes = await axios.get(`${BASEURL}/api/Quotation/getArchitectQuotations/${id}`);
       if (qRes.data.success) {
         // Only show quotations that aren't settled yet
         setAvailableQuotations(qRes.data.quotations.filter(q => q.isSettled === 0));
       }
 
       // Fetch Settlement History (Ledger)
-      const lRes = await axios.get(`http://localhost:5000/api/Quotation/getArchitectLedger/${id}`);
+      const lRes = await axios.get(`${BASEURL}/api/Quotation/getArchitectLedger/${id}`);
       if (lRes.data.success) {
         setLedgerEntries(lRes.data.history);
       }
@@ -43,15 +44,38 @@ export default function ArchitectDetails() {
 
   // Find selected quotation object
   const activeQ = availableQuotations.find(q => q.id === parseInt(selectedQ));
+const handleInputChange = (e) => {
+  const rawValue = e.target.value;
+  const val = parseFloat(rawValue);
 
+  // Allow empty input so user can backspace
+  if (rawValue === "") {
+    setCommInput("");
+    return;
+  }
+
+  if (isPercent) {
+    // Validation: 1 to 100 only
+    if (val >= 0 && val <= 100) {
+      setCommInput(rawValue);
+    }
+  } else {
+    // Validation: Cannot exceed Project Total
+    const maxAmount = activeQ ? parseFloat(activeQ.grandTotal) : Infinity;
+    if (val >= 0 && val <= maxAmount) {
+      setCommInput(rawValue);
+    }
+  }
+};
   const calculateFinalComm = () => {
-    if (!activeQ || !commInput) return 0;
-    // Use grandTotal from your API response
-    const total = parseFloat(activeQ.grandTotal);
-    return isPercent 
-      ? (total * Number(commInput)) / 100 
-      : Number(commInput);
-  };
+  const inputNum = parseFloat(commInput) || 0;
+  if (!activeQ) return 0;
+
+  if (isPercent) {
+    return (parseFloat(activeQ.grandTotal) * inputNum) / 100;
+  }
+  return inputNum;
+};
 
   // 2. Add to Ledger via API
   const addToLedger = async () => {
@@ -60,7 +84,7 @@ export default function ArchitectDetails() {
     const amount = calculateFinalComm();
 
     try {
-      const response = await axios.post(`http://localhost:5000/api/Quotation/settle-commission`, {
+      const response = await axios.post(`${BASEURL}/api/Quotation/settle-commission`, {
         quotationId: activeQ.id,
         architectId: id,
         commissionAmount: amount
@@ -107,55 +131,102 @@ export default function ArchitectDetails() {
               <Calculator size={22} className="text-[#FA9C42]" /> Add Commission
             </h2>
             
-            <div className="space-y-5">
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Select Project</label>
-                <select 
-                  value={selectedQ} 
-                  onChange={(e) => setSelectedQ(e.target.value)}
-                  className="w-full mt-1 p-4 bg-slate-50 border-2 border-transparent focus:border-[#FA9C42] rounded-2xl outline-none font-bold text-slate-700 transition-all"
-                >
-                  <option value="">Choose Project...</option>
-                  {availableQuotations.map(q => (
-                    <option key={q.id} value={q.id}>#{q.id} - {q.clientName}</option>
-                  ))}
-                </select>
-              </div>
+         <div className="lg:col-span-4 space-y-6">
+  <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 sticky top-8">
+    <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
+      <Calculator size={22} className="text-[#FA9C42]" /> Add Commission
+    </h2>
+    
+    <div className="space-y-5">
+      {/* 1. PROJECT SELECTOR */}
+      <div>
+        <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Select Project</label>
+        <select 
+          value={selectedQ} 
+          onChange={(e) => {
+            setSelectedQ(e.target.value);
+            setCommInput(""); // Reset input when project changes
+          }}
+          className="w-full mt-1 p-4 bg-slate-50 border-2 border-transparent focus:border-[#FA9C42] rounded-2xl outline-none font-bold text-slate-700 transition-all"
+        >
+          <option value="">Choose Project...</option>
+          {availableQuotations.map(q => (
+            <option key={q.id} value={q.id}>#{q.id} - {q.clientName}</option>
+          ))}
+        </select>
+      </div>
 
-              {activeQ && (
-                <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 animate-in fade-in slide-in-from-top-2">
-                  <p className="text-[10px] font-black text-[#FA9C42] uppercase">Project Total</p>
-                  <p className="text-xl font-black text-slate-800">₹{parseFloat(activeQ.grandTotal).toLocaleString()}</p>
-                </div>
-              )}
-
-              <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
-                <button onClick={() => setIsPercent(true)} className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${isPercent ? 'bg-white shadow-sm text-[#FA9C42]' : 'text-slate-400'}`}>%</button>
-                <button onClick={() => setIsPercent(false)} className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${!isPercent ? 'bg-white shadow-sm text-[#FA9C42]' : 'text-slate-400'}`}>₹</button>
-              </div>
-
-              <input 
-                type="number" 
-                placeholder={isPercent ? "Enter %" : "Enter Amount (₹)"}
-                value={commInput}
-                onChange={(e) => setCommInput(e.target.value)}
-                className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-[#FA9C42] rounded-2xl outline-none font-black text-lg"
-              />
-
-              <div className="pt-4 border-t border-slate-100">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-sm font-bold text-slate-400">Final:</span>
-                  <span className="text-xl font-black text-slate-800">₹{calculateFinalComm().toLocaleString()}</span>
-                </div>
-                <button 
-                  onClick={addToLedger}
-                  disabled={!selectedQ || !commInput || loading}
-                  className="w-full bg-[#FA9C42] text-white py-4 rounded-2xl font-black shadow-lg hover:bg-[#e88b32] disabled:opacity-50 transition-all"
-                >
-                  SETTLE COMMISSION
-                </button>
-              </div>
+      {/* 2. PROJECT TOTAL DISPLAY (NEW SECTION) */}
+      {activeQ && (
+        <div className="p-5 bg-slate-900 rounded-2xl border border-slate-800 animate-in fade-in zoom-in duration-300">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase">Selected Client</p>
+              <p className="text-sm font-bold text-white">{activeQ.clientName}</p>
             </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-[#FA9C42] uppercase">Project Total</p>
+              <p className="text-xl font-black text-white">
+                ₹{parseFloat(activeQ.grandTotal).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. CALCULATION TYPE TOGGLE */}
+      <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+        <button 
+          onClick={() => { setIsPercent(true); setCommInput(""); }} 
+          className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${isPercent ? 'bg-white shadow-sm text-[#FA9C42]' : 'text-slate-400'}`}
+        > % Percentage </button>
+        <button 
+          onClick={() => { setIsPercent(false); setCommInput(""); }} 
+          className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${!isPercent ? 'bg-white shadow-sm text-[#FA9C42]' : 'text-slate-400'}`}
+        > ₹ Fixed Amount </button>
+      </div>
+
+      {/* 4. VALIDATED INPUT */}
+      <div>
+        <label className="text-[10px] font-black text-slate-400 uppercase ml-1">
+          {isPercent ? "Commission Percentage" : "Commission Amount"}
+        </label>
+        <input 
+          type="number" 
+          placeholder={isPercent ? "e.g. 10" : "e.g. 5000"}
+          value={commInput}
+          onChange={handleInputChange}
+          disabled={!selectedQ}
+          className="w-full mt-1 p-4 bg-slate-50 border-2 border-transparent focus:border-[#FA9C42] rounded-2xl outline-none font-black text-lg disabled:opacity-50"
+        />
+        {activeQ && (
+          <p className="text-[10px] text-slate-400 mt-2 ml-1 italic">
+            {isPercent 
+              ? "* Allowed range: 1% to 100%" 
+              : `* Maximum allowed: ₹${parseFloat(activeQ.grandTotal).toLocaleString()}`}
+          </p>
+        )}
+      </div>
+
+      {/* 5. FINAL SETTLEMENT SUMMARY */}
+      <div className="pt-4 border-t border-slate-100">
+        <div className="flex justify-between items-center mb-4 bg-orange-50 p-3 rounded-xl border border-orange-100">
+          <span className="text-xs font-bold text-slate-500">Calculated Pay:</span>
+          <span className="text-2xl font-black text-[#FA9C42]">
+            ₹{calculateFinalComm().toLocaleString()}
+          </span>
+        </div>
+        <button 
+          onClick={addToLedger}
+          disabled={!selectedQ || !commInput || loading}
+          className="w-full bg-[#FA9C42] text-white py-4 rounded-2xl font-black shadow-lg hover:shadow-orange-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 transition-all"
+        >
+          SETTLE COMMISSION
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
           </div>
         </div>
 

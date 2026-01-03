@@ -2,8 +2,9 @@ import axios from "axios";
 import { Edit, Plus, Trash2, X, CheckCircle, AlertCircle, Award } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Images } from "../assets";
+import { BASEURL } from "../Component/API/Url";
 
-const BASE_URL = "http://localhost:5000/api/brands";
+const BASE_URL = `${BASEURL}/api/brands`;
 
 export default function BrandManagement() {
   const [showModal, setShowModal] = useState(false);

@@ -1,6 +1,7 @@
 import axios from "axios";
+import { BASEURL } from "./Url";
 
-const BASE_URL = "http://localhost:5000/api/Quotation";
+const BASE_URL = `${BASEURL}/api/Quotation`;
 export const getAllQuotations = async () => {
   return await axios.get(`${BASE_URL}/list`);
 };

@@ -3,6 +3,7 @@ import JoditEditor from "jodit-react";
 import { ArrowLeft, Calculator, FileText, Info, Percent, Save, Trash2, User, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { BASEURL } from "../Component/API/Url";
 
 export default function AddQuotation() {
   const navigate = useNavigate();
@@ -26,7 +27,8 @@ const [selectedArchitect, setSelectedArchitect] = useState(""); // The ID of sel
 useEffect(() => {
   const fetchArchitects = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/architects/list');
+      const response = await axios.get(`${BASEURL}/api/architects/list`);
+
       if (response.data.success) {
         setArchitects(response.data.architects);
       }
@@ -99,7 +101,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/product/list");
+        const res = await axios.get(`${BASEURL}/api/product/list`);
         setProducts(res.data.products || []);
       } catch (err) { console.error(err); }
     };
@@ -159,13 +161,13 @@ useEffect(() => {
 
       if (isEditMode) {
         await axios.put(
-          `http://localhost:5000/api/Quotation/updateQuotation/${editData.id}`,
+          `${BASEURL}/api/Quotation/updateQuotation/${editData.id}`,
           payload
         );
         alert("Quotation Updated Successfully!");
       } else {
         await axios.post(
-          "http://localhost:5000/api/Quotation/saveQuotation",
+          `${BASEURL}/api/Quotation/saveQuotation`,
           payload
         );
         alert("Quotation Saved Successfully!");

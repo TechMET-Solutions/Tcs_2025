@@ -2,8 +2,9 @@ import axios from "axios";
 import { Edit, Plus, Tags, Trash2, X, CheckCircle, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Images } from "../assets";
+import { BASEURL } from "../Component/API/Url";
 
-const BASE_URL = "http://localhost:5000/api/categories";
+const BASE_URL = `${BASEURL}/api/categories`;
 
 export default function CategoryManagement() {
   const [showModal, setShowModal] = useState(false);
