@@ -1,8 +1,8 @@
 import axios from "axios";
-import { Edit, Plus, Trash2, X, CheckCircle, AlertCircle, Award } from "lucide-react";
+import { AlertCircle, Award, CheckCircle, Edit, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Images } from "../assets";
 import { BASEURL } from "../Component/API/Url";
+import { useAuth } from "../utils/AuthContext";
 
 const BASE_URL = `${BASEURL}/api/brands`;
 
@@ -13,7 +13,7 @@ export default function BrandManagement() {
   const [currentId, setCurrentId] = useState(null);
   const [brandList, setBrandList] = useState([]);
   const [brand, setBrand] = useState({ name: "", status: "Available" });
-
+ const { permissions, user, loading, role } = useAuth(); 
   const fetchBrands = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/list`);
@@ -55,7 +55,9 @@ export default function BrandManagement() {
           <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">Brand Registry</h1>
           <p className="text-slate-500 font-medium mt-1">Manage and track authorized manufacturer brands.</p>
         </div>
-        <button
+
+         {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Brand Management_Add"] === true) && (
+ <button
           onClick={() => {
             setShowModal(true);
             setIsEditing(false);
@@ -66,6 +68,9 @@ export default function BrandManagement() {
           <Plus size={22} className="group-hover:rotate-90 transition-transform" />
           <span className="font-bold text-lg">Add Brand</span>
         </button>
+
+                        )}
+       
       </div>
 
       {/* --- LARGE DATA TABLE --- */}
@@ -112,20 +117,27 @@ export default function BrandManagement() {
                     </td>
                     <td className="px-10 py-6">
                       <div className="flex justify-end gap-4">
-                        <button 
+                         {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Brand Management_Edit"] === true) && (
+ <button 
                           onClick={() => editBrand(item)}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
                         >
                           <Edit size={18} />
                           <span className="font-bold text-sm">Modify</span>
                         </button>
-                        <button 
+
+                        )}
+                        {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Brand Management_Delete"] === true) && (
+                     <button 
                           onClick={() => { setCurrentId(item.id); setShowDeleteModal(true); }}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"
                         >
                           <Trash2 size={18} />
                           <span className="font-bold text-sm">Remove</span>
                         </button>
+
+                        )}
+                        
                       </div>
                     </td>
                   </tr>

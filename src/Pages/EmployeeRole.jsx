@@ -154,7 +154,7 @@ export default function EmployeeRole() {
     { title: "Architect Registration", icon: <DraftingCompass className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete", "Commission"] },
     { title: "Inventory Management", icon: <ClipboardCheck className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },
     { title: "Quotation Management", icon: <FileText className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete", "Pay", "DC", "Payment Requests"] },
-    { title: "Delivery Challans", icon: <Truck className="w-4 h-4" />, items: ["Update Timeline", "Delete", "Print DC", "Return DC"] },
+    { title: "Delivery Challans", icon: <Truck className="w-4 h-4" />, items: ["View","Update Timeline", "Delete", "Print DC", "Return DC"] },
   ];
 
   // Generate a flat list of all "Section_Item" keys

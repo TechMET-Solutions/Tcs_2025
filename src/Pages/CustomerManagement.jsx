@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BASEURL } from "../Component/API/Url";
+import { useAuth } from "../utils/AuthContext";
 
 /* ✅ MODERN TOOLTIP */
 const Tooltip = ({ text, children }) => {
@@ -75,6 +76,9 @@ export default function CustomerManagement() {
   const getTodayDate = () => new Date().toISOString().split('T')[0];
   const [followupUpdate, setFollowupUpdate] = useState({ date: getTodayDate(), response: "" });
 
+  const { permissions, user, loading, role } = useAuth();
+ 
+  
   const [customer, setCustomer] = useState({
     name: "", Last_Name: "", phone: "", email: "", assignedEmployee: "",
     assignedArchitect: "", status: "New", 
@@ -172,13 +176,17 @@ const handleOpenModal = () => {
           <h1 className="text-3xl font-black tracking-tight text-slate-900">CRM Portal</h1>
           <p className="text-slate-500 font-medium">Manage your clients and track project follow-ups</p>
         </div>
-        <button
+        {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Product Registration_Add"] === true) && (
+
+ <button
           onClick={()=>handleOpenModal()}
           className="group flex items-center gap-2 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-xl shadow-slate-200 hover:bg-[#FA9C42] hover:shadow-[#FA9C42]/20 transition-all active:scale-95"
         >
           <Plus size={20} className="group-hover:rotate-90 transition-transform" />
           <span className="font-bold">New Customer</span>
         </button>
+                        )}
+       
       </div>
 
       {/* --- STATS OVERVIEW (Visual Polish) --- */}

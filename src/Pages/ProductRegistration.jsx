@@ -4,6 +4,7 @@ import Barcode from "react-barcode";
 import QRCode from "react-qr-code";
 import { addProductAPI, getProductAPI, updateProductAPI } from "../Component/API/productApi";
 import axios from "axios";
+import { useAuth } from "../utils/AuthContext";
 
 
 export default function ProductRegistration() {
@@ -53,6 +54,10 @@ export default function ProductRegistration() {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedProductId, setSelectedProductId] = useState(null);
   // FETCH PRODUCTS
+  
+  const { permissions, user, loading, role } = useAuth(); 
+  
+  
   const fetchProducts = async () => {
     try {
       const res = await getProductAPI();

@@ -1,12 +1,16 @@
 import axios from "axios";
-import { Edit, Plus, Tags, Trash2, X, CheckCircle, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Edit, Plus, Tags, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Images } from "../assets";
 import { BASEURL } from "../Component/API/Url";
+import { useAuth } from "../utils/AuthContext";
 
 const BASE_URL = `${BASEURL}/api/categories`;
 
 export default function CategoryManagement() {
+  
+ const { permissions, user, loading, role } = useAuth(); 
+
+  console.log(permissions,"permissions")
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -55,17 +59,20 @@ export default function CategoryManagement() {
           <h1 className="text-3xl font-black tracking-tight text-slate-900">Category Management</h1>
           <p className="text-slate-500 font-medium mt-1">Organize and classify your inventory items.</p>
         </div>
-        <button
-          onClick={() => {
-            setShowModal(true);
-            setIsEditing(false);
-            setCategory({ name: "", status: "Available" });
-          }}
-          className="group flex items-center gap-2 bg-[#FA9C42] text-white px-8 py-4 rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95"
-        >
-          <Plus size={22} className="group-hover:rotate-90 transition-transform" />
-          <span className="font-bold text-lg">Add Category</span>
-        </button>
+        {/* Check if user is admin/superadmin OR has the specific Add permission */}
+{(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Category Management_Add"] === true) && (
+  <button
+    onClick={() => {
+      setShowModal(true);
+      setIsEditing(false);
+      setCategory({ name: "", status: "Available" });
+    }}
+    className="group flex items-center gap-2 bg-[#FA9C42] text-white px-8 py-4 rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95"
+  >
+    <Plus size={22} className="group-hover:rotate-90 transition-transform" />
+    <span className="font-bold text-lg">Add Category</span>
+  </button>
+)}
       </div>
 
       {/* --- TABLE CONTAINER --- */}
@@ -113,20 +120,27 @@ export default function CategoryManagement() {
                     </td>
                     <td className="px-10 py-6">
                       <div className="flex justify-end gap-3">
-                        <button 
+                        {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Category Management_Edit"] === true) && (
+ <button 
                           onClick={() => editCategory(item)}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
                         >
                           <Edit size={18} />
                           <span className="font-bold text-sm">Modify</span>
                         </button>
-                        <button 
+
+                        )}
+                        {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Category Management_Delete"] === true) && (
+<button 
                           onClick={() => { setCurrentId(item.id); setShowDeleteModal(true); }}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"
                         >
                           <Trash2 size={18} />
                           <span className="font-bold text-sm">Remove</span>
                         </button>
+
+                        )}
+                        
                       </div>
                     </td>
                   </tr>
