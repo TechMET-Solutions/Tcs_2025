@@ -32,9 +32,9 @@ const EmpDashboard = ({ user }) => {
       ]);
 
       if (statusRes.data.success) {
-        setCurrentStatus(statusRes.data.lastStatus || "READY");
+        setCurrentStatus(statusRes.data.status);
       }
-      
+
       if (dataRes.data.success) {
         setStats(dataRes.data.stats);
         setFollowUps(dataRes.data.followUps);
@@ -47,30 +47,60 @@ const EmpDashboard = ({ user }) => {
   };
 
   // 2. Handle Punch In/Out Logic
+  // const handlePunch = async (type) => {
+  //   setLoading(true);
+  //   setMessage("");
+  //   try {
+  //     const response = await axios.post(`${BASEURL}/api/employees/punch`, {
+  //       employeeId: STATIC_USER_ID,
+  //       status: type
+  //     });
+
+  //     if (response.data.success) {
+  //       setMessage(`Success: ${type} Recorded!`);
+  //       // If they just punched out, lock the dashboard for today
+  //       if (type === "OUT") {
+  //         setCurrentStatus("COMPLETED");
+  //       } else {
+  //         setCurrentStatus("IN");
+  //       }
+  //     }
+  //   } catch (err) {
+  //     setMessage(err.response?.data?.message || "Punch failed. Try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handlePunch = async (type) => {
     setLoading(true);
     setMessage("");
+
     try {
-      const response = await axios.post(`${BASEURL}/api/employees/punch`, {
+      const url =
+        type === "IN"
+          ? `${BASEURL}/api/employees/punch-in`
+          : `${BASEURL}/api/employees/punch-out`;
+
+      const res = await axios.post(url, {
         employeeId: STATIC_USER_ID,
-        status: type
+        image: null // later you can send base64 / selfie
       });
 
-      if (response.data.success) {
-        setMessage(`Success: ${type} Recorded!`);
-        // If they just punched out, lock the dashboard for today
-        if (type === "OUT") {
-          setCurrentStatus("COMPLETED");
-        } else {
-          setCurrentStatus("IN");
-        }
+      setMessage(res.data.message);
+
+      if (type === "IN") {
+        setCurrentStatus("IN");
+      } else {
+        setCurrentStatus("COMPLETED");
       }
     } catch (err) {
-      setMessage(err.response?.data?.message || "Punch failed. Try again.");
+      setMessage(err.response?.data?.message || "Punch failed");
     } finally {
       setLoading(false);
     }
   };
+
 
   // 3. Helper Component for Punch Section
   const PunchControl = () => {

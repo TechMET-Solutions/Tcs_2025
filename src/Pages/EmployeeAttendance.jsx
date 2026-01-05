@@ -1,52 +1,132 @@
-import React, { useState, useEffect } from "react";
-import { Calendar, User, Clock, Search, Filter, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Calendar, Clock, Filter, Search, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getEmployeesAPI } from "../Component/API/employeeApi";
+import { getAttendanceAPI, getAttendanceSummaryAPI } from "../Component/API/attendanceApi";
+import { formatIndianDate } from "../utils/formatIndianDate";
+
 
 export default function EmployeeAttendance() {
-  const employees = [
-    { id: 1, name: "Rahul Sharma", role: "Sales Executive" },
-    { id: 2, name: "Pooja Patil", role: "Architect" },
-    { id: 3, name: "Amit Desai", role: "Warehouse Mgr" },
-  ];
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const attendanceData = {
-    1: [
-      { date: "2025-12-01", punchIn: "09:15 AM", punchOut: "06:20 PM" },
-      { date: "2025-12-02", punchIn: "09:05 AM", punchOut: "06:10 PM" },
-      { date: "2025-12-03", punchIn: "09:25 AM", punchOut: "06:00 PM" },
-    ],
-    2: [
-      { date: "2025-12-01", punchIn: "09:10 AM", punchOut: "06:30 PM" },
-      { date: "2025-12-02", punchIn: "09:20 AM", punchOut: "06:40 PM" },
-    ],
-    3: [],
-  };
+  const [summary, setSummary] = useState({
+    daysPresent: 0,
+    avgHours: 0,
+  });
 
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const [selectedEmployee, setSelectedEmployee] = useState(1);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [filteredRecords, setFilteredRecords] = useState([]);
 
   useEffect(() => {
-    const records = attendanceData[selectedEmployee] || [];
-    const filtered = records.filter((r) => r.date.startsWith(selectedMonth));
-    setFilteredRecords(filtered);
+    debugger
+    if (!selectedEmployee || !selectedMonth) return;
+
+    (async () => {
+      try {
+        const res = await getAttendanceSummaryAPI(selectedEmployee, selectedMonth);
+        setSummary({
+          daysPresent: res?.data?.daysPresent ?? 0,
+          avgHours: res?.data?.avgHours ?? 0,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    })();
   }, [selectedEmployee, selectedMonth]);
 
-  const calculateHours = (punchIn, punchOut) => {
-    const start = new Date(`2025-01-01 ${punchIn}`);
-    const end = new Date(`2025-01-01 ${punchOut}`);
-    const diffMs = end - start;
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    return { text: `${hours}h ${mins}m`, decimal: hours + mins / 60 };
+
+
+
+
+
+  // Fetch employee list on component mount
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const response = await getEmployeesAPI();
+      if (response.data && response.data.employees) {
+        // Filter out employees with "block" status
+        const activeEmployees = response.data.employees.filter(emp => emp.status !== "blocked");
+        setEmployees(activeEmployees);
+        if (activeEmployees.length > 0) {
+          setSelectedEmployee(activeEmployees[0].id);
+        }
+      }
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching employees:", err);
+      setError("Failed to fetch employee list");
+    } finally {
+      setLoading(false);
+    }
   };
+
+
+  useEffect(() => {
+    if (!selectedEmployee || !selectedMonth) return;
+
+    const fetchAttendance = async () => {
+      try {
+        const res = await getAttendanceAPI(selectedEmployee, selectedMonth);
+        setFilteredRecords(res.data.records || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAttendance();
+  }, [selectedEmployee, selectedMonth]);
+
+  // // useEffect(() => {
+  // //   const records = attendanceData[selectedEmployee] || [];
+  // //   const filtered = records.filter((r) => r.date.startsWith(selectedMonth));
+  // //   setFilteredRecords(filtered);
+  // // }, [selectedEmployee, selectedMonth]);
+
+  const calculateHours = (punchIn, punchOut) => {
+    if (!punchIn || !punchOut) {
+      return { text: "0h 0m", decimal: 0 };
+    }
+
+    const [inH, inM] = punchIn.split(":").map(Number);
+    const [outH, outM] = punchOut.split(":").map(Number);
+
+    let start = inH * 60 + inM;
+    let end = outH * 60 + outM;
+
+    // Handle overnight shift
+    if (end < start) end += 24 * 60;
+
+    const diff = end - start;
+    const hours = Math.floor(diff / 60);
+    const mins = diff % 60;
+
+    return {
+      text: `${hours}h ${mins}m`,
+      decimal: +(hours + mins / 60).toFixed(2),
+    };
+  };
+
+  const isOnTime = (punchIn) => {
+    if (!punchIn) return false;
+    const [h, m] = punchIn.split(":").map(Number);
+    return h < 9 || (h === 9 && m <= 0);
+  };
+
 
   const currentEmp = employees.find(e => e.id === selectedEmployee);
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <div className=" mx-auto">
-        
+
         {/* HEADER SECTION */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
@@ -56,132 +136,152 @@ export default function EmployeeAttendance() {
             </h1>
             <p className="text-slate-500 mt-1">Monitor daily punch-in and work durations.</p>
           </div>
-          
+
           <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
-             <div className="flex items-center gap-2 px-3">
-                <User size={18} className="text-slate-400" />
-                <select
-                  className="bg-transparent border-none text-sm font-semibold text-slate-700 focus:ring-0 outline-none cursor-pointer"
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(Number(e.target.value))}
-                >
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>{emp.name}</option>
-                  ))}
-                </select>
-             </div>
-             <div className="w-[1px] h-6 bg-slate-200"></div>
-             <div className="flex items-center gap-2 px-3">
-                <Filter size={18} className="text-slate-400" />
-                <input
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="bg-transparent border-none text-sm font-semibold text-slate-700 focus:ring-0 outline-none cursor-pointer"
-                />
-             </div>
+            <div className="flex items-center gap-2 px-3">
+              <User size={18} className="text-slate-400" />
+              <select
+                className="bg-transparent border-none text-sm font-semibold text-slate-700 focus:ring-0 outline-none cursor-pointer disabled:opacity-50"
+                value={selectedEmployee || ""}
+                onChange={(e) => setSelectedEmployee(Number(e.target.value))}
+                disabled={loading || employees.length === 0}
+              >
+                <option value="">
+                  {loading ? "Loading employees..." : "Select Employee"}
+                </option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="w-[1px] h-6 bg-slate-200"></div>
+            <div className="flex items-center gap-2 px-3">
+              <Filter size={18} className="text-slate-400" />
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-transparent border-none text-sm font-semibold text-slate-700 focus:ring-0 outline-none cursor-pointer"
+              />
+            </div>
           </div>
         </div>
 
         {/* STATS CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-             <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600"><Calendar size={24}/></div>
-                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">Active</span>
-             </div>
-             <h3 className="text-slate-500 text-sm font-medium">Days Present</h3>
-             <p className="text-3xl font-bold text-slate-900">{filteredRecords.length}</p>
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600"><Calendar size={24} /></div>
+              <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">Active</span>
+            </div>
+            <h3 className="text-slate-500 text-sm font-medium">Days Present</h3>
+            <p className="text-3xl font-bold text-slate-900">{summary.daysPresent}</p>
           </div>
 
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-             <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-orange-50 rounded-2xl text-orange-600"><Clock size={24}/></div>
-                <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Average</span>
-             </div>
-             <h3 className="text-slate-500 text-sm font-medium">Avg. Daily Hours</h3>
-             <p className="text-3xl font-bold text-slate-900">
-                {filteredRecords.length > 0 
-                  ? (filteredRecords.reduce((acc, curr) => acc + calculateHours(curr.punchIn, curr.punchOut).decimal, 0) / filteredRecords.length).toFixed(1) 
-                  : "0"}h
-             </p>
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-orange-50 rounded-2xl text-orange-600"><Clock size={24} /></div>
+              <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Average</span>
+            </div>
+            <h3 className="text-slate-500 text-sm font-medium">Avg. Daily Hours</h3>
+            <p className="text-3xl font-bold text-slate-900">
+              {Number(summary.avgHours || 0).toFixed(1)}h
+            </p>
           </div>
 
           <div className="bg-indigo-600 p-6 rounded-3xl shadow-xl shadow-indigo-100 text-white">
-             <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-white/20 rounded-2xl"><User size={24}/></div>
-             </div>
-             <h3 className="text-indigo-100 text-sm font-medium">Employee Profile</h3>
-             <p className="text-xl font-bold">{currentEmp?.name}</p>
-             <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">{currentEmp?.role}</p>
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-white/20 rounded-2xl"><User size={24} /></div>
+            </div>
+            <h3 className="text-indigo-100 text-sm font-medium">Employee Profile</h3>
+            <p className="text-xl font-bold">{currentEmp?.name}</p>
+            <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">{currentEmp?.role}</p>
           </div>
         </div>
 
         {/* TABLE SECTION */}
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse overflow-hidden rounded-xl shadow-sm bg-white">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Punch In</th>
-                <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Punch Out</th>
-                <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Duration</th>
-                <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+              <tr className="bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700">
+                {["Date", "Punch In", "Punch Out", "Duration", "Status"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-5 py-4 text-center text-[11px] font-semibold text-slate-200 uppercase tracking-widest"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+
+            <tbody className="divide-y divide-slate-100">
               {filteredRecords.length > 0 ? (
                 filteredRecords.map((r, index) => (
-                  <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex flex-col items-center justify-center text-slate-500">
-                          <span className="text-[10px] font-bold uppercase">{new Date(r.date).toLocaleString('default', { month: 'short' })}</span>
-                          <span className="text-sm font-bold leading-none">{new Date(r.date).getDate()}</span>
-                        </div>
-                        <span className="text-sm font-semibold text-slate-700">{r.date}</span>
-                      </div>
+                  <tr
+                    key={index}
+                    className="group transition-all hover:bg-indigo-50/40"
+                  >
+                    {/* Date */}
+                    <td className="px-5 py-4 text-center">
+                      <span className="text-sm font-semibold text-slate-700">
+                        {formatIndianDate(r.date)}
+                      </span>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <ArrowUpRight size={16} className="text-green-500" />
+
+                    {/* Punch In */}
+                    <td className="px-5 py-4">
+                      <div className="flex justify-center items-center gap-2 text-slate-600">
+                        <ArrowUpRight size={16} className="text-emerald-500" />
                         <span className="text-sm font-medium">{r.punchIn}</span>
                       </div>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2 text-slate-600">
+
+                    {/* Punch Out */}
+                    <td className="px-5 py-4">
+                      <div className="flex justify-center items-center gap-2 text-slate-600">
                         <ArrowDownRight size={16} className="text-rose-500" />
                         <span className="text-sm font-medium">{r.punchOut}</span>
                       </div>
                     </td>
-                    <td className="p-4">
-                      <span className="inline-flex items-center gap-1.5 py-1 px-3 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold">
+
+                    {/* Duration */}
+                    <td className="px-5 py-4 text-center">
+                      <span className="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
                         {calculateHours(r.punchIn, r.punchOut).text}
                       </span>
                     </td>
-                    <td className="p-4 text-center">
-                      <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-md ${
-                        r.punchIn.includes("09:0") || r.punchIn.includes("08:") 
-                        ? "bg-green-100 text-green-700" 
-                        : "bg-amber-100 text-amber-700"
-                      }`}>
-                        {r.punchIn.includes("09:0") || r.punchIn.includes("08:") ? "On Time" : "Late"}
+
+                    {/* Status */}
+                    <td className="px-5 py-4 text-center">
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide
+                ${isOnTime(r.punchIn)
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
+                          }
+              `}
+                      >
+                        {isOnTime(r.punchIn) ? "On Time" : "Late"}
                       </span>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-20 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                       <Search size={40} className="text-slate-200" />
-                       <p className="text-slate-400 font-medium">No records found for this period.</p>
+                  <td colSpan={5} className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Search size={42} className="text-slate-300" />
+                      <p className="text-sm font-medium text-slate-400">
+                        No records found for this period
+                      </p>
                     </div>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+
         </div>
       </div>
     </div>
