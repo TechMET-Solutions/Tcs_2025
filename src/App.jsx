@@ -50,8 +50,24 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Dashboard />} />
-           <Route path="/employee/dashboard" element={<EmpDashboard />} />
+       <Route 
+            index 
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Employee Dashboard: Blocked for regular Admins */}
+          <Route 
+            path="employee/dashboard" 
+            element={
+              <ProtectedRoute employeeOnly={true}>
+                <EmpDashboard />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="product-registration" element={<ProductRegistration />} />
           <Route path="generate-quote" element={<GenerateQuote />} />
           <Route path="employee-registration" element={<EmployeeRegistration />} />

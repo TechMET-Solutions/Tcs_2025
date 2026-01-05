@@ -1,6 +1,6 @@
 
 
-//   export const BASEURL = "http://dashboard.theceramicstudio.in/";
+//   export const BASEURL = "https://dashboard.theceramicstudio.in/";
 
 
 

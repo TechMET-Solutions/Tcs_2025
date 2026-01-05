@@ -83,7 +83,7 @@ export default function ProductRegistration() {
 
   useEffect(() => {
     fetchBrands();
-  })
+  },[])
 
   const fetchCategories = async () => {
     try {
@@ -111,11 +111,11 @@ export default function ProductRegistration() {
 
   useEffect(() => {
     fetchCategories();
-  })
+  },[])
 
   useEffect(() => {
     fetchQualities();
-  })
+  },[])
 
   // Form handlers
   const handleChange = (e) => {

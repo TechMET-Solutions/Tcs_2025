@@ -18,26 +18,35 @@ export default function Login() {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError("");
-        setLoading(true);
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-        try {
-            const res = await loginAPI(form);
-            if (res.success) {
-                saveAuth(res);
-                if (res.role === "admin") {
-                    window.location.href = "/";
-                } else {
-                    window.location.href = "/employee/dashboard";
-                }
+    try {
+        const res = await loginAPI(form);
+        if (res.success) {
+            // Check if permissions is a string and parse it, otherwise use as is
+            const parsedPermissions = typeof res.permissions === 'string' 
+                ? JSON.parse(res.permissions) 
+                : res.permissions;
+
+            // Update the response object with the parsed permissions
+            const authData = { ...res, permissions: parsedPermissions };
+
+            saveAuth(authData);
+
+            if (res.role === "admin") {
+                window.location.href = "/";
+            } else {
+                window.location.href = "/employee/dashboard";
             }
-        } catch (err) {
-            setError(err.response?.data?.message || "Invalid email or password");
-        } finally {
-            setLoading(false);
         }
-    };
+    } catch (err) {
+        setError(err.response?.data?.message || "Invalid email or password");
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 p-4">

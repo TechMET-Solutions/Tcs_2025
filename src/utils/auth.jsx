@@ -4,6 +4,7 @@ export const saveAuth = (data) => {
     sessionStorage.setItem("token", data.token);
     sessionStorage.setItem("role", data.role);
     sessionStorage.setItem("user", JSON.stringify(data.user));
+    sessionStorage.setItem("permissions", JSON.stringify(data.permissions));
 };
 
 export const logout = () => {
