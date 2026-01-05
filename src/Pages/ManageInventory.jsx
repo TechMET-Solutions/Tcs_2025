@@ -2,6 +2,7 @@ import { Edit3, Search, Trash2, X, Eye, TrendingUp, ShoppingBag, Calendar, User,
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getPurchaseListAPI } from "../Component/API/inventoryApi";
+import { useAuth } from "../utils/AuthContext";
 
 export default function ManageInventory() {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export default function ManageInventory() {
   const [query, setQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState(null);
-
+ const { permissions, user, loading, role } = useAuth(); 
   // Exact colors from your logo
   const BRAND_ORANGE = "#FF7A00"; 
   const SIDEBAR_DARK = "#1E1E1E";
@@ -104,9 +105,15 @@ export default function ManageInventory() {
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => { setSelectedPurchase(p); setShowModal(true); }} className="btn-action hover:bg-slate-100"><Eye size={18}/></button>
-                <button onClick={() => navigate("/inventory/add", { state: { data: p } })} className="btn-action hover:bg-orange-50 hover:text-[#FF7A00]"><Edit3 size={18}/></button>
-                <button className="btn-action hover:bg-red-50 hover:text-red-500"><Trash2 size={18}/></button>
+                
+                <button onClick={() => { setSelectedPurchase(p); setShowModal(true); }} className="btn-action hover:bg-slate-100"><Eye size={18} /></button>
+                 {(role === "admin" || role === "superadmin" || permissions?.["Inventory Management_Edit"] === true) && (
+
+<button onClick={() => navigate("/inventory/add", { state: { data: p } })} className="btn-action hover:bg-orange-50 hover:text-[#FF7A00]"><Edit3 size={18}/></button>
+                )}
+                
+                
+                
               </div>
             </div>
           ))}

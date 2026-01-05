@@ -1,12 +1,13 @@
 import { Bell, Check, CreditCard, FileText, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getPendingRequests, updateRequestStatus } from '../Component/API/paymentApi';
+import { useAuth } from '../utils/AuthContext';
 
 const QuotationHeader = ({fetchQuotations}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState([]);
-
+ const { permissions, user, loading, role } = useAuth();
 
 // Fetch requests whenever the modal is opened
 
@@ -72,7 +73,8 @@ const handleStatusUpdate = async (requestId, status) => {
           </div>
 
           {/* New Payment Request Button */}
-          <button 
+          {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Payment Requests"] === true) && (
+    <button 
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200"
           >
@@ -84,6 +86,9 @@ const handleStatusUpdate = async (requestId, status) => {
               </span>
             )}
           </button>
+
+                        )}
+          
         </div>
       </div>
 

@@ -14,8 +14,10 @@ import {
 import { useEffect, useState } from "react";
 import { deleteEmployeeAPI, getEmployeesAPI, toggleStatusAPI } from "../Component/API/employeeApi";
 import { BASEURL } from "../Component/API/Url";
+import { useAuth } from "../utils/AuthContext";
 
 export default function EmployeeRegistration() {
+   const { permissions, user, loading, role } = useAuth(); 
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState("add"); 
   const [showPass, setShowPass] = useState(false);
@@ -147,12 +149,16 @@ const saveEmployee = async (e) => {
           <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Employee Directory</h1>
           <p className="text-slate-400 text-sm mt-1 font-medium">Manage team members, payroll, and access status</p>
         </div>
-        <button 
+         {(role === "admin" || role === "superadmin" || permissions?.["Employee Registration_Add"] === true) && (
+ <button 
           onClick={() => { setModalMode("add"); resetForm(); setShowModal(true); }} 
           className="flex items-center gap-2 bg-[#FA9C42] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-[#e88b32] transition-all active:scale-95"
         >
           <Plus size={20} strokeWidth={3} /> Add New Employee
         </button>
+
+                        )}
+       
       </div>
 
       {/* TABLE SECTION */}
@@ -193,6 +199,8 @@ const saveEmployee = async (e) => {
                 <td className="p-5">
                   <div className="flex gap-2">
                     {/* TOGGLE STATUS BUTTON */}
+
+                    
                     <button 
                       onClick={() => handleToggleStatus(item.id,item.status)}
                       className={`p-2 rounded-lg transition-all ${item.status === 'active' ? 'text-slate-300 hover:text-red-500 hover:bg-red-50' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
@@ -200,16 +208,23 @@ const saveEmployee = async (e) => {
                     >
                       {item.status === 'active' ? <Ban size={18} /> : <CheckCircle size={18} />}
                     </button>
-                    
-                    {/* EDIT BUTTON */}
-                    <button onClick={() => handleEdit(item)} className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
+                    {(role === "admin" || role === "superadmin" || permissions?.["Employee Registration_Edit"] === true) && (
+  <button onClick={() => handleEdit(item)} className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
                       <Edit3 size={18}/>
                     </button>
 
+                        )}
+                    {/* EDIT BUTTON */}
+                   
+
                     {/* DELETE BUTTON */}
-                    <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                     {(role === "admin" || role === "superadmin" || permissions?.["Employee Registration_Delete"] === true) && (
+<button onClick={() => handleDelete(item.id)} className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
                       <Trash2 size={18}/>
                     </button>
+
+                        )}
+                    
                   </div>
                 </td>
               </tr>

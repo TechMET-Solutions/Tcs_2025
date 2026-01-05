@@ -176,7 +176,7 @@ const handleOpenModal = () => {
           <h1 className="text-3xl font-black tracking-tight text-slate-900">CRM Portal</h1>
           <p className="text-slate-500 font-medium">Manage your clients and track project follow-ups</p>
         </div>
-        {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Product Registration_Add"] === true) && (
+        {(role === "admin" || role === "superadmin" || permissions?.["Customer Management_Add"] === true) && (
 
  <button
           onClick={()=>handleOpenModal()}
@@ -261,13 +261,17 @@ const handleOpenModal = () => {
         {/* --- ACTIONS COLUMN: ALWAYS VISIBLE --- */}
         <td className="px-8 py-6">
           <div className="flex justify-end gap-3 transition-opacity">
-            <button
+             {(role === "admin" || role === "superadmin" || permissions?.["Customer Management_Edit"] === true) && (
+
+  <button
     onClick={() => handleEdit(item)}
     title="Edit Details"
     className="p-2.5 rounded-xl border border-slate-200 text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95"
   >
     <Edit2 size={18} />
   </button>
+                        )}
+          
             <button
               onClick={() => openHistory(item)}
               title="View History"

@@ -5,11 +5,12 @@ import { sendPaymentRequest } from "../Component/API/paymentApi";
 import { getAllQuotations } from "../Component/API/quotationApi";
 import QuotationHeader from "./QuotationHeader";
 import { BASEURL } from "../Component/API/Url";
+import { useAuth } from "../utils/AuthContext";
 
 export default function ManageQuotation() {
   const [quotationList, setQuotationList] = useState([]);
   const [search, setSearch] = useState("");
-
+ const { permissions, user, loading, role } = useAuth(); 
   // Modals Toggle
   const [openDCModal, setOpenDCModal] = useState(false);
   const [openPayModal, setOpenPayModal] = useState(false);
@@ -227,14 +228,27 @@ const handleSavePaymentRequest = async () => {
                   <td className="p-6 text-base font-black text-slate-800">₹{q.due_amount.toLocaleString()}</td>
                 <td className="p-6">
                   <div className="flex flex-wrap gap-2">
-                    <button 
+                     {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Edit"] === true) && (
+   <button 
   onClick={() => navigate("/quotation/add", { state: { editData: q } })} 
   className="action-btn text-purple-600 border-purple-100 hover:bg-purple-600"
 >
   <FileText size={14} /> Edit
 </button>
-                    <button onClick={() => openPaymentModal(q)} className="action-btn text-blue-600 border-blue-100 hover:bg-blue-600"><CreditCard size={14} /> Pay</button>
-                    <button onClick={() => openDeliveryChallan(q)} className="action-btn text-orange-600 border-orange-100 hover:bg-orange-600"><Truck size={14} /> DC</button>
+
+                    )}
+                    {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Pay"] === true) && (
+    <button onClick={() => openPaymentModal(q)} className="action-btn text-blue-600 border-blue-100 hover:bg-blue-600"><CreditCard size={14} /> Pay</button>
+
+                    )}
+                    
+                     {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_DC"] === true) && (
+    <button onClick={() => openDeliveryChallan(q)} className="action-btn text-orange-600 border-orange-100 hover:bg-orange-600"><Truck size={14} /> DC</button>
+
+                        )}
+                 
+                   
+                   
                     <div className="w-[1px] bg-slate-100 mx-1"></div>
                     <button onClick={() => openQuotationPDF(q.id, "qcode")} className="print-btn">Code</button>
                     <button onClick={() => openQuotationPDF(q.id, "qname")} className="print-btn">Name</button>

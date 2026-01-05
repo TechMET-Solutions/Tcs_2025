@@ -1,12 +1,14 @@
-import { ClipboardList, Printer, Trash2, MapPin, ExternalLink, Calendar, User, Truck, Search, Filter, ChevronRight, Activity } from "lucide-react";
+import axios from "axios";
+import { Activity, Calendar, ClipboardList, MapPin, Printer, Trash2, Truck, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getAllDeliveryChallan } from "../Component/API/quotationApi";
-import axios from "axios";
 import {
-  getTrackingByChallan, addTracking,
-  deleteTracking
+  addTracking,
+  deleteTracking,
+  getTrackingByChallan
 } from "../Component/API/trackingApi";
 import { BASEURL } from "../Component/API/Url";
+import { useAuth } from "../utils/AuthContext";
 
 const API_URL = `${BASEURL}/api/Quotation`
 
@@ -19,7 +21,7 @@ export default function DeliveryChallan() {
 
   const [trackingList, setTrackingList] = useState([]);
   const [loadingTracking, setLoadingTracking] = useState(false);
-
+const { permissions, user, loading, role } = useAuth(); 
 
   useEffect(() => {
     fetchChallans();
@@ -216,9 +218,11 @@ export default function DeliveryChallan() {
                         </span>
                       </div>
                     </td>
-
+ <td className="px-6 py-5 text-center">
                     {/* STATUS */}
-                    <td className="px-6 py-5 text-center">
+                     {(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Update Timeline"] === true) && (
+
+
                       <button
                         onClick={() => openTrackingModal(item.id)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-900 hover:text-white transition-all active:scale-95"
@@ -226,35 +230,47 @@ export default function DeliveryChallan() {
                         <MapPin size={14} />
                         Update Timeline
                       </button>
-                    </td>
+              
+                        )}
+                         </td>
 
                     {/* QUICK ACTION */}
+                   
                     <td className="p-5 text-center">
-                      <button
+                       {(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Delete"] === true) && (
+
+<button
                         onClick={() => handleDeleteItem(item.id)}
                         className="p-3 rounded-2xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all active:scale-95">
                         <Trash2 size={16} />
                       </button>
+                        )}
+                      
                     </td>
 
                     {/* PRINT */}
                     <td className="px-10 py-5 text-right">
                       <div className="flex items-center justify-end gap-3">
-                        <button
+                        {(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Print DC"] === true) && (
+<button
                           onClick={() => printChallan(item.id)}
                           className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all shadow-md active:scale-95"
                         >
                           <Printer size={14} />
                           Print DC
                         </button>
-
-                        <button
+                        )}
+                        
+{(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Return DC"] === true) && (
+<button
                           onClick={() => printChallan2(item.id)}
                           className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition"
                         >
                           <Printer size={12} />
                           Return
                         </button>
+                        )}
+                        
                       </div>
                     </td>
                   </tr>

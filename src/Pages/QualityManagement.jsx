@@ -1,8 +1,8 @@
 import axios from "axios";
-import { Edit, Layers, Plus, Trash2, X, CheckCircle, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Edit, Layers, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Images } from "../assets";
 import { BASEURL } from "../Component/API/Url";
+import { useAuth } from "../utils/AuthContext";
 
 const BASE_URL = `${BASEURL}/api/qualities`;
 
@@ -13,7 +13,7 @@ export default function QualityManagement() {
   const [currentId, setCurrentId] = useState(null);
   const [qualityList, setQualityList] = useState([]);
   const [quality, setQuality] = useState({ name: "", status: "Available" });
-
+ const { permissions, user, loading, role } = useAuth(); 
   // ✅ FETCH DATA
   const fetchQualities = async () => {
     try {
@@ -76,7 +76,9 @@ export default function QualityManagement() {
           <h1 className="text-3xl font-black tracking-tight text-slate-900">Quality Management</h1>
           <p className="text-slate-500 font-medium mt-1">Configure and manage product quality standards across the inventory.</p>
         </div>
-        <button
+         {(role === "admin" || role === "superadmin" || permissions?.["Quality Management_Add"] === true) && (
+
+ <button
           onClick={() => {
             setShowModal(true);
             setIsEditing(false);
@@ -87,6 +89,8 @@ export default function QualityManagement() {
           <Plus size={22} className="group-hover:rotate-90 transition-transform" />
           <span className="font-bold text-lg">Add Quality</span>
         </button>
+                        )}
+       
       </div>
 
       {/* --- LARGE DATA TABLE --- */}
@@ -135,20 +139,27 @@ export default function QualityManagement() {
                     <td className="px-10 py-6">
                       {/* ✅ ACTIONS ALWAYS VISIBLE */}
                       <div className="flex justify-end gap-4">
-                        <button 
+                         {(role === "admin" || role === "superadmin" || permissions?.["Quality Management_Edit"] === true) && (
+
+  <button 
                           onClick={() => editQuality(item)}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
                         >
                           <Edit size={18} />
                           <span className="font-bold text-sm">Modify</span>
                         </button>
-                        <button 
+                        )}
+                        {(role === "admin" || role === "superadmin" || permissions?.["Quality Management_Delete"] === true) && (
+
+  <button 
                           onClick={() => { setCurrentId(item.id); setShowDeleteModal(true); }}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"
                         >
                           <Trash2 size={18} />
                           <span className="font-bold text-sm">Remove</span>
                         </button>
+                        )}
+                       
                       </div>
                     </td>
                   </tr>

@@ -154,7 +154,7 @@ export default function Sidebar() {
             {openInventory && open && (
               <div className="ml-8 mt-2 flex flex-col gap-1 border-l border-gray-600 pl-4 animate-in slide-in-from-top-2 duration-200">
                 {/* Specific Check for Adding Inventory */}
-                {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Inventory Management_Add"]) && (
+                {(role === "admin" || role === "superadmin" || permissions?.["Inventory Management_Add"]) && (
                    <NavItem label="Add Inventory" icon={<PlusCircle size={16} />} path="/inventory/add" isSubItem />
                 )}
                 <NavItem label="Manage Inventory" icon={<ListChecks size={16} />} path="/inventory/manage" isSubItem />
@@ -179,7 +179,7 @@ export default function Sidebar() {
             {openQuotation && open && (
               <div className="ml-8 mt-2 flex flex-col gap-1 border-l border-gray-600 pl-4 animate-in slide-in-from-top-2 duration-200">
                 {/* Specific Check for Adding Quotations */}
-                {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Quotation Management_Add"]) && (
+                {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Add"]) && (
                   <NavItem label="Add Quotation" icon={<FilePlus size={16} />} path="/quotation/add" isSubItem />
                 )}
                 <NavItem label="Manage Quotation" icon={<FileText size={16} />} path="/quotation/manage" isSubItem />

@@ -60,7 +60,7 @@ export default function CategoryManagement() {
           <p className="text-slate-500 font-medium mt-1">Organize and classify your inventory items.</p>
         </div>
         {/* Check if user is admin/superadmin OR has the specific Add permission */}
-{(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Category Management_Add"] === true) && (
+{(role === "admin" || role === "superadmin" || permissions?.["Category Management_Add"] === true) && (
   <button
     onClick={() => {
       setShowModal(true);
@@ -120,7 +120,7 @@ export default function CategoryManagement() {
                     </td>
                     <td className="px-10 py-6">
                       <div className="flex justify-end gap-3">
-                        {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Category Management_Edit"] === true) && (
+                        {(role === "admin" || role === "superadmin" || permissions?.["Category Management_Edit"] === true) && (
  <button 
                           onClick={() => editCategory(item)}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
@@ -130,7 +130,7 @@ export default function CategoryManagement() {
                         </button>
 
                         )}
-                        {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Category Management_Delete"] === true) && (
+                        {(role === "admin" || role === "superadmin" || permissions?.["Category Management_Delete"] === true) && (
 <button 
                           onClick={() => { setCurrentId(item.id); setShowDeleteModal(true); }}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"

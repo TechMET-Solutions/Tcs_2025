@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { formatIndianDate } from "../utils/formatIndianDate";
 
 import { BASEURL } from "../Component/API/Url";
+import { useAuth } from "../utils/AuthContext";
 
 const BASE_URL = `${BASEURL}/api/architects`;
 
@@ -38,7 +39,7 @@ export default function ArchitectRegistration() {
     loyaltyPoints: "",
     remark: ""
   });
-
+ const { permissions, user, loading, role } = useAuth(); 
 
   // --- API CALLS ---
   const fetchArchitects = async () => {
@@ -140,12 +141,17 @@ export default function ArchitectRegistration() {
               className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FA9C42]/20 focus:border-[#FA9C42] transition-all w-full"
             />
           </div>
-          <button
+
+           {( role=== "admin" || role === "superadmin" || permissions?.["Architect Registration_Add"] === true) && (
+ <button
             onClick={handleOpenAddModal}
             className="flex items-center gap-2 bg-[#FA9C42] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-[#e88b32] transition-all active:scale-95 whitespace-nowrap"
           >
             <Plus size={20} strokeWidth={3} /> Add Architect
           </button>
+
+                        )}
+         
         </div>
       </div>
 
@@ -206,17 +212,26 @@ export default function ArchitectRegistration() {
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex justify-end gap-2 transition-opacity">
-                        <button
+                         {(role === "admin" || role === "superadmin" || permissions?.["Architect Registration_Edit"] === true) && (
+ <button
                           onClick={() => handleOpenEditModal(item)}
                           className="p-2 hover:bg-white rounded-lg shadow-sm border border-slate-100 text-slate-400 hover:text-[#FA9C42] hover:border-[#FA9C42] "
                         >
                           <Edit3 size={16} />
                         </button>
-                        <button
+
+                        )}
+
+                         {(role === "admin" || role === "superadmin" || permissions?.["Architect Registration_Delete"] === true) && (
+ <button
                           onClick={() => deleteArchitect(item.id)}
                           className="p-2 hover:bg-white rounded-lg shadow-sm border border-slate-100 text-slate-400 hover:text-red-500 hover:border-red-500">
                           <Trash2 size={16} />
                         </button>
+
+                        )}
+                        
+                       
                       </div>
                     </td>
                   </tr>

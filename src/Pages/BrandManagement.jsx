@@ -56,7 +56,7 @@ export default function BrandManagement() {
           <p className="text-slate-500 font-medium mt-1">Manage and track authorized manufacturer brands.</p>
         </div>
 
-         {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Brand Management_Add"] === true) && (
+         {(role === "admin" || role === "superadmin" || permissions?.["Brand Management_Add"] === true) && (
  <button
           onClick={() => {
             setShowModal(true);
@@ -117,7 +117,7 @@ export default function BrandManagement() {
                     </td>
                     <td className="px-10 py-6">
                       <div className="flex justify-end gap-4">
-                         {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Brand Management_Edit"] === true) && (
+                         {(role === "admin" || role === "superadmin" || permissions?.["Brand Management_Edit"] === true) && (
  <button 
                           onClick={() => editBrand(item)}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
@@ -127,7 +127,7 @@ export default function BrandManagement() {
                         </button>
 
                         )}
-                        {(user?.role === "admin" || user?.role === "superadmin" || permissions?.["Brand Management_Delete"] === true) && (
+                        {(role === "admin" || role === "superadmin" || permissions?.["Brand Management_Delete"] === true) && (
                      <button 
                           onClick={() => { setCurrentId(item.id); setShowDeleteModal(true); }}
                           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"

@@ -1,9 +1,10 @@
+import axios from "axios";
 import { BarChart, BarcodeIcon, Eye, Filter, Layers, MapPin, Maximize, Package, Pencil, Plus, Printer, QrCode, Search, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Barcode from "react-barcode";
 import QRCode from "react-qr-code";
 import { addProductAPI, getProductAPI, updateProductAPI } from "../Component/API/productApi";
-import axios from "axios";
+import { BASEURL } from "../Component/API/Url";
 import { useAuth } from "../utils/AuthContext";
 
 
@@ -76,7 +77,7 @@ export default function ProductRegistration() {
 
   const fetchBrands = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/brands/list");
+      const { data } = await axios.get(`${BASEURL}/api/brands/list`);
       if (data.success) {
         setBrandList(data.brands);
       }
@@ -92,7 +93,7 @@ export default function ProductRegistration() {
 
   const fetchCategories = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/categories/list");
+      const { data } = await axios.get(`${BASEURL}/api/categories/list`);
       if (data.success) {
         setCategoryList(data.categories);
       }
@@ -105,7 +106,7 @@ export default function ProductRegistration() {
 
   const fetchQualities = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/qualities/list");
+      const { data } = await axios.get(`${BASEURL}/api/qualities/list`);
       if (data.success) {
         setQualityList(data.qualities);
       }
@@ -429,13 +430,17 @@ export default function ProductRegistration() {
           <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">Product Registration</h1>
           <p className="text-slate-500 font-medium">Manage and track your inventory stock and logistics.</p>
         </div>
-        <button
+        {(role === "admin" || role === "superadmin" || permissions?.["Product Registration_Add"] === true) && (
+
+ <button
           onClick={() => setShowAddModal(true)}
           className="group flex items-center gap-3 bg-[#FA9C42] text-white px-8 py-4 rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95"
         >
           <Plus size={22} className="group-hover:rotate-90 transition-transform" />
           <span className="font-bold text-lg">Add Product</span>
         </button>
+                        )}
+       
       </div>
 
       {/* --- TABLE CONTAINER --- */}
@@ -510,12 +515,21 @@ export default function ProductRegistration() {
                       {/* ACTIONS */}
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-2">
-                          <button onClick={() => editProduct(item)} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-100 hover:shadow-md transition-all active:scale-90">
+                          {(role === "admin" || role === "superadmin" || permissions?.["Product Registration_Edit"] === true) && (
+
+<button onClick={() => editProduct(item)} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-100 hover:shadow-md transition-all active:scale-90">
                             <Pencil size={18} />
                           </button>
-                          <button onClick={() => deleteProduct(item.id)} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-100 hover:shadow-md transition-all active:scale-90">
+                          )}
+                          
+                            {(role === "admin" || role === "superadmin" || permissions?.["Product Registration_Delete"] === true) && (
+
+ <button onClick={() => deleteProduct(item.id)} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-100 hover:shadow-md transition-all active:scale-90">
                             <Trash2 size={18} />
                           </button>
+                        )}
+                          
+                         
                           <button onClick={() => viewProduct(item)} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-sky-500 hover:border-sky-100 hover:shadow-md transition-all active:scale-90">
                             <Eye size={18} />
                           </button>
