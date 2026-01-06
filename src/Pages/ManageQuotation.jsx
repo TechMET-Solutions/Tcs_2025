@@ -1,14 +1,17 @@
+import axios from "axios";
 import { CheckCircle, ChevronRight, CreditCard, FileText, Trash2, Truck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendPaymentRequest } from "../Component/API/paymentApi";
-import { getAllQuotations } from "../Component/API/quotationApi";
-import QuotationHeader from "./QuotationHeader";
 import { BASEURL } from "../Component/API/Url";
 import { useAuth } from "../utils/AuthContext";
+import QuotationHeader from "./QuotationHeader";
 
 export default function ManageQuotation() {
   const [quotationList, setQuotationList] = useState([]);
+  
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
  const { permissions, user, loading, role } = useAuth(); 
   // Modals Toggle
@@ -41,16 +44,24 @@ const handleBoxUpdate = (productId, value) => {
         : item
     ));
 };
-  useEffect(() => {
-    fetchQuotations();
-  }, []);
+ const fetchQuotations = async (page = 1) => {
+  try {
+    // Pass page as a query parameter
+    const res = await axios.get(`${BASEURL}/api/Quotation/list?page=${page}&limit=10`);
+    
+    if (res.data.success) {
+      setQuotationList(res.data.quotations);
+      setTotalPages(res.data.pagination.totalPages);
+      setCurrentPage(res.data.pagination.currentPage);
+    }
+  } catch (error) { 
+    console.log(error); 
+  }
+};
 
-  const fetchQuotations = async () => {
-    try {
-      const res = await getAllQuotations();
-      if (res.data.success) setQuotationList(res.data.quotations);
-    } catch (error) { console.log(error); }
-  };
+useEffect(() => {
+  fetchQuotations(currentPage);
+}, [currentPage]);
 
   const filteredData = quotationList.filter((q) =>
     q.clientName?.toLowerCase().includes(search.toLowerCase())
@@ -238,7 +249,17 @@ const handleSavePaymentRequest = async () => {
 
                     )}
                     {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Pay"] === true) && (
-    <button onClick={() => openPaymentModal(q)} className="action-btn text-blue-600 border-blue-100 hover:bg-blue-600"><CreditCard size={14} /> Pay</button>
+    <button 
+  onClick={() => openPaymentModal(q)} 
+  disabled={Number(q.due_amount) <= 0} // Disable if due is 0 or less
+  className={`action-btn ${
+    Number(q.due_amount) <= 0 
+    ? "opacity-50 cursor-not-allowed grayscale" 
+    : "text-blue-600 border-blue-100 hover:bg-blue-600"
+  }`}
+>
+  <CreditCard size={14} /> Pay
+</button>
 
                     )}
                     
@@ -259,6 +280,45 @@ const handleSavePaymentRequest = async () => {
             ))}
           </tbody>
         </table>
+        <div className="mt-8 flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm font-['Lexend']">
+  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+    Page {currentPage} of {totalPages}
+  </p>
+  
+  <div className="flex items-center gap-2">
+    <button
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage(prev => prev - 1)}
+      className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all"
+    >
+      Previous
+    </button>
+
+    <div className="flex gap-1">
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i + 1)}
+          className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
+            currentPage === i + 1 
+            ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-100" 
+            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+
+    <button
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage(prev => prev + 1)}
+      className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all"
+    >
+      Next
+    </button>
+  </div>
+</div>
       </div>
 
       {/* --- EDIT MODAL --- */}
@@ -400,14 +460,22 @@ const handleSavePaymentRequest = async () => {
           />
         </div>
       </div>
-
-      <button 
-        className="w-full mt-8 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-100 disabled:bg-slate-300" 
-        onClick={handleSavePaymentRequest}
-        disabled={!paymentData.amount || !paymentData.paymentType}
-      >
-        Save Payment
-      </button>
+<button 
+  className={`w-full mt-8 py-4 rounded-2xl font-black uppercase tracking-widest transition-all duration-200 shadow-xl 
+    ${(Number(paymentData.amount) > Number(paymentData.due) || !paymentData.amount || !paymentData.paymentType) 
+      ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' 
+      : 'bg-blue-600 text-white shadow-blue-100 hover:bg-blue-700 active:transform active:scale-[0.98]'
+    }`} 
+  onClick={handleSavePaymentRequest}
+  disabled={
+    !paymentData.amount || 
+    !paymentData.paymentType || 
+    Number(paymentData.amount) > Number(paymentData.due) || // Disable if it exceeds due
+    Number(paymentData.amount) <= 0                        // Disable if zero or negative
+  }
+>
+  {Number(paymentData.amount) > Number(paymentData.due) ? 'Amount Exceeds Due' : 'Save Payment'}
+</button>
     </div>
   </div>
 )}

@@ -37,17 +37,29 @@ export default function EmployeeRegistration() {
     status: "active", // added status field
     profile: null,
   });
-
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [limit] = useState(10);
   console.log(employee,"employee")
-  const fetchEmployeesFromDB = async () => {
-    try {
-      const res = await getEmployeesAPI();
-      if (res.data.success) setEmployeeList(res.data.employees);
-    } catch (err) { console.log(err); }
-  };
+  const fetchEmployeesFromDB = async (page = 1) => {
+  try {
+    // Note: Update your getEmployeesAPI to handle the URL: `${BASEURL}/api/employees?page=${page}&limit=${limit}`
+    const res = await getEmployeesAPI(page, limit); 
+    
+    if (res.data.success) {
+      setEmployeeList(res.data.employees);
+      setTotalPages(res.data.pagination.totalPages);
+      setCurrentPage(res.data.pagination.currentPage);
+    }
+  } catch (err) { console.log(err); }
+};
 
-  useEffect(() => { fetchEmployeesFromDB(); }, []);
+// Update useEffect to watch currentPage
+useEffect(() => { 
+  fetchEmployeesFromDB(currentPage); 
+}, [currentPage]);
 
+ 
   const handleChange = (e) => {
     setEmployee({ ...employee, [e.target.name]: e.target.value });
   };
@@ -231,6 +243,47 @@ const saveEmployee = async (e) => {
             ))}
           </tbody>
         </table>
+        {/* --- PAGINATION FOOTER --- */}
+<div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+    Page {currentPage} of {totalPages}
+  </p>
+  
+  <div className="flex gap-2">
+    <button
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage(p => p - 1)}
+      className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-all"
+    >
+      Previous
+    </button>
+    
+    {/* Page Numbers */}
+    <div className="flex gap-1">
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i + 1)}
+          className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${
+            currentPage === i + 1 
+              ? "bg-[#FA9C42] text-white shadow-md shadow-orange-100" 
+              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+
+    <button
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage(p => p + 1)}
+      className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-all"
+    >
+      Next
+    </button>
+  </div>
+</div>
       </div>
 
       {/* MODAL SECTION - RESTORED ALL FIELDS */}

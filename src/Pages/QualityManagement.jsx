@@ -15,20 +15,31 @@ export default function QualityManagement() {
   const [quality, setQuality] = useState({ name: "", status: "Available" });
  const { permissions, user, loading, role } = useAuth(); 
   // ✅ FETCH DATA
-  const fetchQualities = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/list`);
+  const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+  const [limit] = useState(10); // Items per page
+  
+
+  const fetchQualities = async (page = 1) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/list?page=${page}&limit=${limit}`);
+    if (res.data.success) {
       setQualityList(res.data.qualities || []);
-    } catch (err) {
-      console.error("Fetch Error:", err);
+      setTotalPages(res.data.pagination.totalPages);
+      setCurrentPage(res.data.pagination.currentPage);
     }
-  };
+  } catch (err) {
+    console.error("Fetch Error:", err);
+  }
+};
 
-  useEffect(() => {
-    fetchQualities();
-  }, []);
 
-  // ✅ HANDLE INPUT
+useEffect(() => {
+  fetchQualities(currentPage);
+}, [currentPage]);
+  
+
+
   const handleChange = (e) => {
     setQuality({ ...quality, [e.target.name]: e.target.value });
   };
@@ -167,6 +178,46 @@ export default function QualityManagement() {
               )}
             </tbody>
           </table>
+          {/* --- PAGINATION FOOTER --- */}
+<div className="px-10 py-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+    Showing Page {currentPage} of {totalPages}
+  </p>
+  
+  <div className="flex gap-2">
+    <button
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage(prev => prev - 1)}
+      className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+    >
+      Prev
+    </button>
+    
+    <div className="flex gap-1">
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i + 1)}
+          className={`w-11 h-11 rounded-xl text-sm font-black transition-all ${
+            currentPage === i + 1 
+              ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200" 
+              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+
+    <button
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage(prev => prev + 1)}
+      className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+    >
+      Next
+    </button>
+  </div>
+</div>
         </div>
       </div>
 

@@ -8,5 +8,8 @@ export const getAllQuotations = async () => {
 export const createDeliveryChallan = async (payload) => {
   return axios.post(`${BASE_URL}/generate-dc`, payload);
 };
-export const getAllDeliveryChallan = () =>
-    axios.get(`${BASE_URL}/delivery-challan/list`);
+export const getAllDeliveryChallan = (page = 1, limit = 10) => {
+    return axios.get(`${BASE_URL}/delivery-challan/list`, {
+        params: { page, limit }
+    });
+};

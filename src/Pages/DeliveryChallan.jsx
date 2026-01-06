@@ -18,7 +18,10 @@ export default function DeliveryChallan() {
   const [trackingChallanId, setTrackingChallanId] = useState(null);
   const [trackingDate, setTrackingDate] = useState("");
   const [trackingStatus, setTrackingStatus] = useState("");
-
+const [quotationList, setQuotationList] = useState([]);
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [limit] = useState(10);
   const [trackingList, setTrackingList] = useState([]);
   const [loadingTracking, setLoadingTracking] = useState(false);
 const { permissions, user, loading, role } = useAuth(); 
@@ -27,16 +30,20 @@ const { permissions, user, loading, role } = useAuth();
     fetchChallans();
   }, []);
 
-  const fetchChallans = async () => {
-    try {
-      const res = await getAllDeliveryChallan();
-      if (res.data.success) {
-        setChallanList(res.data.challans);
-      }
-    } catch (err) {
-      console.log(err);
+ const fetchChallans = async (page = 1) => {
+  try {
+    // Pass the current page and desired limit
+    const res = await getAllDeliveryChallan(page, 10); 
+    
+    if (res.data.success) {
+      setChallanList(res.data.challans);
+      setTotalPages(res.data.pagination.totalPages); // Received from backend
+      setCurrentPage(res.data.pagination.currentPage);
     }
-  };
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   const handleDeleteItem = async (challanId) => {
     if (!window.confirm("Delete this delivery challan?")) return;
@@ -354,6 +361,45 @@ const { permissions, user, loading, role } = useAuth();
               )}
             </tbody>
           </table>
+          <div className="mt-8 px-8 py-5 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 font-['Lexend']">
+  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+    Page <span className="text-slate-900">{currentPage}</span> of {totalPages}
+  </div>
+
+  <div className="flex items-center gap-2">
+    <button
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage(prev => prev - 1)}
+      className="px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+    >
+      Prev
+    </button>
+
+    <div className="flex gap-1">
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i + 1)}
+          className={`w-11 h-11 rounded-2xl text-sm font-black transition-all ${
+            currentPage === i + 1
+              ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-100"
+              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+
+    <button
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage(prev => prev + 1)}
+      className="px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+    >
+      Next
+    </button>
+  </div>
+</div>
         </div>
       </div>
 

@@ -75,7 +75,9 @@ export default function CustomerManagement() {
   const [isEditing, setIsEditing] = useState(false);
   const getTodayDate = () => new Date().toISOString().split('T')[0];
   const [followupUpdate, setFollowupUpdate] = useState({ date: getTodayDate(), response: "" });
-
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const itemsPerPage = 10; // You can make this dynamic if needed
   const { permissions, user, loading, role } = useAuth();
  
   
@@ -89,16 +91,20 @@ export default function CustomerManagement() {
   useEffect(() => {
     if (!apiCalled.current) {
       apiCalled.current = true;
-      fetchCustomers();
+fetchCustomers(currentPage);
     }
   }, []);
 
-  const fetchCustomers = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/list`);
-      setCustomerList(res.data.customers || []);
-    } catch (err) { console.log("Fetch Error:", err); }
-  };
+ const fetchCustomers = async (page = 1) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/list?page=${page}&limit=${itemsPerPage}`);
+    setCustomerList(res.data.customers || []);
+    setTotalPages(res.data.pagination.totalPages || 1);
+    setCurrentPage(page);
+  } catch (err) { 
+    console.log("Fetch Error:", err); 
+  }
+};
 
   const handleChange = (e) => setCustomer({ ...customer, [e.target.name]: e.target.value });
   const handleFollowupInput = (e) => setFollowupUpdate({ ...followupUpdate, [e.target.name]: e.target.value });
@@ -296,6 +302,46 @@ const handleOpenModal = () => {
   )}
 </tbody>
           </table>
+          {/* --- PAGINATION FOOTER --- */}
+<div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+  <p className="text-sm text-slate-500 font-medium">
+    Showing page <span className="text-slate-900 font-bold">{currentPage}</span> of <span className="text-slate-900 font-bold">{totalPages}</span>
+  </p>
+  
+  <div className="flex items-center gap-2">
+    <button
+      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+      disabled={currentPage === 1}
+      className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+    >
+      Previous
+    </button>
+    
+    <div className="flex gap-1">
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i + 1)}
+          className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
+            currentPage === i + 1 
+              ? "bg-[#FA9C42] text-white shadow-lg shadow-[#FA9C42]/20" 
+              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+
+    <button
+      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+      disabled={currentPage === totalPages}
+      className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+    >
+      Next
+    </button>
+  </div>
+</div>
         </div>
       </div>
 

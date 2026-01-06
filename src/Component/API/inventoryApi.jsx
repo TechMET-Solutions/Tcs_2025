@@ -7,9 +7,8 @@ export const addPurchaseAPI = (data) => {
   return axios.post(`${BASE_URL}/add`, data);
 };
 
-export const getPurchaseListAPI = () => {
-  return axios.get(`${BASE_URL}/list`);
+export const getPurchaseListAPI = (page = 1, limit = 10) => {
+  return axios.get(`${BASE_URL}/list?page=${page}&limit=${limit}`);
 };
-
 export const getSinglePurchaseAPI = (id) =>
   axios.get(`${BASE_URL}/purchase/${id}`);

@@ -13,15 +13,26 @@ export default function BrandManagement() {
   const [currentId, setCurrentId] = useState(null);
   const [brandList, setBrandList] = useState([]);
   const [brand, setBrand] = useState({ name: "", status: "Available" });
- const { permissions, user, loading, role } = useAuth(); 
-  const fetchBrands = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/list`);
+  const { permissions, user, loading, role } = useAuth(); 
+  const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [limit] = useState(10); // Change this to show more/less items per page
+ const fetchBrands = async (page = 1) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/list?page=${page}&limit=${limit}`);
+    if (res.data.success) {
       setBrandList(res.data.brands || []);
-    } catch (err) { console.error("Fetch Error:", err); }
-  };
+      setTotalPages(res.data.pagination.totalPages);
+      setCurrentPage(res.data.pagination.currentPage);
+    }
+  } catch (err) { 
+    console.error("Fetch Error:", err); 
+  }
+};
 
-  useEffect(() => { fetchBrands(); }, []);
+useEffect(() => { 
+  fetchBrands(currentPage); 
+}, [currentPage]);
 
   const handleChange = (e) => setBrand({ ...brand, [e.target.name]: e.target.value });
 
@@ -145,6 +156,46 @@ export default function BrandManagement() {
               )}
             </tbody>
           </table>
+          {/* --- PAGINATION CONTROL --- */}
+<div className="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+    Page <span className="text-slate-900">{currentPage}</span> of {totalPages}
+  </div>
+
+  <div className="flex items-center gap-2">
+    <button
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage(prev => prev - 1)}
+      className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+    >
+      Previous
+    </button>
+
+    <div className="flex gap-1">
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i + 1)}
+          className={`w-11 h-11 rounded-xl text-sm font-black transition-all ${
+            currentPage === i + 1
+              ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
+              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+
+    <button
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage(prev => prev + 1)}
+      className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+    >
+      Next
+    </button>
+  </div>
+</div>
         </div>
       </div>
 

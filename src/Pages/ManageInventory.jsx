@@ -1,4 +1,4 @@
-import { Edit3, Search, Trash2, X, Eye, TrendingUp, ShoppingBag, Calendar, User, ArrowRight } from "lucide-react";
+import { Calendar, Edit3, Eye, Search, ShoppingBag, TrendingUp, User, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getPurchaseListAPI } from "../Component/API/inventoryApi";
@@ -7,7 +7,10 @@ import { useAuth } from "../utils/AuthContext";
 export default function ManageInventory() {
   const navigate = useNavigate();
   const hasFetched = useRef(false);
-  const [purchases, setPurchases] = useState([]);
+ const [purchases, setPurchases] = useState([]);
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [limit] = useState(10);
   const [query, setQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState(null);
@@ -16,18 +19,24 @@ export default function ManageInventory() {
   const BRAND_ORANGE = "#FF7A00"; 
   const SIDEBAR_DARK = "#1E1E1E";
 
-  useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const res = await getPurchaseListAPI();
+const fetchData = async (page = 1) => {
+  try {
+    // Pass page and limit as query parameters
+    const res = await getPurchaseListAPI(page, limit); 
+    
+    if (res.data.success) {
       setPurchases(res.data.purchases || []);
-    } catch (err) { console.log(err); }
-  };
+      setTotalPages(res.data.pagination.totalPages);
+      setCurrentPage(res.data.pagination.currentPage);
+    }
+  } catch (err) { 
+    console.log(err); 
+  }
+};
+
+useEffect(() => {
+  fetchData(currentPage);
+}, [currentPage]); // Re-fetch data whenever the page number changes
 
   const filtered = purchases.filter((p) => {
     const q = query.toLowerCase();
@@ -118,6 +127,46 @@ export default function ManageInventory() {
             </div>
           ))}
         </div>
+        {/* --- PAGINATION CONTROLS --- */}
+<div className="mt-6 px-8 py-5 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 font-['Lexend']">
+  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+    Showing page <span className="text-slate-900">{currentPage}</span> of {totalPages}
+  </div>
+
+  <div className="flex items-center gap-2">
+    <button
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage(prev => prev - 1)}
+      className="px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+    >
+      Previous
+    </button>
+
+    <div className="flex gap-1">
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i + 1)}
+          className={`w-11 h-11 rounded-2xl text-sm font-black transition-all ${
+            currentPage === i + 1
+              ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-100"
+              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+
+    <button
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage(prev => prev + 1)}
+      className="px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+    >
+      Next
+    </button>
+  </div>
+</div>
       </div>
 
       <style>{`
@@ -240,7 +289,8 @@ export default function ManageInventory() {
           Edit Records
         </button>
       </div>
-    </div>
+          </div>
+          
   </div>
 )}
     </div>

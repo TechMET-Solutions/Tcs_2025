@@ -45,6 +45,9 @@ export default function ProductRegistration() {
 
   // Product List
   const [productList, setProductList] = useState([]);
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [limit] = useState(10); // Items per page
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [printProduct, setPrintProduct] = useState(null);
   const [modalMode, setModalMode] = useState("add");
@@ -59,21 +62,25 @@ export default function ProductRegistration() {
   const { permissions, user, loading, role } = useAuth(); 
   
   
-  const fetchProducts = async () => {
-    try {
-      const res = await getProductAPI();
-      if (res.data.success) {
-        setProductList(res.data.products);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("❌ Failed to fetch products");
+ const fetchProducts = async (page = 1) => {
+  try {
+    // Note: Assuming getProductAPI is an axios call, pass the query params
+    const res = await axios.get(`${BASEURL}/api/product/list?page=${page}&limit=${limit}`);
+    
+    if (res.data.success) {
+      setProductList(res.data.products);
+      setTotalPages(res.data.pagination.totalPages);
+      setCurrentPage(res.data.pagination.currentPage);
     }
-  };
+  } catch (error) {
+    console.error(error);
+    alert("❌ Failed to fetch products");
+  }
+};
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+useEffect(() => {
+  fetchProducts(currentPage);
+}, [currentPage]);
 
   const fetchBrands = async () => {
     try {
@@ -599,6 +606,46 @@ export default function ProductRegistration() {
               )}
             </tbody>
           </table>
+          {/* --- PAGINATION FOOTER --- */}
+<div className="px-10 py-6 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+    Showing Page <span className="text-slate-900">{currentPage}</span> of {totalPages}
+  </div>
+
+  <div className="flex items-center gap-2 font-['Lexend']">
+    <button
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage(prev => prev - 1)}
+      className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+    >
+      Prev
+    </button>
+
+    <div className="flex gap-1">
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i + 1)}
+          className={`w-11 h-11 rounded-xl text-sm font-black transition-all ${
+            currentPage === i + 1
+              ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
+              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+
+    <button
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage(prev => prev + 1)}
+      className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+    >
+      Next
+    </button>
+  </div>
+</div>
         </div>
       </div>
       {showQRModal && (
