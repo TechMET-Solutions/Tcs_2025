@@ -204,7 +204,7 @@ export default function EmployeeAttendance() {
           <table className="w-full border-collapse overflow-hidden rounded-xl shadow-sm bg-white">
             <thead>
               <tr className="bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700">
-                {["Date", "Punch In", "Punch Out", "Duration", "Status"].map((h) => (
+                {["Date", "Punch In", "Punch Out"].map((h) => (
                   <th
                     key={h}
                     className="px-5 py-4 text-center text-[11px] font-semibold text-slate-200 uppercase tracking-widest"
@@ -246,14 +246,14 @@ export default function EmployeeAttendance() {
                     </td>
 
                     {/* Duration */}
-                    <td className="px-5 py-4 text-center">
+                    {/* <td className="px-5 py-4 text-center">
                       <span className="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
                         {calculateHours(r.punchIn, r.punchOut).text}
                       </span>
-                    </td>
+                    </td> */}
 
                     {/* Status */}
-                    <td className="px-5 py-4 text-center">
+                    {/* <td className="px-5 py-4 text-center">
                       <span
                         className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide
                 ${isOnTime(r.punchIn)
@@ -264,7 +264,7 @@ export default function EmployeeAttendance() {
                       >
                         {isOnTime(r.punchIn) ? "On Time" : "Late"}
                       </span>
-                    </td>
+                    </td> */}
                   </tr>
                 ))
               ) : (

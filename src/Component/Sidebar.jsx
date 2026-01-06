@@ -3,6 +3,7 @@ import {
   ChevronDown,
   ChevronRight,
   DraftingCompass,
+  Factory,
   FileChartColumn,
   FilePlus,
   FileSignature,
@@ -127,6 +128,10 @@ export default function Sidebar() {
 
         {hasView("Brand Management") && (
           <NavItem label="Brand Management" icon={<Tag />} path="/Brand-Management" />
+        )}
+
+        {hasView("Supplier Management") && (
+          <NavItem label="Supplier Management" icon={<Factory />} path="/supplier" />
         )}
 
         {hasView("Product Registration") && (

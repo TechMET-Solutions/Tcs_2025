@@ -23,6 +23,7 @@ import ManageInventory from "./Pages/ManageInventory";
 import ManageQuotation from "./Pages/ManageQuotation";
 import ProductRegistration from "./Pages/ProductRegistration";
 import QualityManagement from "./Pages/QualityManagement";
+import Supplier from "./Pages/Supplier";
 
 
 
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="Category-Management" element={<CategoryManagement />} />
           <Route path="Quality-Management" element={<QualityManagement />} />
           <Route path="Brand-Management" element={<BrandManagement />} />
+          <Route path="supplier" element={<Supplier />} />
 
           <Route path="inventory/add" element={<AddInventory />} />
           <Route path="inventory/manage" element={<ManageInventory />} />

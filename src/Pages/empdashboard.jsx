@@ -15,7 +15,7 @@ const EmpDashboard = ({ user }) => {
   const [followUps, setFollowUps] = useState([]);
 
   // Static ID as per your requirement
-  const STATIC_USER_ID = 1;
+  const STATIC_USER_ID = 2;
 
   // 1. Fetch all dashboard data on component mount
   useEffect(() => {

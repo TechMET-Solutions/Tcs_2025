@@ -24,6 +24,7 @@ export default function Login() {
 
     try {
         const res = await loginAPI(form);
+        console.log("LOGIN EMPLOYEE", res)
         if (res.success) {
             // Check if permissions is a string and parse it, otherwise use as is
             const parsedPermissions = typeof res.permissions === 'string' 
