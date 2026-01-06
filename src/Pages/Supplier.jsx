@@ -1,5 +1,5 @@
 import axios from "axios";
-import { AlertCircle, CheckCircle, Edit, Plus, Trash2, X, User } from "lucide-react";
+import { AlertCircle, CheckCircle, Edit, Plus, Trash2, X, User, Tags } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BASEURL } from "../Component/API/Url";
 import { useAuth } from "../utils/AuthContext";
@@ -15,7 +15,6 @@ export default function Supplier() {
     const [supplier, setSupplier] = useState({
         name: "",
         mobile: "",
-        status: "Active",
     });
 
     const { permissions, role } = useAuth();
@@ -57,7 +56,7 @@ export default function Supplier() {
                 await axios.post(`${BASE_URL}/create`, supplier);
             }
             setShowModal(false);
-            setSupplier({ name: "", mobile: "", status: "Active" });
+            setSupplier({ name: "", mobile: "" });
             fetchSuppliers();
         } catch (err) {
             console.error("Save Error:", err);
@@ -68,7 +67,6 @@ export default function Supplier() {
         setSupplier({
             name: item.name,
             mobile: item.mobile,
-            status: item.status,
         });
         setCurrentId(item.id);
         setIsEditing(true);
@@ -95,7 +93,7 @@ export default function Supplier() {
                             onClick={() => {
                                 setShowModal(true);
                                 setIsEditing(false);
-                                setSupplier({ name: "", mobile: "", status: "Active" });
+                                setSupplier({ name: "", mobile: "" });
                             }}
                             className="flex items-center gap-2 bg-[#FA9C42] text-white px-8 py-4 rounded-2xl shadow-xl hover:bg-orange-600 transition-all"
                         >
@@ -111,6 +109,7 @@ export default function Supplier() {
                     <table className="w-full">
                         <thead>
                             <tr className="bg-slate-50 border-b text-center">
+                            <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Index</th>
                                 <th className="px-10 py-7 text-left text-xs font-black uppercase tracking-widest text-slate-400">
                                     Supplier
                                 </th>
@@ -118,9 +117,6 @@ export default function Supplier() {
                                     Mobile No
                                 </th>
                                 <th className="px-10 py-7 text-xs font-black uppercase tracking-widest text-slate-400">
-                                    Status
-                                </th>
-                                <th className="px-10 py-7 text-right text-xs font-black uppercase tracking-widest text-slate-400">
                                     Actions
                                 </th>
                             </tr>
@@ -134,12 +130,15 @@ export default function Supplier() {
                                     </td>
                                 </tr>
                             ) : (
-                                supplierList.map((item) => (
+                                supplierList.map((item, index) => (
                                     <tr key={item.id} className="hover:bg-slate-50">
+                                        <td className="px-10 py-6 text-slate-400 font-mono text-sm">
+                                            {String(index + 1).padStart(2, '0')}
+                                        </td>
                                         <td className="px-10 py-6">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-[#FA9C42]">
-                                                    <User />
+                                                   <Tags size={22} />
                                                 </div>
                                                 <span className="font-black text-lg">{item.name}</span>
                                             </div>
@@ -149,30 +148,14 @@ export default function Supplier() {
                                             {item.mobile}
                                         </td>
 
-                                        <td className="px-10 py-6 text-center">
-                                            <span
-                                                className={`inline-flex items-center gap-2 px-6 py-2 rounded-full text-xs font-black uppercase
-                        ${item.status === "Active"
-                                                        ? "bg-emerald-50 text-emerald-600"
-                                                        : "bg-red-50 text-red-600"
-                                                    }`}
-                                            >
-                                                {item.status === "Active" ? (
-                                                    <CheckCircle size={16} />
-                                                ) : (
-                                                    <AlertCircle size={16} />
-                                                )}
-                                                {item.status}
-                                            </span>
-                                        </td>
-
                                         <td className="px-10 py-6">
                                             <div className="flex justify-end gap-4">
                                                 <button
                                                     onClick={() => editSupplier(item)}
-                                                    className="px-5 py-3 rounded-xl border hover:text-[#FA9C42]"
+                                                    className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
                                                 >
                                                     <Edit size={18} />
+                                                    <span className="font-bold text-sm">Modify</span>
                                                 </button>
 
                                                 <button
@@ -180,9 +163,10 @@ export default function Supplier() {
                                                         setCurrentId(item.id);
                                                         setShowDeleteModal(true);
                                                     }}
-                                                    className="px-5 py-3 rounded-xl border hover:text-red-500"
+                                                    className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"
                                                 >
                                                     <Trash2 size={18} />
+                                                    <span className="font-bold text-sm">Remove</span>
                                                 </button>
                                             </div>
                                         </td>
@@ -191,6 +175,44 @@ export default function Supplier() {
                             )}
                         </tbody>
                     </table>
+                    <div className="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+                            Page <span className="text-slate-900">{currentPage}</span> of {totalPages}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(prev => prev - 1)}
+                                className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                Previous
+                            </button>
+
+                            <div className="flex gap-1">
+                                {[...Array(totalPages)].map((_, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => setCurrentPage(i + 1)}
+                                        className={`w-11 h-11 rounded-xl text-sm font-black transition-all ${currentPage === i + 1
+                                            ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
+                                            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                                            }`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(prev => prev + 1)}
+                                className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -218,6 +240,7 @@ export default function Supplier() {
                             />
 
                             <input
+                                type="number"
                                 name="mobile"
                                 value={supplier.mobile}
                                 onChange={handleChange}
@@ -226,16 +249,6 @@ export default function Supplier() {
                                 maxLength={10}
                                 className="w-full px-6 py-4 rounded-xl border font-bold"
                             />
-
-                            <select
-                                name="status"
-                                value={supplier.status}
-                                onChange={handleChange}
-                                className="w-full px-6 py-4 rounded-xl border font-bold"
-                            >
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                            </select>
 
                             <button
                                 type="submit"

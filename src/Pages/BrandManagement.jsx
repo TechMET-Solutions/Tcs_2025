@@ -13,26 +13,26 @@ export default function BrandManagement() {
   const [currentId, setCurrentId] = useState(null);
   const [brandList, setBrandList] = useState([]);
   const [brand, setBrand] = useState({ name: "", status: "Available" });
-  const { permissions, user, loading, role } = useAuth(); 
+  const { permissions, user, loading, role } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
-const [limit] = useState(10); // Change this to show more/less items per page
- const fetchBrands = async (page = 1) => {
-  try {
-    const res = await axios.get(`${BASE_URL}/list?page=${page}&limit=${limit}`);
-    if (res.data.success) {
-      setBrandList(res.data.brands || []);
-      setTotalPages(res.data.pagination.totalPages);
-      setCurrentPage(res.data.pagination.currentPage);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit] = useState(10); // Change this to show more/less items per page
+  const fetchBrands = async (page = 1) => {
+    try {
+      const res = await axios.get(`${BASE_URL}/list?page=${page}&limit=${limit}`);
+      if (res.data.success) {
+        setBrandList(res.data.brands || []);
+        setTotalPages(res.data.pagination.totalPages);
+        setCurrentPage(res.data.pagination.currentPage);
+      }
+    } catch (err) {
+      console.error("Fetch Error:", err);
     }
-  } catch (err) { 
-    console.error("Fetch Error:", err); 
-  }
-};
+  };
 
-useEffect(() => { 
-  fetchBrands(currentPage); 
-}, [currentPage]);
+  useEffect(() => {
+    fetchBrands(currentPage);
+  }, [currentPage]);
 
   const handleChange = (e) => setBrand({ ...brand, [e.target.name]: e.target.value });
 
@@ -59,7 +59,7 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-10 font-['Lexend'] text-slate-800">
-      
+
       {/* --- HEADER --- */}
       <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 px-2">
         <div>
@@ -67,21 +67,21 @@ useEffect(() => {
           <p className="text-slate-500 font-medium mt-1">Manage and track authorized manufacturer brands.</p>
         </div>
 
-         {(role === "admin" || role === "superadmin" || permissions?.["Brand Management_Add"] === true) && (
- <button
-          onClick={() => {
-            setShowModal(true);
-            setIsEditing(false);
-            setBrand({ name: "", status: "Available" });
-          }}
-          className="group flex items-center gap-2 bg-[#FA9C42] text-white px-8 py-4 rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95"
-        >
-          <Plus size={22} className="group-hover:rotate-90 transition-transform" />
-          <span className="font-bold text-lg">Add Brand</span>
-        </button>
+        {(role === "admin" || role === "superadmin" || permissions?.["Brand Management_Add"] === true) && (
+          <button
+            onClick={() => {
+              setShowModal(true);
+              setIsEditing(false);
+              setBrand({ name: "", status: "Available" });
+            }}
+            className="group flex items-center gap-2 bg-[#FA9C42] text-white px-8 py-4 rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95"
+          >
+            <Plus size={22} className="group-hover:rotate-90 transition-transform" />
+            <span className="font-bold text-lg">Add Brand</span>
+          </button>
 
-                        )}
-       
+        )}
+
       </div>
 
       {/* --- LARGE DATA TABLE --- */}
@@ -118,37 +118,37 @@ useEffect(() => {
                     </td>
                     <td className="px-10 py-6 text-center">
                       <span className={`inline-flex items-center gap-2 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest border
-                        ${item.status === "Available" 
-                          ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                        ${item.status === "Available"
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                           : "bg-red-50 text-red-600 border-red-100"}`}
                       >
-                        {item.status === "Available" ? <CheckCircle size={16}/> : <AlertCircle size={16}/>}
+                        {item.status === "Available" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
                         {item.status}
                       </span>
                     </td>
                     <td className="px-10 py-6">
                       <div className="flex justify-end gap-4">
-                         {(role === "admin" || role === "superadmin" || permissions?.["Brand Management_Edit"] === true) && (
- <button 
-                          onClick={() => editBrand(item)}
-                          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
-                        >
-                          <Edit size={18} />
-                          <span className="font-bold text-sm">Modify</span>
-                        </button>
+                        {(role === "admin" || role === "superadmin" || permissions?.["Brand Management_Edit"] === true) && (
+                          <button
+                            onClick={() => editBrand(item)}
+                            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#FA9C42] hover:border-[#FA9C42] hover:shadow-md transition-all active:scale-95"
+                          >
+                            <Edit size={18} />
+                            <span className="font-bold text-sm">Modify</span>
+                          </button>
 
                         )}
                         {(role === "admin" || role === "superadmin" || permissions?.["Brand Management_Delete"] === true) && (
-                     <button 
-                          onClick={() => { setCurrentId(item.id); setShowDeleteModal(true); }}
-                          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"
-                        >
-                          <Trash2 size={18} />
-                          <span className="font-bold text-sm">Remove</span>
-                        </button>
+                          <button
+                            onClick={() => { setCurrentId(item.id); setShowDeleteModal(true); }}
+                            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-red-500 hover:border-red-200 hover:shadow-md transition-all active:scale-95"
+                          >
+                            <Trash2 size={18} />
+                            <span className="font-bold text-sm">Remove</span>
+                          </button>
 
                         )}
-                        
+
                       </div>
                     </td>
                   </tr>
@@ -157,45 +157,44 @@ useEffect(() => {
             </tbody>
           </table>
           {/* --- PAGINATION CONTROL --- */}
-<div className="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-    Page <span className="text-slate-900">{currentPage}</span> of {totalPages}
-  </div>
+          <div className="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+              Page <span className="text-slate-900">{currentPage}</span> of {totalPages}
+            </div>
 
-  <div className="flex items-center gap-2">
-    <button
-      disabled={currentPage === 1}
-      onClick={() => setCurrentPage(prev => prev - 1)}
-      className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-    >
-      Previous
-    </button>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+                className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                Previous
+              </button>
 
-    <div className="flex gap-1">
-      {[...Array(totalPages)].map((_, i) => (
-        <button
-          key={i}
-          onClick={() => setCurrentPage(i + 1)}
-          className={`w-11 h-11 rounded-xl text-sm font-black transition-all ${
-            currentPage === i + 1
-              ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
-              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-          }`}
-        >
-          {i + 1}
-        </button>
-      ))}
-    </div>
+              <div className="flex gap-1">
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-11 h-11 rounded-xl text-sm font-black transition-all ${currentPage === i + 1
+                        ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                      }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
 
-    <button
-      disabled={currentPage === totalPages}
-      onClick={() => setCurrentPage(prev => prev + 1)}
-      className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-    >
-      Next
-    </button>
-  </div>
-</div>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -206,15 +205,15 @@ useEffect(() => {
             <div className="px-10 py-8 flex justify-between items-center border-b border-slate-100">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-orange-100 text-[#FA9C42] rounded-2xl">
-                    <Award size={24} />
+                  <Award size={24} />
                 </div>
                 <h2 className="text-2xl font-black uppercase tracking-tight">{isEditing ? "Modify Brand" : "Register Brand"}</h2>
               </div>
               <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors">
-                <X size={20}/>
+                <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={saveBrand} className="p-10 space-y-8">
               <div className="space-y-3">
                 <label className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Brand Name</label>
@@ -231,15 +230,15 @@ useEffect(() => {
               <div className="space-y-3">
                 <label className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Market Status</label>
                 <div className="relative">
-                    <select
-                        name="status"
-                        value={brand.status}
-                        onChange={handleChange}
-                        className="w-full px-6 py-5 rounded-2xl bg-white border border-slate-200 focus:border-[#FA9C42] outline-none appearance-none cursor-pointer font-bold text-lg transition-all"
-                    >
-                        <option value="Available">Available</option>
-                        <option value="Unavailable">Unavailable</option>
-                    </select>
+                  <select
+                    name="status"
+                    value={brand.status}
+                    onChange={handleChange}
+                    className="w-full px-6 py-5 rounded-2xl bg-white border border-slate-200 focus:border-[#FA9C42] outline-none appearance-none cursor-pointer font-bold text-lg transition-all"
+                  >
+                    <option value="Available">Available</option>
+                    <option value="Unavailable">Unavailable</option>
+                  </select>
                 </div>
               </div>
 
@@ -269,12 +268,12 @@ useEffect(() => {
             </p>
             <div className="flex gap-4">
               <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-4 font-bold text-slate-400 hover:bg-slate-50 rounded-2xl transition-all">Go Back</button>
-              <button 
+              <button
                 onClick={async () => {
-                   await axios.delete(`${BASE_URL}/delete/${currentId}`);
-                   setShowDeleteModal(false);
-                   fetchBrands();
-                }} 
+                  await axios.delete(`${BASE_URL}/delete/${currentId}`);
+                  setShowDeleteModal(false);
+                  fetchBrands();
+                }}
                 className="flex-1 py-4 bg-red-500 text-white font-black rounded-2xl shadow-lg shadow-red-100 hover:bg-red-600 transition-all"
               >
                 Delete
