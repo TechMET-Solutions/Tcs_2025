@@ -86,47 +86,96 @@ useEffect(() => {
         </div>
 
         {/* CARDS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filtered.map((p) => (
-            <div key={p.id} className="bg-white rounded-[28px] p-6 border border-slate-100 hover:shadow-xl transition-all group relative">
-              {/* ID Badge */}
-              <div className="absolute top-4 right-4 text-[10px] font-black text-slate-300">ID: {p.id}</div>
-              
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg" style={{ backgroundColor: BRAND_ORANGE }}>
+        {/* --- TABLE VIEW --- */}
+<div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+  <div className="overflow-x-auto">
+    <table className="w-full text-left border-collapse">
+      <thead>
+        <tr className="bg-slate-50/50 border-b border-slate-100">
+          <th className="p-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Bill Details</th>
+          <th className="p-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Supplier Name</th>
+          <th className="p-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Date</th>
+          <th className="p-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
+          <th className="p-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-slate-50">
+        {filtered.map((p) => (
+          <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
+            {/* Bill Info */}
+            <td className="p-5">
+              <div className="flex flex-col">
+                <span className="font-black text-[#1E1E1E]">#{p.bill_no}</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">ID: {p.id}</span>
+              </div>
+            </td>
+
+            {/* Supplier Info */}
+            <td className="p-5">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black" 
+                  style={{ backgroundColor: BRAND_ORANGE }}
+                >
                   {p.client_name?.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <h3 className="font-bold text-lg text-[#1E1E1E]">{p.client_name}</h3>
-                  <p className="text-slate-400 text-xs font-medium uppercase tracking-tighter">{new Date(p.purchase_date).toDateString()}</p>
-                </div>
+                <span className="font-bold text-slate-700">{p.client_name}</span>
               </div>
+            </td>
 
-              <div className="bg-slate-50 rounded-2xl p-4 space-y-3 mb-6">
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400 font-bold uppercase">Bill No</span>
-                  <span className="font-bold text-slate-700">{p.bill_no}</span>
-                </div>
-                <div className="flex justify-between items-center border-t border-slate-200 pt-3">
-                  <span className="text-slate-400 text-xs font-bold uppercase">Grand Total</span>
-                  <span className="font-black text-xl" style={{ color: BRAND_ORANGE }}>₹{p.subtotal}</span>
-                </div>
-              </div>
+            {/* Date */}
+            <td className="p-5 text-center">
+              <span className="text-sm font-medium text-slate-500">
+                {new Date(p.purchase_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
+            </td>
 
-              <div className="grid grid-cols-3 gap-3">
+            {/* Amount */}
+            <td className="p-5 text-right">
+              <span className="font-black text-lg" style={{ color: BRAND_ORANGE }}>
+                ₹{Number(p.subtotal).toLocaleString()}
+              </span>
+            </td>
+
+            {/* Actions */}
+            <td className="p-5">
+              <div className="flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => { setSelectedPurchase(p); setShowModal(true); }} 
+                  className="p-2.5 rounded-xl bg-slate-100 text-slate-500 hover:bg-[#1E1E1E] hover:text-white transition-all"
+                  title="View Details"
+                >
+                  <Eye size={18} />
+                </button>
                 
-                <button onClick={() => { setSelectedPurchase(p); setShowModal(true); }} className="btn-action hover:bg-slate-100"><Eye size={18} /></button>
-                 {(role === "admin" || role === "superadmin" || permissions?.["Inventory Management_Edit"] === true) && (
-
-<button onClick={() => navigate("/inventory/add", { state: { data: p } })} className="btn-action hover:bg-orange-50 hover:text-[#FF7A00]"><Edit3 size={18}/></button>
+                {(role === "admin" || role === "superadmin" || permissions?.["Inventory Management_Edit"] === true) && (
+                  <button 
+                    onClick={() => navigate("/inventory/add", { state: { data: p } })} 
+                    className="p-2.5 rounded-xl bg-orange-50 text-[#FF7A00] hover:bg-[#FF7A00] hover:text-white transition-all shadow-sm shadow-orange-100"
+                    title="Edit Record"
+                  >
+                    <Edit3 size={18}/>
+                  </button>
                 )}
-                
-                
-                
               </div>
-            </div>
-          ))}
-        </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {/* Empty State */}
+  {filtered.length === 0 && (
+    <div className="p-20 text-center">
+      <div className="inline-flex p-6 rounded-full bg-slate-50 mb-4 text-slate-300">
+        <Search size={40} />
+      </div>
+      <h3 className="text-xl font-bold text-slate-400">No records found</h3>
+      <p className="text-slate-400 text-sm">Try adjusting your search filters</p>
+    </div>
+  )}
+</div>
         {/* --- PAGINATION CONTROLS --- */}
 <div className="mt-6 px-8 py-5 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 font-['Lexend']">
   <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">

@@ -69,7 +69,20 @@ useEffect(() => {
 
 `); // Your default HTML string here
 
-  const emptyRow = { productId: "", productName: "", size: "", quality: "", rate: 0, cov: 1, box: 1, discount: 0, total: 0 };
+  const emptyRow = { 
+  productId: "", 
+  productName: "", 
+  size: "", 
+  quality: "", 
+  rate: 0, 
+  box: 0,      // Main Input
+  cov: 1,      // Editable Coverage per Box (Default 1)
+  Weight: 0, 
+  discount: 0, 
+  Coverage: 0, // Calculated Result (Total Area)
+  TWgt: 0,     // Calculated Result (Total Weight)
+  total: 0     // Final Amount
+};
   const [rows, setRows] = useState([emptyRow]);
 
   // ---------------- JODIT CONFIG ----------------
@@ -129,14 +142,35 @@ useEffect(() => {
 
   // ---------------- CALCULATIONS ----------------
   const recalcRow = (row) => {
-    const rate = Number(row.rate) || 0;
-    const cov = Number(row.cov) || 0;
-    const box = Number(row.box) || 0;
-    const itemDiscount = Number(row.discount) || 0;
-    const baseTotal = rate * cov * box;
-    const finalRowTotal = baseTotal - (baseTotal * itemDiscount / 100);
-    return { ...row, total: finalRowTotal.toFixed(2) };
+  const boxes = parseFloat(row.box) || 0;
+  const covPerBox = parseFloat(row.cov) || 0; // Editable coverage per box
+  const rate = parseFloat(row.rate) || 0;
+  const weightPerBox = parseFloat(row.Weight) || 0;
+  const discountPercent = parseFloat(row.discount) || 0;
+
+  // 1. Total Coverage (Area) = Boxes * Coverage per individual box
+  const totalCoverage = covPerBox;
+
+  // 2. Total Weight = Boxes * Weight per individual box
+  const totalWeight = boxes * weightPerBox;
+
+  // 3. Amount = Total Area * Rate per unit
+  const amount = boxes *totalCoverage * rate;
+
+  // 4. Final Total
+  const discountAmount = (amount * discountPercent) / 100;
+  const finalTotal = amount - discountAmount;
+
+  return {
+    ...row,
+    box: boxes,
+    cov: covPerBox, // Keep this editable
+    Coverage: totalCoverage.toFixed(2), 
+    TWgt: totalWeight.toFixed(2),
+    total: finalTotal.toFixed(2),
+    // Area: totalCoverage.toFixed(2)
   };
+};
 
   const updateRowField = (i, key, value) => {
     const updated = [...rows];
@@ -170,7 +204,8 @@ useEffect(() => {
           address: clientAddress,
           gstNo: clientGst,
           attendedBy,
-          architect: selectedArchitect
+          architect: selectedArchitect,
+          Attended:selectedAttended
         },
         headerSection,
         bottomSection,
@@ -203,7 +238,7 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-4 md:p-10 font-['Lexend'] text-slate-700">
-      <div className="max-w-[1500px] mx-auto">
+      <div className=" mx-auto">
         
         {/* HEADER */}
         <div className="flex justify-between items-center mb-10 bg-white p-8 rounded-[35px] shadow-sm border border-orange-50">
@@ -228,8 +263,8 @@ useEffect(() => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-8 space-y-10">
+        <div className=" gap-10">
+          <div className=" space-y-10">
             
             {/* CLIENT INFO */}
          <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100">
@@ -321,44 +356,78 @@ useEffect(() => {
                   + Add New Row
                 </button>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-slate-50/50">
-                    <tr>
-                      {["Product Search", "Details", "Rate", "Qty/Box", "Dis%", "Total", ""].map(h => (
-                        <th key={h} className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {rows.map((r, i) => (
-                      <tr key={i} className="hover:bg-slate-50/30 transition-colors">
-                        <td className="p-4 w-72">
-                          <select className="lux-input text-xs" value={r.productId} onChange={(e) => selectProduct(i, e.target.value)}>
-                            <option value="">Select a Product</option>
-                            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                          </select>
-                        </td>
-                        <td className="p-4">
-                          <p className="text-xs font-bold text-slate-700">{r.size || '---'}</p>
-                          <p className="text-[10px] font-black text-orange-400 uppercase">{r.quality}</p>
-                        </td>
-                        <td className="p-4"><input className="table-input w-24" value={r.rate} onChange={(e) => updateRowField(i, "rate", e.target.value)} /></td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-1">
-                            <input className="table-input w-12" value={r.cov} onChange={(e) => updateRowField(i, "cov", e.target.value)} />
-                            <span className="text-slate-300">x</span>
-                            <input className="table-input w-12" value={r.box} onChange={(e) => updateRowField(i, "box", e.target.value)} />
-                          </div>
-                        </td>
-                        <td className="p-4"><input className="table-input w-16 text-orange-600" value={r.discount} onChange={(e) => updateRowField(i, "discount", e.target.value)} /></td>
-                        <td className="p-4 font-black text-slate-800">₹{Number(r.total).toLocaleString()}</td>
-                        <td className="p-4"><button onClick={() => setRows(rows.filter((_,idx)=>idx!==i))} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={18}/></button></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <div className="overflow-x-auto rounded-[24px] border border-slate-100 shadow-sm bg-white">
+  <table className="w-full text-left border-collapse table-fixed"> {/* table-fixed helps maintain column sizes */}
+    <thead className="bg-slate-50/50 border-b border-slate-100">
+      <tr>
+        {/* Manually defining widths for critical sections */}
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[280px]">Product Search</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[120px]">Details</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[100px] text-center">Rate</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[100px] text-center">Quality</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[140px] text-center">Box</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[80px] text-center">Weight</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[80px] text-center">TWgt</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[90px] text-center">Coverage</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[80px] text-center">Dis%</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[120px] text-right">Total</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[80px] text-center">Area</th>
+        <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[60px] text-center">Action</th>
+      </tr>
+    </thead>
+    <tbody className="divide-y divide-slate-50">
+      {rows.map((r, i) => (
+        <tr key={i} className="hover:bg-slate-50/30 transition-colors h-[70px]"> {/* Fixed row height for stability */}
+          <td className="p-3">
+            <select className="lux-input w-full text-xs h-13 px-2 rounded-xl border-slate-200 bg-slate-50" value={r.productId} onChange={(e) => selectProduct(i, e.target.value)}>
+              <option value="">Select a Product</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </td>
+          <td className="p-3">
+            <p className="text-xs font-bold text-slate-700">{r.size || '---'}</p>
+            <p className="text-[9px] font-black text-orange-400 uppercase">{r.quality}</p>
+          </td>
+          <td className="p-3 text-center">
+            <input className="table-input w-20 h-10 text-center" value={r.rate} onChange={(e) => updateRowField(i, "rate", e.target.value)} />
+          </td>
+          <td className="p-3 text-center">
+            <span className="text-[10px] font-black text-orange-500 bg-orange-50 px-2 py-1 rounded-md uppercase">
+              {r.quality}
+            </span>
+          </td>
+          <td className="p-3">
+            <div className="flex items-center justify-center gap-1">
+              {/* <input className="table-input w-12 h-10 text-center" value={r.cov} onChange={(e) => updateRowField(i, "cov", e.target.value)} /> */}
+              {/* <span className="text-slate-300">x</span> */}
+              <input className="table-input w-12 h-10 text-center" value={r.box} onChange={(e) => updateRowField(i, "box", e.target.value)} />
+            </div>
+          </td>
+          <td className="p-3 text-center"><input className="table-input w-16 h-10 text-center text-orange-600" value={r.Weight} onChange={(e) => updateRowField(i, "Weight", e.target.value)} /></td>
+          <td className="p-3 text-center"><input className="table-input w-16 h-10 text-center text-orange-600 bg-slate-50" value={r.TWgt} readOnly /></td>
+          <td className="p-3 text-center w-[100px]">
+  <div className="flex flex-col items-center">
+    <input 
+      className="table-input w-16 h-10 text-center border-blue-100 bg-blue-50/20 font-bold text-blue-600" 
+      value={r.cov} // This is the individual box coverage
+      onChange={(e) => updateRowField(i, "cov", e.target.value)} 
+    />
+    {/* <span className="text-[8px] font-bold text-blue-400 uppercase mt-1">Cov / Box</span> */}
+  </div>
+</td>
+          <td className="p-3 text-center"><input className="table-input w-14 h-10 text-center text-orange-600" value={r.discount} onChange={(e) => updateRowField(i, "discount", e.target.value)} /></td>
+          <td className="p-3 text-right font-black text-slate-800 text-sm">₹{Number(r.total).toLocaleString()}</td>
+          <td className="p-3 text-center"><input className="table-input w-16 h-10 text-center text-orange-600" value={r.Area} onChange={(e) => updateRowField(i, "Area", e.target.value)} /></td>
+          <td className="p-3 text-center">
+            <button onClick={() => setRows(rows.filter((_, idx) => idx !== i))} className="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-lg transition-colors">
+              <Trash2 size={16}/>
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
             </div>
 
             {/* BANK DETAILS */}
@@ -368,10 +437,7 @@ useEffect(() => {
               </h3>
               <JoditEditor value={bottomSection} config={config} onBlur={c => setBottomSection(c)} />
             </div>
-          </div>
-
-          {/* SUMMARY SIDEBAR */}
-          <div className="lg:col-span-4">
+             <div className="lg:col-span-4">
             <div className="sticky top-10 space-y-8">
               <div className="bg-gradient-to-br from-[#FFF7F0] to-[#FFFFFF] p-10 rounded-[50px] border border-orange-100 shadow-xl shadow-orange-50/50">
                 <div className="flex items-center gap-2 mb-8 text-orange-600">
@@ -413,6 +479,10 @@ useEffect(() => {
               </div>
             </div>
           </div>
+          </div>
+
+          {/* SUMMARY SIDEBAR */}
+         
         </div>
         
         {/* FEEDBACK MODAL */}
