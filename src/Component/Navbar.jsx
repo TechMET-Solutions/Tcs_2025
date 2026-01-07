@@ -109,6 +109,15 @@ export default function Navbar() {
                 >
                   Employee Attendance
                 </li>
+                <li
+  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+  onClick={() => {
+    navigate("/work-panel"); // Route for Admin to assign tasks
+    setSettingsOpen(false);
+  }}
+>
+  Work Panel
+</li>
               </ul>
             </div>
           )}

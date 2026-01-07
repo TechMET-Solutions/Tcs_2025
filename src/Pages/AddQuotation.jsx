@@ -17,12 +17,15 @@ export default function AddQuotation() {
   // ---------------- STATES ----------------
   const [clientName, setClientName] = useState("");
   const [clientContact, setClientContact] = useState("");
+   const [clientContactAlt, setClientContactAlt] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [clientGst, setClientGst] = useState(""); 
   const [attendedBy, setAttendedBy] = useState("");
 const [architects, setArchitects] = useState([]); // List from API
 const [selectedArchitect, setSelectedArchitect] = useState(""); // The ID of selected architect
+  const [selectedAttended, setSelectedAttended] = useState("");
+  const [Attended, setAttended] = useState([]); // List from API
 
 useEffect(() => {
   const fetchArchitects = async () => {
@@ -38,6 +41,22 @@ useEffect(() => {
   };
 
   fetchArchitects();
+}, []);
+
+  useEffect(() => {
+  const fetchEmployee = async () => {
+    try {
+      const response = await axios.get(`${BASEURL}/api/employees/list`);
+
+      if (response.data.success) {
+        setAttended(response.data.employees);
+      }
+    } catch (error) {
+      console.error("Error fetching architects:", error);
+    }
+  };
+
+  fetchEmployee();
 }, []);
   const [additionalDiscount, setAdditionalDiscount] = useState(0);
 
@@ -227,8 +246,33 @@ useEffect(() => {
     </div>
 
     {/* Architect Dropdown - Dynamic */}
+    
+
+    {/* Client GST Number */}
     <div className="space-y-1">
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Select Architect</label>
+      <label className="text-[10px] font-black text-orange-400 uppercase tracking-widest ml-1">Client GST Number</label>
+      <input className="lux-input border-orange-100" placeholder="27XXXXX..." value={clientGst} onChange={(e) => setClientGst(e.target.value)} />
+    </div>
+
+    {/* Contact Number */}
+    <div className="space-y-1">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contact Number</label>
+      <input className="lux-input" placeholder="+91" value={clientContact} onChange={(e) => setClientContact(e.target.value)} />
+                </div>
+                 <div className="space-y-1">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Alt Number</label>
+      <input className="lux-input" placeholder="+91" value={clientContactAlt} onChange={(e) => setClientContactAlt(e.target.value)} />
+    </div>
+
+    {/* Site Address */}
+    <div className="md:col-span-2 space-y-1">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Site Address</label>
+      <input className="lux-input" placeholder="Full location..." value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} />
+    </div>
+              </div>
+              <div className="space-y-1 mt-2 flex gap-5">
+                <div>
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Select Architect</label>
       <select 
         className="lux-input bg-white" 
         value={selectedArchitect} 
@@ -241,26 +285,24 @@ useEffect(() => {
           </option>
         ))}
       </select>
+                </div>
+                <div>
+                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Attended By</label>
+      <select 
+        className="lux-input bg-white" 
+        value={selectedAttended} 
+        onChange={(e) => setSelectedAttended(e.target.value)}
+      >
+        <option value="">Choose Architect...</option>
+        {Attended.map((arch) => (
+          <option key={arch.id} value={arch.id}>
+            {arch.name} {arch.id}
+          </option>
+        ))}
+      </select>
+                </div>
+     
     </div>
-
-    {/* Client GST Number */}
-    <div className="space-y-1">
-      <label className="text-[10px] font-black text-orange-400 uppercase tracking-widest ml-1">Client GST Number</label>
-      <input className="lux-input border-orange-100" placeholder="27XXXXX..." value={clientGst} onChange={(e) => setClientGst(e.target.value)} />
-    </div>
-
-    {/* Contact Number */}
-    <div className="space-y-1">
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contact Number</label>
-      <input className="lux-input" placeholder="+91" value={clientContact} onChange={(e) => setClientContact(e.target.value)} />
-    </div>
-
-    {/* Site Address */}
-    <div className="md:col-span-2 space-y-1">
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Site Address</label>
-      <input className="lux-input" placeholder="Full location..." value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} />
-    </div>
-  </div>
 </div>
 
             {/* INTRO NOTE */}

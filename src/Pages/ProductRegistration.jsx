@@ -3,7 +3,7 @@ import { BarChart, BarcodeIcon, Eye, Filter, Layers, MapPin, Maximize, Package, 
 import { useEffect, useState } from "react";
 import Barcode from "react-barcode";
 import QRCode from "react-qr-code";
-import { addProductAPI, getProductAPI, updateProductAPI } from "../Component/API/productApi";
+import { addProductAPI, updateProductAPI } from "../Component/API/productApi";
 import { BASEURL } from "../Component/API/Url";
 import { useAuth } from "../utils/AuthContext";
 
@@ -36,6 +36,7 @@ export default function ProductRegistration() {
     godown: [],
     description: "",
     image: null,
+    cov:""
   });
 
   // Batch State
@@ -562,7 +563,9 @@ useEffect(() => {
 
                       {/* Logistics */}
                       <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-3">
+                        {(role === "admin" || role === "superadmin") && (
+
+ <div className="flex items-center justify-center gap-3">
                           <button
                             title="Print Barcode"
                             onClick={() => {
@@ -584,6 +587,8 @@ useEffect(() => {
                             <QrCode />
                           </button>
                         </div>
+                        )}
+                        
                       </td>
 
                       {/* PRINT */}
@@ -881,8 +886,9 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="text-xs font-semibold text-slate-600 ml-1">Godown Access</label>
+                  <div className="space-y-3 flex gap-10">
+                    <div>
+<label className="text-xs font-semibold text-slate-600 ml-1">Godown Access</label>
                     <div className="flex gap-4">
                       {["KKW", "TCS"].map((g) => (
                         <label key={g} className={`flex items-center gap-3 px-6 py-3 rounded-xl border-2 transition-all cursor-pointer ${product.godown.includes(g) ? 'bg-[#FA9C42] border-[#FA9C42] text-white shadow-md' : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'}`}>
@@ -896,6 +902,20 @@ useEffect(() => {
                           <span className="text-xs font-bold uppercase tracking-widest">{g}</span>
                         </label>
                       ))}
+                    </div>
+
+                      </div>
+                    
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-600 ml-1"> Product Cov </label>
+                      <input
+                        name="cov"
+                        type="number"
+                        value={product.cov}
+                        onChange={handleChange}
+                        disabled={modalMode === "view"}
+                        className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all font-bold text-[#FA9C42]"
+                      />
                     </div>
                   </div>
                 </div>
