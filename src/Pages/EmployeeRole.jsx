@@ -135,7 +135,7 @@
 //   );
 // }
 
-import { BadgeCheck, ClipboardCheck, DraftingCompass, FileText, Layers, LayoutDashboard, Package, Save, ShieldCheck, Truck, UserPlus, Users } from "lucide-react";
+import { BadgeCheck, ClipboardCheck, DraftingCompass, Factory, FileText, Layers, LayoutDashboard, Package, Save, ShieldCheck, Truck, UserPlus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getEmployeeRolesAPI, getEmployeesAPI, saveEmployeeRolesAPI } from "../Component/API/employeeApi";
 
@@ -150,6 +150,7 @@ export default function EmployeeRole() {
     { title: "Quality Management", icon: <BadgeCheck className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },
     { title: "Category Management", icon: <Layers className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },
     { title: "Brand Management", icon: <LayoutDashboard className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },
+    { title: "Supplier  Management", icon: <Factory className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },
     { title: "Product Registration", icon: <Package className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },
     { title: "Architect Registration", icon: <DraftingCompass className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete", "Commission"] },
     { title: "Inventory Management", icon: <ClipboardCheck className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },

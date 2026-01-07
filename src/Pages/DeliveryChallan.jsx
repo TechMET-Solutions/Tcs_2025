@@ -18,32 +18,32 @@ export default function DeliveryChallan() {
   const [trackingChallanId, setTrackingChallanId] = useState(null);
   const [trackingDate, setTrackingDate] = useState("");
   const [trackingStatus, setTrackingStatus] = useState("");
-const [quotationList, setQuotationList] = useState([]);
-const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
-const [limit] = useState(10);
+  const [quotationList, setQuotationList] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit] = useState(10);
   const [trackingList, setTrackingList] = useState([]);
   const [loadingTracking, setLoadingTracking] = useState(false);
-const { permissions, user, loading, role } = useAuth(); 
+  const { permissions, user, loading, role } = useAuth();
 
   useEffect(() => {
     fetchChallans();
   }, []);
 
- const fetchChallans = async (page = 1) => {
-  try {
-    // Pass the current page and desired limit
-    const res = await getAllDeliveryChallan(page, 10); 
-    
-    if (res.data.success) {
-      setChallanList(res.data.challans);
-      setTotalPages(res.data.pagination.totalPages); // Received from backend
-      setCurrentPage(res.data.pagination.currentPage);
+  const fetchChallans = async (page = 1) => {
+    try {
+      // Pass the current page and desired limit
+      const res = await getAllDeliveryChallan(page, 10);
+
+      if (res.data.success) {
+        setChallanList(res.data.challans);
+        setTotalPages(res.data.pagination.totalPages); // Received from backend
+        setCurrentPage(res.data.pagination.currentPage);
+      }
+    } catch (err) {
+      console.log(err);
     }
-  } catch (err) {
-    console.log(err);
-  }
-};
+  };
 
   const handleDeleteItem = async (challanId) => {
     if (!window.confirm("Delete this delivery challan?")) return;
@@ -225,59 +225,59 @@ const { permissions, user, loading, role } = useAuth();
                         </span>
                       </div>
                     </td>
- <td className="px-6 py-5 text-center">
-                    {/* STATUS */}
-                     {(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Update Timeline"] === true) && (
+                    <td className="px-6 py-5 text-center">
+                      {/* STATUS */}
+                      {(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Update Timeline"] === true) && (
 
 
-                      <button
-                        onClick={() => openTrackingModal(item.id)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-900 hover:text-white transition-all active:scale-95"
-                      >
-                        <MapPin size={14} />
-                        Update Timeline
-                      </button>
-              
-                        )}
-                         </td>
+                        <button
+                          onClick={() => openTrackingModal(item.id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-900 hover:text-white transition-all active:scale-95"
+                        >
+                          <MapPin size={14} />
+                          Update Timeline
+                        </button>
+
+                      )}
+                    </td>
 
                     {/* QUICK ACTION */}
-                   
-                    <td className="p-5 text-center">
-                       {(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Delete"] === true) && (
 
-<button
-                        onClick={() => handleDeleteItem(item.id)}
-                        className="p-3 rounded-2xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all active:scale-95">
-                        <Trash2 size={16} />
-                      </button>
-                        )}
-                      
+                    <td className="p-5 text-center">
+                      {(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Delete"] === true) && (
+
+                        <button
+                          onClick={() => handleDeleteItem(item.id)}
+                          className="p-3 rounded-2xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all active:scale-95">
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+
                     </td>
 
                     {/* PRINT */}
                     <td className="px-10 py-5 text-right">
                       <div className="flex items-center justify-end gap-3">
                         {(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Print DC"] === true) && (
-<button
-                          onClick={() => printChallan(item.id)}
-                          className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all shadow-md active:scale-95"
-                        >
-                          <Printer size={14} />
-                          Print DC
-                        </button>
+                          <button
+                            onClick={() => printChallan(item.id)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all shadow-md active:scale-95"
+                          >
+                            <Printer size={14} />
+                            Print DC
+                          </button>
                         )}
-                        
-{(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Return DC"] === true) && (
-<button
-                          onClick={() => printChallan2(item.id)}
-                          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition"
-                        >
-                          <Printer size={12} />
-                          Return
-                        </button>
+
+                        {(role === "admin" || role === "superadmin" || permissions?.["Delivery Challans_Return DC"] === true) && (
+                          <button
+                            onClick={() => printChallan2(item.id)}
+                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition"
+                          >
+                            <Printer size={12} />
+                            Return
+                          </button>
                         )}
-                        
+
                       </div>
                     </td>
                   </tr>
@@ -362,44 +362,43 @@ const { permissions, user, loading, role } = useAuth();
             </tbody>
           </table>
           <div className="mt-8 px-8 py-5 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 font-['Lexend']">
-  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-    Page <span className="text-slate-900">{currentPage}</span> of {totalPages}
-  </div>
+            <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+              Page <span className="text-slate-900">{currentPage}</span> of {totalPages}
+            </div>
 
-  <div className="flex items-center gap-2">
-    <button
-      disabled={currentPage === 1}
-      onClick={() => setCurrentPage(prev => prev - 1)}
-      className="px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
-    >
-      Prev
-    </button>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+                className="px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+              >
+                Prev
+              </button>
 
-    <div className="flex gap-1">
-      {[...Array(totalPages)].map((_, i) => (
-        <button
-          key={i}
-          onClick={() => setCurrentPage(i + 1)}
-          className={`w-11 h-11 rounded-2xl text-sm font-black transition-all ${
-            currentPage === i + 1
-              ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-100"
-              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-          }`}
-        >
-          {i + 1}
-        </button>
-      ))}
-    </div>
+              <div className="flex gap-1">
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-11 h-11 rounded-2xl text-sm font-black transition-all ${currentPage === i + 1
+                        ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-100"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                      }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
 
-    <button
-      disabled={currentPage === totalPages}
-      onClick={() => setCurrentPage(prev => prev + 1)}
-      className="px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
-    >
-      Next
-    </button>
-  </div>
-</div>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                className="px-6 py-3 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

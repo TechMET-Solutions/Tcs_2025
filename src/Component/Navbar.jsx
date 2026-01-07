@@ -1,12 +1,17 @@
 import { Bell, LogOut, Settings, X } from "lucide-react"; // Added X icon
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../utils/AuthContext";
 
 export default function Navbar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false); // New State
   const navigate = useNavigate();
+
+  const { user } = useAuth();
+
+  console.log(user)
 
   const handleLogout = () => {
     sessionStorage.clear();
@@ -22,7 +27,7 @@ export default function Navbar() {
 
   return (
     <div className="h-16 px-6 bg-gradient-to-r from-[#F2F4F7] to-[#E4E7EB] backdrop-blur-md shadow-md flex items-center justify-between border-b border-gray-300">
-      
+
       {/* LEFT TITLE */}
       <h1 className="text-2xl font-semibold text-[#1F3A93] tracking-wide">
         Dashboard
@@ -33,7 +38,7 @@ export default function Navbar() {
 
         {/* 🔔 NOTIFICATION */}
         <div className="relative">
-          <div 
+          <div
             onClick={() => setNotificationsOpen(!notificationsOpen)}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow hover:shadow-lg cursor-pointer border border-gray-300 hover:bg-gray-200 transition"
           >
@@ -51,7 +56,7 @@ export default function Navbar() {
                   <X size={16} className="text-gray-400 hover:text-gray-600" />
                 </button>
               </div>
-              
+
               <div className="max-h-64 overflow-y-auto">
                 {notifications.length > 0 ? (
                   notifications.map((n) => (
@@ -66,7 +71,7 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-              
+
               <div className="p-2 text-center border-t border-gray-100">
                 <button className="text-xs text-[#1F3A93] font-medium hover:underline">
                   Mark all as read
@@ -81,8 +86,8 @@ export default function Navbar() {
           <div
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow hover:shadow-lg cursor-pointer border border-gray-300 hover:bg-gray-200 transition"
             onClick={() => {
-                setSettingsOpen(!settingsOpen);
-                setNotificationsOpen(false); // Close others when opening settings
+              setSettingsOpen(!settingsOpen);
+              setNotificationsOpen(false); // Close others when opening settings
             }}
           >
             <Settings size={20} className="text-[#1F3A93]" />
@@ -110,14 +115,14 @@ export default function Navbar() {
                   Employee Attendance
                 </li>
                 <li
-  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-  onClick={() => {
-    navigate("/work-panel"); // Route for Admin to assign tasks
-    setSettingsOpen(false);
-  }}
->
-  Work Panel
-</li>
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => {
+                    navigate("/work-panel"); // Route for Admin to assign tasks
+                    setSettingsOpen(false);
+                  }}
+                >
+                  Work Panel
+                </li>
               </ul>
             </div>
           )}
@@ -130,13 +135,22 @@ export default function Navbar() {
             onClick={() => setProfileOpen(!profileOpen)}
           >
             <img
-              src="https://i.pravatar.cc/40"
-              alt="User"
-              className="w-10 h-10 rounded-full border-2 border-[#1F3A93] shadow"
+              src={
+                user?.profile_photo
+                  ? `http://localhost:5000/uploads/employees/${user.profile_photo}`
+                  : "https://i.pravatar.cc/40"
+              }
+              alt={user?.name || "User"}
+              className="w-10 h-10 rounded-full border-2 border-[#1F3A93] shadow object-cover"
             />
+
             <div className="hidden md:flex flex-col leading-tight">
-              <span className="text-[15px] font-semibold text-[#3A3A3A]">Sumit</span>
-              <span className="text-[12px] text-[#1F3A93]">Administrator</span>
+              <span className="text-[15px] font-semibold text-[#3A3A3A]">
+                {user?.name || "User"}
+              </span>
+              <span className="text-[12px] text-gray-500">
+                {user?.email || ""}
+              </span>
             </div>
           </div>
 
@@ -157,6 +171,7 @@ export default function Navbar() {
             </div>
           )}
         </div>
+
 
       </div>
     </div>
