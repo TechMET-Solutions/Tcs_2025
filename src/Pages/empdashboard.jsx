@@ -5,8 +5,9 @@ import {
   CheckCircle, AlertCircle, Calendar, Briefcase, Mail 
 } from "lucide-react";
 import { BASEURL } from "../Component/API/Url";
+import { useAuth } from "../utils/AuthContext";
 
-const EmpDashboard = ({ user }) => {
+const EmpDashboard = () => {
   // State Management
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -14,21 +15,23 @@ const EmpDashboard = ({ user }) => {
   const [stats, setStats] = useState({ quotationCount: 0, followUpCount: 0 });
   const [followUps, setFollowUps] = useState([]);
 
-  // Static ID as per your requirement
-  const STATIC_USER_ID = 2;
-
+   const { user } = useAuth(); 
+  
   // 1. Fetch all dashboard data on component mount
   useEffect(() => {
-    fetchInitialData();
-  }, []);
+    if (user?.id) {
+      fetchInitialData();
+    }
+  }, [user]);
+
 
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      // Fetch Status, Stats, and Followups in parallel for better performance
+
       const [statusRes, dataRes] = await Promise.all([
-        axios.get(`${BASEURL}/api/employees/status/${STATIC_USER_ID}`),
-        axios.get(`${BASEURL}/api/employees/dashboard-summary/${STATIC_USER_ID}`)
+        axios.get(`${BASEURL}/api/employees/status/${user.id}`),
+        axios.get(`${BASEURL}/api/employees/attendance-summary/${user.id}`)
       ]);
 
       if (statusRes.data.success) {
@@ -46,31 +49,6 @@ const EmpDashboard = ({ user }) => {
     }
   };
 
-  // 2. Handle Punch In/Out Logic
-  // const handlePunch = async (type) => {
-  //   setLoading(true);
-  //   setMessage("");
-  //   try {
-  //     const response = await axios.post(`${BASEURL}/api/employees/punch`, {
-  //       employeeId: STATIC_USER_ID,
-  //       status: type
-  //     });
-
-  //     if (response.data.success) {
-  //       setMessage(`Success: ${type} Recorded!`);
-  //       // If they just punched out, lock the dashboard for today
-  //       if (type === "OUT") {
-  //         setCurrentStatus("COMPLETED");
-  //       } else {
-  //         setCurrentStatus("IN");
-  //       }
-  //     }
-  //   } catch (err) {
-  //     setMessage(err.response?.data?.message || "Punch failed. Try again.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const handlePunch = async (type) => {
     setLoading(true);
@@ -83,7 +61,7 @@ const EmpDashboard = ({ user }) => {
           : `${BASEURL}/api/employees/punch-out`;
 
       const res = await axios.post(url, {
-        employeeId: STATIC_USER_ID,
+        employeeId: user.id,
         image: null // later you can send base64 / selfie
       });
 
@@ -150,15 +128,27 @@ const EmpDashboard = ({ user }) => {
       <aside className="w-full md:w-80 bg-white border-r border-slate-200 p-8 flex flex-col">
         <div className="flex flex-col items-center text-center pb-8 border-b border-slate-100">
           <div className="relative">
-            <div className="w-28 h-28 bg-gradient-to-tr from-blue-600 to-indigo-400 rounded-3xl flex items-center justify-center mb-4 rotate-3 shadow-xl">
-              <User size={48} className="text-white -rotate-3" />
-            </div>
+            {user?.profile_photo ? (
+              <img
+                src={`${BASEURL}/uploads/employees/${user.profile_photo}`}
+                alt={user.name}
+                className="w-28 h-28 rounded-3xl object-cover shadow-xl"
+              />
+            ) : (
+              <div className="w-28 h-28 bg-gradient-to-tr from-blue-600 to-indigo-400 rounded-3xl flex items-center justify-center shadow-xl">
+                <User size={48} className="text-white" />
+              </div>
+            )}
+
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
           </div>
+
+
           <h3 className="text-xl font-extrabold text-slate-800 tracking-tight">{user?.name || "Member Name"}</h3>
           <p className="text-sm font-medium text-slate-400 flex items-center gap-1 mt-1">
-            <Briefcase size={14} /> Employee ID: {STATIC_USER_ID}
+            <Briefcase size={14} /> Employee ID: {user?.id || "—"}
           </p>
+
         </div>
 
         <div className="mt-8 space-y-6">
@@ -178,7 +168,10 @@ const EmpDashboard = ({ user }) => {
 
           <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl text-white shadow-lg">
             <p className="text-xs text-slate-400 font-medium">Monthly Salary</p>
-            <p className="text-2xl font-black mt-1">₹{user?.salary || "0.00"}</p>
+            <p className="text-2xl font-black mt-1">
+              ₹{Number(user?.salary || 0).toFixed(2)}
+            </p>
+
             <div className="mt-4 h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
                <div className="h-full bg-blue-500 w-2/3"></div>
             </div>

@@ -6,12 +6,13 @@ export const AuthProvider = ({ children }) => {
     const [permissions, setPermissions] = useState({});
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
- const [role, setRole] = useState(null);
+    const [role, setRole] = useState(null);
+    
     useEffect(() => {
         // Load data from sessionStorage on initial app load
         const storedPermissions = sessionStorage.getItem("permissions");
         const storedUser = sessionStorage.getItem("user");
-          const storedRole = sessionStorage.getItem("role");
+        const storedRole = sessionStorage.getItem("role");
 
         if (storedPermissions) {
             try {
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }) => {
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
-        if (storedRole){
+        if (storedRole) {
             setRole(storedRole)
         }
         setLoading(false);
@@ -33,8 +34,8 @@ export const AuthProvider = ({ children }) => {
 
     // Function to update state after login
     const login = (authData) => {
-        const parsedPerms = typeof authData.permissions === 'string' 
-            ? JSON.parse(authData.permissions) 
+        const parsedPerms = typeof authData.permissions === 'string'
+            ? JSON.parse(authData.permissions)
             : authData.permissions;
 
         setPermissions(parsedPerms);
@@ -42,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ permissions, user, login, loading , role}}>
+        <AuthContext.Provider value={{ permissions, user, login, loading, role }}>
             {children}
         </AuthContext.Provider>
     );
