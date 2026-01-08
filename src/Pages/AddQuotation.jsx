@@ -22,11 +22,12 @@ export default function AddQuotation() {
   const [clientAddress, setClientAddress] = useState("");
   const [clientGst, setClientGst] = useState(""); 
   const [attendedBy, setAttendedBy] = useState("");
+  console.log(attendedBy,"attendedBy")
 const [architects, setArchitects] = useState([]); // List from API
 const [selectedArchitect, setSelectedArchitect] = useState(""); // The ID of selected architect
   const [selectedAttended, setSelectedAttended] = useState("");
   const [Attended, setAttended] = useState([]); // List from API
-
+console.log(Attended,"Attended")
 useEffect(() => {
   const fetchArchitects = async () => {
     try {
@@ -59,7 +60,7 @@ useEffect(() => {
   fetchEmployee();
 }, []);
   const [additionalDiscount, setAdditionalDiscount] = useState(0);
-
+console.log(additionalDiscount,"additionalDiscount")
   const [products, setProducts] = useState([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedback, setFeedback] = useState({ rating: "", comments: "", satisfied: "" });
@@ -81,10 +82,11 @@ useEffect(() => {
   discount: 0, 
   Coverage: 0, // Calculated Result (Total Area)
   TWgt: 0,     // Calculated Result (Total Weight)
-  total: 0     // Final Amount
+  total: 0,    // Final Amount
+  area:""
 };
   const [rows, setRows] = useState([emptyRow]);
-
+console.log(rows,"rows")
   // ---------------- JODIT CONFIG ----------------
   const config = useMemo(() => ({
     readonly: false,
@@ -93,42 +95,99 @@ useEffect(() => {
     height: 250,
   }), []);
 
-  // ---------------- POPULATE DATA (FOR EDIT) ----------------
+
+  // useEffect(() => {
+  //   if (editData) {
+  //     debugger
+  //     // Mapping based on your provided JSON structure
+  //     setClientName(editData.clientName || "");
+  //     setClientContact(editData.contactNo || "");
+  //     setClientEmail(editData.email || "");
+  //     setClientAddress(editData.address || "");
+  //     setClientGst(editData.gstNo || ""); 
+  //     setAttendedBy(editData.attendedBy || "");
+  //    setSelectedArchitect(editData.architect || "");
+      
+  //     setHeaderSection(editData.headerSection || "");
+  //     setBottomSection(editData.bottomSection || "");
+      
+  //     // Map "items" from JSON to "rows" in state
+  //     if (editData.items && editData.items.length > 0) {
+  //       setRows(editData.items.map(item => ({
+  //         productId: item.productId,
+  //         productName: item.productName,
+  //         size: item.size,
+  //         quality: item.quality,
+  //         rate: item.rate,
+  //         cov: item.Cov,
+  //         box: item.box,
+  //         discount: item.discount,
+  //         total: item.total
+  //       })));
+  //     }
+      
+  //     // Calculate additional discount if grandTotal differs from row sums
+  //     const rowsSum = editData.items?.reduce((sum, i) => sum + Number(i.total), 0) || 0;
+  //     setAdditionalDiscount(rowsSum - Number(editData.grandTotal) || 0);
+  //   }
+  // }, [editData]);
   useEffect(() => {
-    if (editData) {
-      // Mapping based on your provided JSON structure
-      setClientName(editData.clientName || "");
-      setClientContact(editData.contactNo || "");
-      setClientEmail(editData.email || "");
-      setClientAddress(editData.address || "");
-      setClientGst(editData.gstNo || ""); 
-      setAttendedBy(editData.attendedBy || "");
-     setSelectedArchitect(editData.architect || "");
-      
-      setHeaderSection(editData.headerSection || "");
-      setBottomSection(editData.bottomSection || "");
-      
-      // Map "items" from JSON to "rows" in state
-      if (editData.items && editData.items.length > 0) {
-        setRows(editData.items.map(item => ({
+  debugger
+  if (editData) {
+   
+    setClientName(editData.clientName || "");
+    setClientContact(editData.contactNo || "");
+    setClientContactAlt(editData.altContactNo || "");
+    setClientEmail(editData.email || "");
+    setClientAddress(editData.address || "");
+    setClientGst(editData.gstNo || ""); 
+   const attendedId = editData.attendedBy?._id || editData.attendedBy || "";
+    setAttendedBy(String(attendedId));
+    setSelectedArchitect(editData.architect || "");
+    setHeaderSection(editData.headerSection || "");
+    setBottomSection(editData.bottomSection || "");
+   const discountVal = Number(editData.additionalDiscount) || 0;
+    setAdditionalDiscount(discountVal);
+    // Map Items with Live Calculations
+    if (editData.items && editData.items.length > 0) {
+      const mappedRows = editData.items.map(item => {
+        const box = Number(item.box) || 0;
+        const cov = Number(item.cov) || 0;
+        const weight = Number(item.weight) || 0;
+        const rate = Number(item.rate) || 0;
+        const discount = Number(item.discount) || 0;
+        const Area = item.area;
+        // Perfect Logic Calculations
+        const calculatedCoverage = box * cov;
+        const totalWeight = box * weight;
+        const totalAmount = (calculatedCoverage * rate) - discount;
+
+        return {
           productId: item.productId,
-          productName: item.productName,
+          productName: item.productName || item.name,
           size: item.size,
           quality: item.quality,
-          rate: item.rate,
-          cov: item.cov,
-          box: item.box,
-          discount: item.discount,
-          total: item.total
-        })));
-      }
-      
-      // Calculate additional discount if grandTotal differs from row sums
-      const rowsSum = editData.items?.reduce((sum, i) => sum + Number(i.total), 0) || 0;
-      setAdditionalDiscount(rowsSum - Number(editData.grandTotal) || 0);
-    }
-  }, [editData]);
+          rate: rate,
+          box: box,
+          cov: cov,
+          Weight: weight,
+          discount: discount,
+          Coverage: calculatedCoverage, // Total Area
+          TWgt: totalWeight,            // Total Weight
+          total: totalAmount,
+          area: Area   // Final Row Price
+        };
+      });
 
+      setRows(mappedRows);
+
+      // Handle Grand Total & Additional Discount
+      const rowsSum = mappedRows.reduce((sum, row) => sum + row.total, 0);
+      const grandTotal = Number(editData.grandTotal) || 0;
+      // setAdditionalDiscount(rowsSum - grandTotal);
+    }
+  }
+}, [editData]);
   // ---------------- API FETCH (Products) ----------------
   useEffect(() => {
     const fetchData = async () => {
@@ -188,7 +247,8 @@ useEffect(() => {
   };
 
   const itemTotal = rows.reduce((sum, r) => sum + Number(r.total), 0);
-  const grandTotal = (itemTotal - Number(additionalDiscount)).toFixed(2);
+ const discountAmount = (Number(itemTotal) * (Number(additionalDiscount) || 0)) / 100;
+const grandTotal = (Number(itemTotal) - discountAmount).toFixed(2);
 
   // ---------------- SAVE / UPDATE LOGIC ----------------
   
@@ -197,9 +257,11 @@ useEffect(() => {
     try {
       const payload = {
         quotationId: isEditMode ? editData.id : undefined,
+        additionalDiscount:additionalDiscount,
         clientDetails: {
           name: clientName,
           contactNo: clientContact,
+          altContactNo: clientContactAlt,
           email: clientEmail,
           address: clientAddress,
           gstNo: clientGst,
@@ -321,21 +383,28 @@ useEffect(() => {
         ))}
       </select>
                 </div>
-                <div>
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Attended By</label>
-      <select 
-        className="lux-input bg-white" 
-        value={selectedAttended} 
-        onChange={(e) => setSelectedAttended(e.target.value)}
-      >
-        <option value="">Choose Architect...</option>
-        {Attended.map((arch) => (
-          <option key={arch.id} value={arch.id}>
-            {arch.name} {arch.id}
-          </option>
-        ))}
-      </select>
-                </div>
+              <div>
+  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+    Attended By
+  </label>
+  <select 
+    className="lux-input bg-white w-full" 
+    value={attendedBy} // The ID stored in state
+    onChange={(e) => setAttendedBy(e.target.value)}
+  >
+    <option value="">Choose Person...</option>
+    {Attended.map((person) => {
+      // Determine the correct ID field (handling both MongoDB _id and standard id)
+      const personId = String(person._id || person.id); 
+      
+      return (
+        <option key={personId} value={personId}>
+          {person.name}
+        </option>
+      );
+    })}
+  </select>
+</div>
      
     </div>
 </div>
@@ -417,7 +486,7 @@ useEffect(() => {
 </td>
           <td className="p-3 text-center"><input className="table-input w-14 h-10 text-center text-orange-600" value={r.discount} onChange={(e) => updateRowField(i, "discount", e.target.value)} /></td>
           <td className="p-3 text-right font-black text-slate-800 text-sm">₹{Number(r.total).toLocaleString()}</td>
-          <td className="p-3 text-center"><input className="table-input w-16 h-10 text-center text-orange-600" value={r.Area} onChange={(e) => updateRowField(i, "Area", e.target.value)} /></td>
+          <td className="p-3 text-center"><input className="table-input w-16 h-10 text-center text-orange-600" value={r.area} onChange={(e) => updateRowField(i, "Area", e.target.value)} /></td>
           <td className="p-3 text-center">
             <button onClick={() => setRows(rows.filter((_, idx) => idx !== i))} className="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-lg transition-colors">
               <Trash2 size={16}/>
