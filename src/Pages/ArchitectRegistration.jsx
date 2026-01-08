@@ -298,7 +298,23 @@ export default function ArchitectRegistration() {
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">WhatsApp *</label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                    <input name="whatsapp" value={architect.whatsapp} onChange={handleChange} placeholder="9876543210" className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium" required />
+                    <input name="whatsapp"
+                      type="number"
+                      value={architect.whatsapp}
+                      onKeyDown={(e) => {
+                        if (["e", "E", "+", "-", "."].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        // typing ke time max 10 digits
+                        if (value.length <= 10) {
+                          handleChange(e);
+                        }
+                      }}
+                      onWheel={(e) => e.target.blur()} placeholder="+91 XXXXXXXXXX" className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium" required />
                   </div>
                 </div>
                 <div className="space-y-1.5">

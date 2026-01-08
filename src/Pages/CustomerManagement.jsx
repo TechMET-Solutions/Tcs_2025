@@ -30,12 +30,13 @@ const Tooltip = ({ text, children }) => {
 };
 
 /* ✅ REFINED INPUT FIELD */
-const InputField = ({ label, name, value, onChange, error, placeholder, icon: Icon }) => (
+const InputField = ({ label, name, value, onChange, error, placeholder,type="text", icon: Icon }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-tight ml-1">{label}</label>
     <div className="relative group">
       {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#FA9C42] transition-colors" />}
       <input
+        type={type}
         name={name}
         value={value}
         onChange={onChange}
@@ -492,8 +493,8 @@ export default function CustomerManagement() {
                   <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputField label="First Name" name="name" value={customer.name} onChange={handleChange} error={errors.name} placeholder="e.g. Rahul" icon={User} />
                     <InputField label="Last Name" name="Last_Name" value={customer.Last_Name} onChange={handleChange} error={errors.Last_Name} placeholder="e.g. Sharma" />
-                    <InputField label="Mobile Number" name="phone" value={customer.phone} onChange={handleChange} error={errors.phone} placeholder="98XXXXXXXX" icon={Phone} />
-                    <InputField label="Alt Mobile Number" name="altphone" value={customer.altphone} onChange={handleChange} error={errors.altphone} placeholder="98XXXXXXXX" icon={Phone} />
+                    <InputField type="number" label="Mobile Number" name="phone" value={customer.phone} onChange={handleChange} error={errors.phone} placeholder="98XXXXXXXX" icon={Phone} />
+                    <InputField type="number" label="Alt Mobile Number" name="altphone" value={customer.altphone} onChange={handleChange} error={errors.altphone} placeholder="98XXXXXXXX" icon={Phone} />
                     <InputField label="Email Address" name="email" value={customer.email} onChange={handleChange} error={errors.email} placeholder="rahul@example.com" icon={Mail} />
                   </div>
                 </div>

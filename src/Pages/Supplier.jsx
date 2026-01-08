@@ -242,8 +242,21 @@ export default function Supplier() {
                             <input
                                 type="number"
                                 name="mobile"
+                                onKeyDown={(e) => {
+                                    if (["e", "E", "+", "-", "."].includes(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    // typing ke time max 10 digits
+                                    if (value.length <= 10) {
+                                        handleChange(e);
+                                    }
+                                }}
+                                onWheel={(e) => e.target.blur()}
                                 value={supplier.mobile}
-                                onChange={handleChange}
                                 placeholder="Mobile Number"
                                 required
                                 maxLength={10}
