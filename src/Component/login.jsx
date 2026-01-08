@@ -38,6 +38,8 @@ export default function Login() {
 
             if (res.role === "admin") {
                 window.location.href = "/";
+            } else if (res.role === "superadmin") {
+                window.location.href = "/";
             } else {
                 window.location.href = "/employee/dashboard";
             }
