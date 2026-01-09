@@ -9,6 +9,7 @@ import {
   Phone,
   Plus,
   Receipt,
+  Search,
   User,
   X,
 } from "lucide-react";
@@ -30,12 +31,13 @@ const Tooltip = ({ text, children }) => {
 };
 
 /* ✅ REFINED INPUT FIELD */
-const InputField = ({ label, name, value, onChange, error, placeholder, icon: Icon }) => (
+const InputField = ({ label, name, value, onChange, error, placeholder, type = "text", icon: Icon }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-tight ml-1">{label}</label>
     <div className="relative group">
       {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#FA9C42] transition-colors" />}
       <input
+        type={type}
         name={name}
         value={value}
         onChange={onChange}
@@ -113,7 +115,7 @@ export default function CustomerManagement() {
   const { permissions, user, loading, role } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [architects, setArchitects] = useState([]);
-
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [customer, setCustomer] = useState({
     name: "", Last_Name: "", phone: "", altphone: "", email: "", assignedEmployee: "",
@@ -184,6 +186,8 @@ export default function CustomerManagement() {
 
     if (!customer.name) newErrors.name = "First name is required";
     if (!customer.phone) newErrors.phone = "Phone is required";
+    if (customer.phone && !/^\d{10}$/.test(customer.phone)) newErrors.phone = "Phone must be 10 digits";
+    if (customer.altphone && !/^\d{10}$/.test(customer.altphone)) newErrors.altphone = "Alt phone must be 10 digits";
     if (!customer.projectName) newErrors.projectName = "Project is required";
     if (!customer.assignedEmployee)
       newErrors.assignedEmployee = "Assigned employee is required";
@@ -274,17 +278,42 @@ export default function CustomerManagement() {
       </div>
 
       {/* --- STATS OVERVIEW (Visual Polish) --- */}
-      <div className="mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        {[
-          { label: "Total Leads", val: customerList.length, color: "text-blue-600" },
+      <div className="mx-auto mb-10 flex flex-wrap items-center justify-between gap-6">
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {[
+            { label: "Total Leads", val: customerList.length, color: "text-blue-600" },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex justify-between items-center min-w-[220px]"
+            >
+              <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">
+                {stat.label}
+              </span>
+              <span className={`text-3xl font-black ${stat.color}`}>
+                {stat.val}
+              </span>
+            </div>
+          ))}
+        </div>
 
-        ].map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex justify-between items-center">
-            <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">{stat.label}</span>
-            <span className={`text-3xl font-black ${stat.color}`}>{stat.val}</span>
-          </div>
-        ))}
+        {/* Search */}
+        <div className="relative bg-white rounded-2xl shadow-sm flex justify-between items-center min-w-[320px]">
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            size={18}
+          />
+          <input
+            type="text"
+            placeholder="Search customer name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 rounded-xl border-2  border-[#FA9C42]/80 bg-white outline-none transition-all"
+          />
+        </div>
       </div>
+
 
       {/* --- DATA TABLE --- */}
       <div className=" mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden">
@@ -307,113 +336,119 @@ export default function CustomerManagement() {
                   </td>
                 </tr>
               ) : (
-                customerList.map((item, index) => (
-                  <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-lg group-hover:bg-[#FA9C42]/10 group-hover:text-[#FA9C42] transition-colors">
-                          {item.name[0]}
-                        </div>
-                        <div>
-                          <div className="font-black text-slate-900">
-                            {item.name} {item.Last_Name}
+                customerList
+                  .filter(item =>
+                    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    item.Last_Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    item.phone.includes(searchTerm)
+                  )
+                  .map((item, index) => (
+                    <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-lg group-hover:bg-[#FA9C42]/10 group-hover:text-[#FA9C42] transition-colors">
+                            {item.name[0]}
                           </div>
-                          <div className="text-sm text-slate-500 flex items-center gap-1">
-                            <Phone size={12} /> {item.phone}
+                          <div>
+                            <div className="font-black text-slate-900">
+                              {item.name} {item.Last_Name}
+                            </div>
+                            <div className="text-sm text-slate-500 flex items-center gap-1">
+                              <Phone size={12} /> {item.phone}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                          Employee
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                            Employee
+                          </span>
+                          <span className="font-bold text-slate-700">
+                            {item.assignedEmployee}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">
+                          {item.siteType || "N/A"}
                         </span>
-                        <span className="font-bold text-slate-700">
-                          {item.assignedEmployee}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">
-                        {item.siteType || "N/A"}
-                      </span>
-                      <div className="mt-1 font-bold text-slate-700">
-                        {item.projectName || "Unnamed Project"}
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      {/* Priority Level Selector */}
-                      <select
-                        value={item.priority || "Low"}
-                        onChange={async (e) => {
-                          const newPriority = e.target.value;
-                          const updatedItem = { ...item, priority: newPriority };
+                        <div className="mt-1 font-bold text-slate-700">
+                          {item.projectName || "Unnamed Project"}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        {/* Priority Level Selector */}
+                        <select
+                          value={item.priority || "Low"}
+                          onChange={async (e) => {
+                            const newPriority = e.target.value;
+                            const updatedItem = { ...item, priority: newPriority };
 
-                          // Update in list immediately for UX
-                          const newList = [...customerList];
-                          newList[index] = updatedItem;
-                          setCustomerList(newList);
+                            // Update in list immediately for UX
+                            const newList = [...customerList];
+                            newList[index] = updatedItem;
+                            setCustomerList(newList);
 
-                          // Save to database
-                          try {
-                            await axios.put(`${BASE_URL}/update/${item.id}`, updatedItem);
-                            console.log("Priority updated successfully");
-                          } catch (err) {
-                            console.log("Error updating priority:", err);
-                            // Revert on error
-                            setCustomerList(customerList);
-                          }
-                        }}
-                        className="px-3 py-2 rounded-lg text-xs font-bold uppercase border border-slate-200 bg-white cursor-pointer focus:border-[#FA9C42] focus:ring-2 focus:ring-[#FA9C42]/20 transition-all hover:shadow-md"
-                      >
-                        <option value="Low" className="text-blue-600">Low</option>
-                        <option value="Medium" className="text-orange-600">Medium</option>
-                        <option value="High" className="text-red-600">High</option>
-                        <option value="Urgent" className="text-red-700 font-black">Urgent</option>
-                      </select>
-                    </td>
+                            // Save to database
+                            try {
+                              await axios.put(`${BASE_URL}/update/${item.id}`, updatedItem);
+                              console.log("Priority updated successfully");
+                            } catch (err) {
+                              console.log("Error updating priority:", err);
+                              // Revert on error
+                              setCustomerList(customerList);
+                            }
+                          }}
+                          className="px-3 py-2 rounded-lg text-xs font-bold uppercase border border-slate-200 bg-white cursor-pointer focus:border-[#FA9C42] focus:ring-2 focus:ring-[#FA9C42]/20 transition-all hover:shadow-md"
+                        >
+                          <option value="Low" className="text-blue-600">Low</option>
+                          <option value="Medium" className="text-orange-600">Medium</option>
+                          <option value="High" className="text-red-600">High</option>
+                          <option value="Urgent" className="text-red-700 font-black">Urgent</option>
+                        </select>
+                      </td>
 
-                    {/* --- ACTIONS COLUMN: ALWAYS VISIBLE --- */}
-                    <td className="px-8 py-6">
-                      <div className="flex flex-col gap-3 items-end">
+                      {/* --- ACTIONS COLUMN: ALWAYS VISIBLE --- */}
+                      <td className="px-8 py-6">
+                        <div className="flex flex-col gap-3 items-end">
 
 
-                        {/* Action Buttons */}
-                        <div className="flex justify-end gap-3 transition-opacity">
-                          {(role === "admin" || role === "superadmin" || permissions?.["Customer Management_Edit"] === true) && (
+                          {/* Action Buttons */}
+                          <div className="flex justify-end gap-3 transition-opacity">
+                            {(role === "admin" || role === "superadmin" || permissions?.["Customer Management_Edit"] === true) && (
+
+                              <button
+                                onClick={() => handleEdit(item)}
+                                title="Edit Details"
+                                className="p-2.5 rounded-xl border border-slate-200 text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95"
+                              >
+                                <Edit2 size={18} />
+                              </button>
+                            )}
 
                             <button
-                              onClick={() => handleEdit(item)}
-                              title="Edit Details"
-                              className="p-2.5 rounded-xl border border-slate-200 text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95"
+                              onClick={() => openHistory(item)}
+                              title="View History"
+                              className="p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:shadow-md transition-all active:scale-95"
                             >
-                              <Edit2 size={18} />
+                              <History size={18} />
                             </button>
-                          )}
-
-                          <button
-                            onClick={() => openHistory(item)}
-                            title="View History"
-                            className="p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:shadow-md transition-all active:scale-95"
-                          >
-                            <History size={18} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setActiveIndex(index);
-                              setShowUpdateFollowup(true);
-                            }}
-                            className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-700 hover:border-[#FA9C42] hover:text-[#FA9C42] hover:shadow-md transition-all active:scale-95"
-                          >
-                            Follow-up <ChevronRight size={16} />
-                          </button>
+                            <button
+                              onClick={() => {
+                                setActiveIndex(index);
+                                setShowUpdateFollowup(true);
+                              }}
+                              className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-700 hover:border-[#FA9C42] hover:text-[#FA9C42] hover:shadow-md transition-all active:scale-95"
+                            >
+                              Follow-up <ChevronRight size={16} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    {/* -------------------------------------- */}
-                  </tr>
-                ))
+                      </td>
+                      {/* -------------------------------------- */}
+                    </tr>
+                  ))
               )}
             </tbody>
           </table>
@@ -492,8 +527,8 @@ export default function CustomerManagement() {
                   <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputField label="First Name" name="name" value={customer.name} onChange={handleChange} error={errors.name} placeholder="e.g. Rahul" icon={User} />
                     <InputField label="Last Name" name="Last_Name" value={customer.Last_Name} onChange={handleChange} error={errors.Last_Name} placeholder="e.g. Sharma" />
-                    <InputField label="Mobile Number" name="phone" value={customer.phone} onChange={handleChange} error={errors.phone} placeholder="98XXXXXXXX" icon={Phone} />
-                    <InputField label="Alt Mobile Number" name="altphone" value={customer.altphone} onChange={handleChange} error={errors.altphone} placeholder="98XXXXXXXX" icon={Phone} />
+                    <InputField type="number" label="Mobile Number" name="phone" value={customer.phone} onChange={handleChange} error={errors.phone} placeholder="98XXXXXXXX" icon={Phone} />
+                    <InputField type="number" label="Alt Mobile Number" name="altphone" value={customer.altphone} onChange={handleChange} error={errors.altphone} placeholder="98XXXXXXXX" icon={Phone} />
                     <InputField label="Email Address" name="email" value={customer.email} onChange={handleChange} error={errors.email} placeholder="rahul@example.com" icon={Mail} />
                   </div>
                 </div>
