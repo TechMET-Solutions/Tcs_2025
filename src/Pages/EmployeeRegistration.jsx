@@ -7,6 +7,7 @@ import {
   Edit3,
   Eye, EyeOff,
   Plus,
+  Search,
   Trash2,
   Upload,
   X
@@ -22,6 +23,7 @@ export default function EmployeeRegistration() {
   const [modalMode, setModalMode] = useState("add");
   const [showPass, setShowPass] = useState(false);
   const [employeeList, setEmployeeList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [employee, setEmployee] = useState({
     name: "",
@@ -156,21 +158,52 @@ export default function EmployeeRegistration() {
   return (
     <div className="p-8 bg-[#fcfcfc] min-h-screen">
       {/* HEADER SECTION */}
-      <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Employee Directory</h1>
-          <p className="text-slate-400 text-sm mt-1 font-medium">Manage team members, payroll, and access status</p>
+      <div className="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          {/* Title */}
+          <div className="min-w-[240px]">
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">
+              Employee Directory
+            </h1>
+            <p className="text-slate-400 text-sm mt-1 font-medium">
+              Manage team members, payroll, and access status
+            </p>
+          </div>
+
+          <div className="flex gap-6">
+            {/* Search */}
+            <div className="relative w-full sm:w-[320px]">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                size={18}
+              />
+              <input
+                type="text"
+                placeholder="Search by name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FA9C42]/20 focus:border-[#FA9C42] transition-all"
+              />
+            </div>
+
+            {/* Button */}
+            {(role === "admin" ||
+              role === "superadmin" ||
+              permissions?.["Employee Registration_Add"] === true) && (
+                <button
+                  onClick={() => {
+                    setModalMode("add");
+                    resetForm();
+                    setShowModal(true);
+                  }}
+                  className="flex items-center gap-2 bg-[#FA9C42] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-[#e88b32] transition-all active:scale-95 shrink-0"
+                >
+                  <Plus size={20} strokeWidth={3} />
+                  Add New Employee
+                </button>
+              )}
+          </div>
         </div>
-        {(role === "admin" || role === "superadmin" || permissions?.["Employee Registration_Add"] === true) && (
-          <button
-            onClick={() => { setModalMode("add"); resetForm(); setShowModal(true); }}
-            className="flex items-center gap-2 bg-[#FA9C42] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-[#e88b32] transition-all active:scale-95"
-          >
-            <Plus size={20} strokeWidth={3} /> Add New Employee
-          </button>
-
-        )}
-
       </div>
 
       {/* TABLE SECTION */}
@@ -186,61 +219,67 @@ export default function EmployeeRegistration() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {employeeList.map((item, index) => (
-              <tr key={index} className={`hover:bg-slate-50/80 transition-all ${item.status === 'blocked' ? 'bg-slate-50/50' : ''}`}>
-                <td className="p-5">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm ${item.status === 'blocked' ? 'bg-slate-200 text-slate-500' : 'bg-orange-100 text-[#FA9C42]'}`}>
-                      {item.name.charAt(0).toUpperCase()}
+            {employeeList
+              .filter(item =>
+                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.phone.includes(searchTerm)
+              )
+              .map((item, index) => (
+                <tr key={index} className={`hover:bg-slate-50/80 transition-all ${item.status === 'blocked' ? 'bg-slate-50/50' : ''}`}>
+                  <td className="p-5">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm ${item.status === 'blocked' ? 'bg-slate-200 text-slate-500' : 'bg-orange-100 text-[#FA9C42]'}`}>
+                        {item.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className={`font-bold ${item.status === 'blocked' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{item.name}</p>
+                        <p className="text-xs text-slate-400">{item.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className={`font-bold ${item.status === 'blocked' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{item.name}</p>
-                      <p className="text-xs text-slate-400">{item.email}</p>
+                  </td>
+                  <td className="p-5 text-sm font-medium text-slate-600">{item.phone}</td>
+                  <td className="p-5">
+                    <span className="font-bold text-slate-700">₹{item.salary}</span>
+                  </td>
+                  <td className="p-5">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="p-5">
+                    <div className="flex gap-2">
+                      {/* TOGGLE STATUS BUTTON */}
+
+
+                      <button
+                        onClick={() => handleToggleStatus(item.id, item.status)}
+                        className={`p-2 rounded-lg transition-all ${item.status === 'active' ? 'text-slate-300 hover:text-red-500 hover:bg-red-50' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
+                        title={item.status === 'active' ? "Block Employee" : "Unblock Employee"}
+                      >
+                        {item.status === 'active' ? <Ban size={18} /> : <CheckCircle size={18} />}
+                      </button>
+                      {(role === "admin" || role === "superadmin" || permissions?.["Employee Registration_Edit"] === true) && (
+                        <button onClick={() => handleEdit(item)} className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
+                          <Edit3 size={18} />
+                        </button>
+
+                      )}
+                      {/* EDIT BUTTON */}
+
+
+                      {/* DELETE BUTTON */}
+                      {(role === "admin" || role === "superadmin" || permissions?.["Employee Registration_Delete"] === true) && (
+                        <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                          <Trash2 size={18} />
+                        </button>
+
+                      )}
+
                     </div>
-                  </div>
-                </td>
-                <td className="p-5 text-sm font-medium text-slate-600">{item.phone}</td>
-                <td className="p-5">
-                  <span className="font-bold text-slate-700">₹{item.salary}</span>
-                </td>
-                <td className="p-5">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                    {item.status}
-                  </span>
-                </td>
-                <td className="p-5">
-                  <div className="flex gap-2">
-                    {/* TOGGLE STATUS BUTTON */}
-
-
-                    <button
-                      onClick={() => handleToggleStatus(item.id, item.status)}
-                      className={`p-2 rounded-lg transition-all ${item.status === 'active' ? 'text-slate-300 hover:text-red-500 hover:bg-red-50' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
-                      title={item.status === 'active' ? "Block Employee" : "Unblock Employee"}
-                    >
-                      {item.status === 'active' ? <Ban size={18} /> : <CheckCircle size={18} />}
-                    </button>
-                    {(role === "admin" || role === "superadmin" || permissions?.["Employee Registration_Edit"] === true) && (
-                      <button onClick={() => handleEdit(item)} className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
-                        <Edit3 size={18} />
-                      </button>
-
-                    )}
-                    {/* EDIT BUTTON */}
-
-
-                    {/* DELETE BUTTON */}
-                    {(role === "admin" || role === "superadmin" || permissions?.["Employee Registration_Delete"] === true) && (
-                      <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
-                        <Trash2 size={18} />
-                      </button>
-
-                    )}
-
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
         {/* --- PAGINATION FOOTER --- */}
@@ -309,37 +348,7 @@ export default function EmployeeRegistration() {
                   <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FA9C42] border-b border-orange-100 pb-2">Personal Information</h3>
                   <div className="grid grid-cols-2 gap-5">
                     <input name="name" value={employee.name} onChange={handleChange} placeholder="Full Name" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
-                    {/* <input type="number"
-                      onKeyDown={(e) => {
-                        if (["e", "E", "+", "-", "."].includes(e.key)) {
-                          e.preventDefault();
-                        }
-                      }}
-                      name="phone" value={employee.phone} onChange={handleChange} placeholder="Mobile Number" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required /> */}
-                    
-                    <input
-                      type="number"
-                      name="phone"
-                      value={employee.phone}
-                      placeholder="Mobile Number"
-                      className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium"
-                      required
-                      onKeyDown={(e) => {
-                        if (["e", "E", "+", "-", "."].includes(e.key)) {
-                          e.preventDefault();
-                        }
-                      }}
-                      onChange={(e) => {
-                        const value = e.target.value;
-
-                        // typing ke time max 10 digits
-                        if (value.length <= 10) {
-                          handleChange(e);
-                        }
-                      }}
-                      onWheel={(e) => e.target.blur()}
-                    />
-
+                    <input name="phone" value={employee.phone} onChange={handleChange} placeholder="Mobile Number" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
                     <input
                       type="date"
                       name="birthdate"
