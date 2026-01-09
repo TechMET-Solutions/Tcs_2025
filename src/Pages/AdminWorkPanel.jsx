@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Send, Clock, CheckCircle2, MessageSquare, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, MessageSquare, Trash2, Send } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { deleteTaskAPI } from '../Component/API/taskApi';
 
 export const AdminWorkPanel = () => {
   // Form State
@@ -29,6 +30,19 @@ export const AdminWorkPanel = () => {
     }
   };
 
+const handleDelete = async (taskId) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+
+    try {
+      const res = await deleteTaskAPI(taskId);
+      if (res.data.success) {
+        // Refresh the list after deletion
+        fetchAllTasks(); 
+      }
+    } catch (err) {
+      alert("Failed to delete task");
+    }
+  };
   // 2. Fetch All Assigned Tasks for the Table
   const fetchAllTasks = async () => {
     setTaskLoading(true);
@@ -139,26 +153,30 @@ export const AdminWorkPanel = () => {
 
       {/* 2. TASK MONITORING LIST */}
       <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-             <h3 className="text-xl font-black text-slate-800">Assigned Tasks Overview</h3>
-             {taskLoading && <Loader2 size={16} className="animate-spin text-blue-500" />}
-          </div>
-          <button onClick={fetchAllTasks} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Refresh List</button>
+      <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <h3 className="text-xl font-black text-slate-800">Assigned Tasks Overview</h3>
+          {taskLoading && <Loader2 size={16} className="animate-spin text-blue-500" />}
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50">
-                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Employee</th>
-                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Task Title</th>
-                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Employee Remark</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {allTasks.length > 0 ? allTasks.map((item) => (
+        <button onClick={fetchAllTasks} className="text-[10px] font-black text-blue-600 uppercase hover:underline">
+          Refresh List
+        </button>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-slate-50/50">
+              <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Employee</th>
+              <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Task Title</th>
+              <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+              <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Remark</th>
+              <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {allTasks.length > 0 ? (
+              allTasks.map((item) => (
                 <tr key={item.id} className="group hover:bg-slate-50/80 transition-all">
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
@@ -185,16 +203,26 @@ export const AdminWorkPanel = () => {
                       </p>
                     </div>
                   </td>
+                  <td className="px-8 py-5 text-right">
+                    <button 
+                      onClick={() => handleDelete(item.id)}
+                      className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      title="Delete Task"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
                 </tr>
-              )) : (
-                <tr>
-                   <td colSpan="4" className="text-center py-10 text-slate-400 font-bold">No tasks assigned yet.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="text-center py-10 text-slate-400 font-bold">No tasks assigned yet.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
     </div>
   );
 };

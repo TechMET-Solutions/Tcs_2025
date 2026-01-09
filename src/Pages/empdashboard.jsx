@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { 
-  User, FileText, Clock, PhoneCall, LogOut, 
-  CheckCircle, AlertCircle, Calendar, Briefcase, Mail 
+import {
+  AlertCircle,
+  Briefcase,
+  Calendar,
+  CheckCircle,
+  Clock,
+  FileText,
+  Mail,
+  PhoneCall,
+  Send,
+  User
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { BASEURL } from "../Component/API/Url";
 import { useAuth } from "../utils/AuthContext";
 
@@ -12,11 +20,15 @@ const EmpDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [currentStatus, setCurrentStatus] = useState(""); // READY, IN, or COMPLETED
+  console.log(currentStatus,"currentStatus")
   const [stats, setStats] = useState({ quotationCount: 0, followUpCount: 0 });
   const [followUps, setFollowUps] = useState([]);
-
+const [tasks, setTasks] = useState([]);
+ 
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [remark, setRemark] = useState("");
    const { user } = useAuth(); 
-  
+  console.log(user,"user")
   // 1. Fetch all dashboard data on component mount
   useEffect(() => {
     if (user?.id) {
@@ -24,7 +36,22 @@ const EmpDashboard = () => {
     }
   }, [user]);
 
+const fetchMyTasks = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/tasks/employee/${user?.id}`);
+      if (res.data.success) {
+        setTasks(res.data.tasks);
+      }
+    } catch (err) {
+      console.error("Error fetching tasks:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    if (user?.id) fetchMyTasks();
+  }, [user?.id]);
   const fetchInitialData = async () => {
     try {
       setLoading(true);
@@ -48,7 +75,27 @@ const EmpDashboard = () => {
       setLoading(false);
     }
   };
+const handleUpdateStatus = async (taskId) => {
+    if (!remark.trim()) {
+      alert("Please provide a remark before completing the task.");
+      return;
+    }
 
+    try {
+      const res = await axios.put(`${BASEURL}/api/tasks/update/${taskId}`, {
+        status: 'done',
+        remark: remark
+      });
+
+      if (res.data.success) {
+        setRemark("");
+        setSelectedTask(null);
+        fetchMyTasks(); // Refresh list
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || "Update failed");
+    }
+  };
 
   const handlePunch = async (type) => {
     setLoading(true);
@@ -92,32 +139,35 @@ const EmpDashboard = () => {
     }
 
     return (
-      <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 gap-2">
-        <button
-          disabled={loading || currentStatus === "IN"}
-          onClick={() => handlePunch("IN")}
-          className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
-            currentStatus === "IN" 
-            ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
-            : "bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-100"
-          }`}
-        >
-          {currentStatus === "IN" ? <CheckCircle size={16} /> : null}
-          {currentStatus === "IN" ? "Already In" : "Punch In"}
-        </button>
+    <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-slate-200 gap-3">
+  {/* PUNCH IN BUTTON */}
+  <button
+    disabled={loading || currentStatus !== "READY"}
+    onClick={() => handlePunch("IN")}
+    className={`flex-1 px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+      currentStatus !== "READY"
+        ? "bg-slate-50 text-slate-400 cursor-not-allowed border border-slate-100"
+        : "bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-100"
+    }`}
+  >
+    {currentStatus !== "READY" && <CheckCircle size={18} />}
+    {currentStatus === "READY" ? "Punch In" : "Already Punched In"}
+  </button>
 
-        <button
-          disabled={loading || currentStatus !== "IN"}
-          onClick={() => handlePunch("OUT")}
-          className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
-            currentStatus !== "IN"
-            ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
-            : "bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-100"
-          }`}
-        >
-          Punch Out
-        </button>
-      </div>
+  <button
+    
+    disabled={loading || currentStatus !== "IN"}
+    onClick={() => handlePunch("OUT")}
+    className={`flex-1 px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+      currentStatus !== "IN"
+        ? "bg-slate-50 text-slate-400 cursor-not-allowed border border-slate-100"
+        : "bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-100"
+    }`}
+  >
+    {currentStatus === "COMPLETED" && <CheckCircle size={18} />}
+    {currentStatus === "COMPLETED" ? "Shift Completed" : "Punch Out"}
+  </button>
+</div>
     );
   };
 
@@ -166,7 +216,7 @@ const EmpDashboard = () => {
             </div>
           </div>
 
-          <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl text-white shadow-lg">
+          {/* <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl text-white shadow-lg">
             <p className="text-xs text-slate-400 font-medium">Monthly Salary</p>
             <p className="text-2xl font-black mt-1">
               ₹{Number(user?.salary || 0).toFixed(2)}
@@ -175,12 +225,12 @@ const EmpDashboard = () => {
             <div className="mt-4 h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
                <div className="h-full bg-blue-500 w-2/3"></div>
             </div>
-          </div>
+          </div> */}
         </div>
 
-        <button className="mt-auto flex items-center justify-center gap-2 text-rose-500 font-bold py-4 hover:bg-rose-50 rounded-2xl transition-all border border-transparent hover:border-rose-100">
+        {/* <button className="mt-auto flex items-center justify-center gap-2 text-rose-500 font-bold py-4 hover:bg-rose-50 rounded-2xl transition-all border border-transparent hover:border-rose-100">
           <LogOut size={18} /> Logout Session
-        </button>
+        </button> */}
       </aside>
 
       {/* --- MAIN CONTENT AREA --- */}
@@ -234,56 +284,100 @@ const EmpDashboard = () => {
         </div>
 
         {/* FOLLOW UPS DATA TABLE */}
-        <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white">
-            <h3 className="text-xl font-black text-slate-800">Priority Follow-ups</h3>
-            <div className="flex gap-2">
-               <button className="p-2 hover:bg-slate-100 rounded-xl transition-colors"><AlertCircle size={20} className="text-slate-400" /></button>
+       <div className="space-y-6">
+      <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white">
+          <h3 className="text-xl font-black text-slate-800">My Assigned Tasks</h3>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400 uppercase">Status:</span>
+            <span className="px-3 py-1 bg-amber-100 text-amber-600 text-[10px] font-black rounded-full uppercase">Pending</span>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50">
+                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Task Details</th>
+                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Date Assigned</th>
+                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {tasks.length > 0 ? tasks.map((task) => (
+                <tr key={task.id} className="group hover:bg-slate-50/80 transition-all">
+                  <td className="px-8 py-5">
+                    <div className="font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{task.title}</div>
+                    <div className="text-xs text-slate-400 mt-1 max-w-md italic">"{task.description}"</div>
+                    {task.remark && (
+                      <div className="mt-2 text-[10px] bg-indigo-50 text-indigo-500 p-2 rounded-lg font-medium">
+                        <strong>Remark:</strong> {task.remark}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-8 py-5 text-slate-500 font-medium text-sm">
+                    {new Date(task.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    {task.status === 'pending' ? (
+                      <button 
+                        onClick={() => setSelectedTask(task.id)}
+                        className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-extrabold hover:bg-indigo-700 transition-all shadow-md flex items-center gap-2 ml-auto"
+                      >
+                        <Clock size={14} /> Mark as Done
+                      </button>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-green-500 font-black text-[10px] uppercase">
+                        <CheckCircle size={14} /> Completed
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="3" className="px-8 py-20 text-center text-slate-400 font-bold">
+                    No tasks found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* MODAL / OVERLAY FOR REMARK */}
+      {selectedTask && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl">
+            <h4 className="text-xl font-black text-slate-800 mb-2">Complete Task</h4>
+            <p className="text-sm text-slate-500 mb-6">Please provide a brief remark on what was done.</p>
+            
+            <textarea 
+              className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm focus:border-indigo-500 outline-none transition-all"
+              placeholder="Type your remark here..."
+              rows="4"
+              value={remark}
+              onChange={(e) => setRemark(e.target.value)}
+            />
+
+            <div className="flex gap-3 mt-6">
+              <button 
+                onClick={() => setSelectedTask(null)}
+                className="flex-1 px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleUpdateStatus(selectedTask)}
+                className="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg flex items-center justify-center gap-2"
+              >
+                <Send size={16} /> Submit
+              </button>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Client Name</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Contact</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Requirement</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Operations</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {followUps.length > 0 ? followUps.map((item, idx) => (
-                  <tr key={idx} className="group hover:bg-slate-50/80 transition-all">
-                    <td className="px-8 py-5">
-                      <div className="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{item.customer_name}</div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Corporate Client</div>
-                    </td>
-                    <td className="px-8 py-5 text-slate-600 font-medium">{item.phone}</td>
-                    <td className="px-8 py-5">
-                      <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-lg truncate block max-w-[200px]">
-                        {item.requirement || "General Inquiry"}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <button className="bg-white border border-slate-200 text-slate-700 px-5 py-2 rounded-xl text-xs font-extrabold hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-sm">
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="4" className="px-8 py-20 text-center">
-                      <div className="flex flex-col items-center">
-                        <CheckCircle size={48} className="text-slate-100 mb-4" />
-                        <p className="text-slate-400 font-bold">Great job! No pending follow-ups for today.</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        </div>
+      )}
+    </div>
 
       </main>
     </div>

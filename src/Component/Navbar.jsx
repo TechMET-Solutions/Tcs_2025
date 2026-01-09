@@ -8,8 +8,10 @@ export default function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false); // New State
   const navigate = useNavigate();
+const { permissions, user, loading, role } = useAuth(); 
 
-  const { user } = useAuth();
+
+  // const { user } = useAuth();
 
   console.log(user)
 
@@ -82,7 +84,9 @@ export default function Navbar() {
         </div>
 
         {/* ⚙️ SETTINGS */}
-        <div className="relative">
+        {(role === "admin" || role === "superadmin") && (
+
+ <div className="relative">
           <div
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow hover:shadow-lg cursor-pointer border border-gray-300 hover:bg-gray-200 transition"
             onClick={() => {
@@ -127,6 +131,8 @@ export default function Navbar() {
             </div>
           )}
         </div>
+                        )}
+        
 
         {/* 👤 PROFILE */}
         <div className="relative">
