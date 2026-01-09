@@ -63,7 +63,15 @@ export default function EmployeeRegistration() {
 
 
   const handleChange = (e) => {
-    setEmployee({ ...employee, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const updatedEmployee = { ...employee, [name]: value };
+
+    // Auto-generate email if name field is being changed
+    if (name === "name" && value) {
+      updatedEmployee.email = value.toLowerCase().replace(/\s+/g, '.') + '@theceramicstudio.com';
+    }
+
+    setEmployee(updatedEmployee);
   };
 
   const handleFileChange = (e) => {
@@ -304,8 +312,8 @@ export default function EmployeeRegistration() {
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
                   className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${currentPage === i + 1
-                      ? "bg-[#FA9C42] text-white shadow-md shadow-orange-100"
-                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    ? "bg-[#FA9C42] text-white shadow-md shadow-orange-100"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                     }`}
                 >
                   {i + 1}
@@ -348,7 +356,21 @@ export default function EmployeeRegistration() {
                   <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FA9C42] border-b border-orange-100 pb-2">Personal Information</h3>
                   <div className="grid grid-cols-2 gap-5">
                     <input name="name" value={employee.name} onChange={handleChange} placeholder="Full Name" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
-                    <input name="phone" value={employee.phone} onChange={handleChange} placeholder="Mobile Number" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
+                    <input name="phone" value={employee.phone} placeholder="Mobile Number" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required onKeyDown={(e) => {
+                      if (["e", "E", "+", "-", "."].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        // typing ke time max 10 digits
+                        if (value.length <= 10) {
+                          handleChange(e);
+                        }
+                      }}
+                      onWheel={(e) => e.target.blur()}
+                    />
                     <input
                       type="date"
                       name="birthdate"
@@ -357,7 +379,7 @@ export default function EmployeeRegistration() {
                       onChange={handleChange}
                       className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium text-slate-500"
                     />
-                    <input name="email" value={employee.email} onChange={handleChange} placeholder="Email Address" className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium" required />
+                    <input name="email" value={employee.email} readOnly placeholder="Auto-generated Email" className="p-4 rounded-xl border-2 border-slate-100 bg-slate-50 outline-none focus:border-[#FA9C42] transition-all font-medium text-slate-500 cursor-not-allowed" required />
                   </div>
                 </div>
 
