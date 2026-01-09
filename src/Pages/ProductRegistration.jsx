@@ -342,6 +342,7 @@ useEffect(() => {
       rate: item.rate || "",
       status: item.status || "",
       link: item.link || "",
+      cov: item.cov || "",
       godown: normalizeGodown(item.godown), // ✅ FIX
       description: item.description || "",
       image: null,

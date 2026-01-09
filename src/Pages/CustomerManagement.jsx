@@ -30,7 +30,7 @@ const Tooltip = ({ text, children }) => {
 };
 
 /* ✅ REFINED INPUT FIELD */
-const InputField = ({ label, name, value, onChange, error, placeholder,type="text", icon: Icon }) => (
+const InputField = ({ label, name, value, onChange, error, placeholder, type = "text", icon: Icon }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-tight ml-1">{label}</label>
     <div className="relative group">
@@ -185,6 +185,8 @@ export default function CustomerManagement() {
 
     if (!customer.name) newErrors.name = "First name is required";
     if (!customer.phone) newErrors.phone = "Phone is required";
+    if (customer.phone && !/^\d{10}$/.test(customer.phone)) newErrors.phone = "Phone must be 10 digits";
+    if (customer.altphone && !/^\d{10}$/.test(customer.altphone)) newErrors.altphone = "Alt phone must be 10 digits";
     if (!customer.projectName) newErrors.projectName = "Project is required";
     if (!customer.assignedEmployee)
       newErrors.assignedEmployee = "Assigned employee is required";
