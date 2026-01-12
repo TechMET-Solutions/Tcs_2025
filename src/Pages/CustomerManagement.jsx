@@ -136,7 +136,7 @@ export default function CustomerManagement() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/employees/list");
+      const res = await axios.get(`${BASEURL}/api/employees/list`);
 
       const employeeNames = res.data.employees.map(emp => emp.name);
 
@@ -151,7 +151,7 @@ export default function CustomerManagement() {
 
   const fetchArchitects = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/architects/list");
+      const res = await axios.get(`${BASEURL}/api/architects/list`);
 
       const architectNames = res.data.architects.map(
         arch => `${arch.firstname} ${arch.lastname}`.trim()
@@ -181,45 +181,72 @@ export default function CustomerManagement() {
   const handleChange = (e) => setCustomer({ ...customer, [e.target.name]: e.target.value });
   const handleFollowupInput = (e) => setFollowupUpdate({ ...followupUpdate, [e.target.name]: e.target.value });
 
-  const validate = () => {
-    let newErrors = {};
+   const validate = () => {
+  let newErrors = {};
 
-    if (!customer.name) newErrors.name = "First name is required";
-    if (!customer.phone) newErrors.phone = "Phone is required";
-    if (customer.phone && !/^\d{10}$/.test(customer.phone)) newErrors.phone = "Phone must be 10 digits";
-    if (customer.altphone && !/^\d{10}$/.test(customer.altphone)) newErrors.altphone = "Alt phone must be 10 digits";
-    if (!customer.projectName) newErrors.projectName = "Project is required";
-    if (!customer.assignedEmployee)
-      newErrors.assignedEmployee = "Assigned employee is required";
-    if (!customer.assignedArchitect)
-      newErrors.assignedArchitect = "Assigned architect is required";
+  // Mandatory Fields
+  if (!customer.name?.trim()) newErrors.name = "First name is required";
+  if (!customer.Last_Name?.trim()) newErrors.Last_Name = "Last name is required";
+  if (!customer.phone?.trim()) newErrors.phone = "Mobile number is required";
+  if (!customer.assignedEmployee?.trim()) newErrors.assignedEmployee = "Employee assignment is required";
+  if (!customer.assignedArchitect?.trim()) newErrors.assignedArchitect = "Architect assignment is required";
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  setErrors(newErrors);
+  
+  // Returns true only if no errors found
+  return Object.keys(newErrors).length === 0;
+};
 
 
-  const saveCustomer = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setIsSubmitting(true);
-    try {
-      if (isEditing) {
-        // UPDATE EXISTING
-        await axios.put(`${BASE_URL}/update/${customer.id}`, customer);
-      } else {
-        // CREATE NEW
-        await axios.post(`${BASE_URL}/add`, customer);
-      }
-      fetchCustomers();
-      setShowModal(false);
-      setErrors({});
-    } catch (err) {
-      setErrors({ server: "Operation failed." });
-    } finally {
-      setIsSubmitting(false);
+ const saveCustomer = async (e) => {
+  e.preventDefault();
+  
+  // 1. Run Validation
+  if (!validate()) return;
+  
+  setIsSubmitting(true);
+
+  try {
+    // 2. Prepare Data: Convert empty strings to NULL
+    const dataToSave = Object.keys(customer).reduce((acc, key) => {
+      const value = customer[key];
+      acc[key] = (typeof value === 'string' && value.trim() === "") ? null : value;
+      return acc;
+    }, {});
+
+    // 3. API Call
+    let response;
+    if (isEditing) {
+      response = await axios.put(`${BASE_URL}/update/${customer.id}`, dataToSave);
+    } else {
+      response = await axios.post(`${BASE_URL}/add`, dataToSave);
     }
-  };
+
+    // 4. Success Actions
+    fetchCustomers();
+    setShowModal(false);
+    setErrors({});
+    alert("✅ Customer saved successfully!");
+
+  } catch (err) {
+    console.error("Save Error:", err);
+
+    // 5. Extract the specific error message from the backend
+    const errorMessage = err.response?.data?.message || "Operation failed. Please try again.";
+    
+    // 6. Show the Alert with the specific error (e.g., "Already Exists")
+    alert(errorMessage); 
+
+    // Also set it in state if you want to show it on the UI
+    setErrors({ server: errorMessage });
+
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
+
 
   const saveNewFollowup = async () => {
     try {

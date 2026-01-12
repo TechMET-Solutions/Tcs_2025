@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { addPurchaseAPI } from "../Component/API/inventoryApi";
 import { getProductAPI } from "../Component/API/productApi";
+import { BASEURL } from "../Component/API/Url";
 
 export default function AddInventory() {
   const navigate = useNavigate();
@@ -92,7 +93,7 @@ useEffect(() => {
     }
     
     try {
-      const response = await fetch(`http://localhost:5000/api/suppliers/list?search=${searchTerm}`);
+      const response = await fetch(`${BASEURL}/api/suppliers/list?search=${searchTerm}`);
       const data = await response.json();
       if (data.success) {
         setSuggestions(data.suppliers);

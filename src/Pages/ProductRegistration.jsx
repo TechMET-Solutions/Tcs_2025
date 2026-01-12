@@ -312,6 +312,8 @@ useEffect(() => {
       rate: item.rate || "",
       status: item.status || "",
       link: item.link || "",
+      cov: item.Cov
+ || "",
       godown: normalizeGodown(item.godown), // ✅ FIX
       description: item.description || "",
       image: null,
@@ -330,6 +332,7 @@ useEffect(() => {
 
 
   const editProduct = (item) => {
+    debugger
     setModalMode("edit");
     setSelectedProductId(item.id);
 
@@ -342,7 +345,7 @@ useEffect(() => {
       rate: item.rate || "",
       status: item.status || "",
       link: item.link || "",
-      cov: item.cov || "",
+      cov: item.Cov || "",
       godown: normalizeGodown(item.godown), // ✅ FIX
       description: item.description || "",
       image: null,

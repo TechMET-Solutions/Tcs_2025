@@ -6,6 +6,7 @@ import ProtectedRoute from "./Component/ProtectedRoute";
 import PublicRoute from "./Component/PublicRoute";
 import AddInventory from "./Pages/AddInventory";
 import AddQuotation from "./Pages/AddQuotation";
+import { AdminWorkPanel } from "./Pages/AdminWorkPanel";
 import ArchitectDetails from "./Pages/ArchitectDetails";
 import ArchitectRegistration from "./Pages/ArchitectRegistration";
 import BrandManagement from "./Pages/BrandManagement";
@@ -18,13 +19,13 @@ import EmployeeAttendance from "./Pages/EmployeeAttendance";
 import EmployeeRegistration from "./Pages/EmployeeRegistration";
 import EmployeeReviews from "./Pages/EmployeeReviews";
 import EmployeeRole from "./Pages/EmployeeRole";
+import ExpensePanel from "./Pages/ExpensePanel";
 import GenerateQuote from "./Pages/GenerateQuote";
 import ManageInventory from "./Pages/ManageInventory";
 import ManageQuotation from "./Pages/ManageQuotation";
 import ProductRegistration from "./Pages/ProductRegistration";
 import QualityManagement from "./Pages/QualityManagement";
 import Supplier from "./Pages/Supplier";
-import { AdminWorkPanel } from "./Pages/AdminWorkPanel";
 
 
 
@@ -79,6 +80,7 @@ export default function App() {
           <Route path="Quality-Management" element={<QualityManagement />} />
           <Route path="Brand-Management" element={<BrandManagement />} />
           <Route path="supplier" element={<Supplier />} />
+          <Route path="/expense-panel" element={<ExpensePanel />} />
         <Route path="/work-panel" element={<AdminWorkPanel />} />
           <Route path="inventory/add" element={<AddInventory />} />
           <Route path="inventory/manage" element={<ManageInventory />} />

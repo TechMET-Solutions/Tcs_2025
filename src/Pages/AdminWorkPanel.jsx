@@ -2,6 +2,7 @@ import axios from 'axios';
 import { CheckCircle2, Clock, Loader2, MessageSquare, Trash2, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { deleteTaskAPI } from '../Component/API/taskApi';
+import { BASEURL } from '../Component/API/Url';
 
 export const AdminWorkPanel = () => {
   // Form State
@@ -18,7 +19,7 @@ export const AdminWorkPanel = () => {
   const fetchEmployees = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/employees/list?page=${page}&limit=10`);
+      const response = await axios.get(`${BASEURL}/api/employees/list?page=${page}&limit=10`);
       if (response.data.success) {
         setEmployees(response.data.employees);
         setPagination(response.data.pagination);
@@ -48,7 +49,7 @@ const handleDelete = async (taskId) => {
     setTaskLoading(true);
     try {
       // Endpoint created in previous step
-      const response = await axios.get(`http://localhost:5000/api/tasks/all`);
+      const response = await axios.get(`${BASEURL}/api/tasks/all`);
       if (response.data.success) {
         setAllTasks(response.data.tasks);
       }
@@ -69,7 +70,7 @@ const handleDelete = async (taskId) => {
     if (!task.employeeId || !task.title) return;
 
     try {
-      const response = await axios.post(`http://localhost:5000/api/tasks/assign`, {
+      const response = await axios.post(`${BASEURL}/api/tasks/assign`, {
         employeeId: task.employeeId,
         title: task.title,
         description: task.description

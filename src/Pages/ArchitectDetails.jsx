@@ -125,11 +125,7 @@ const handleInputChange = (e) => {
         </div>
 
         {/* ADD COMMISSION SECTION */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 sticky top-8">
-            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
-              <Calculator size={22} className="text-[#FA9C42]" /> Add Commission
-            </h2>
+      
             
          <div className="lg:col-span-4 space-y-6">
   <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 sticky top-8">
@@ -227,8 +223,7 @@ const handleInputChange = (e) => {
     </div>
   </div>
 </div>
-          </div>
-        </div>
+          
 
         {/* PROJECT HISTORY TABLE */}
         <div className="lg:col-span-8 bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">

@@ -423,32 +423,17 @@ const handleSavePaymentRequest = async () => {
 
         {/* Amount Input */}
         <div>
-          <div className="flex justify-between items-center mb-1">
-            <label className="modal-label">Amount</label>
-            {Number(paymentData.amount) > Number(paymentData.due) && (
-              <span className="text-[10px] font-bold text-red-500 animate-pulse">
-                CANNOT EXCEED DUE!
-              </span>
-            )}
-          </div>
+          <label className="modal-label">Amount</label>
           <input 
-            className={`lux-modal-input transition-colors ${
-              Number(paymentData.amount) > Number(paymentData.due) 
-              ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-200' 
-              : ''
-            }`} 
+            className="lux-modal-input" // Removed conditional red styling
             type="number" 
             placeholder="Enter amount" 
             value={paymentData.amount}
-            onChange={(e) => {
-              const val = e.target.value;
-              // Update state normally, validation is handled by the button and styling
-              setPaymentData({ ...paymentData, amount: val });
-            }}
+            onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
           />
         </div>
 
-        {/* Remark Input (Optional but recommended) */}
+        {/* Remark Input */}
         <div>
           <label className="modal-label">Remark</label>
           <input 
@@ -460,22 +445,14 @@ const handleSavePaymentRequest = async () => {
           />
         </div>
       </div>
-<button 
-  className={`w-full mt-8 py-4 rounded-2xl font-black uppercase tracking-widest transition-all duration-200 shadow-xl 
-    ${(Number(paymentData.amount) > Number(paymentData.due) || !paymentData.amount || !paymentData.paymentType) 
-      ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' 
-      : 'bg-blue-600 text-white shadow-blue-100 hover:bg-blue-700 active:transform active:scale-[0.98]'
-    }`} 
-  onClick={handleSavePaymentRequest}
-  disabled={
-    !paymentData.amount || 
-    !paymentData.paymentType || 
-    Number(paymentData.amount) > Number(paymentData.due) || // Disable if it exceeds due
-    Number(paymentData.amount) <= 0                        // Disable if zero or negative
-  }
->
-  {Number(paymentData.amount) > Number(paymentData.due) ? 'Amount Exceeds Due' : 'Save Payment'}
-</button>
+
+      <button 
+        className="w-full mt-8 py-4 rounded-2xl font-black uppercase tracking-widest bg-blue-600 text-white shadow-xl shadow-blue-100 hover:bg-blue-700 active:transform active:scale-[0.98] transition-all duration-200" 
+        onClick={handleSavePaymentRequest}
+        disabled={false} // Always clickable
+      >
+        Save Payment
+      </button>
     </div>
   </div>
 )}

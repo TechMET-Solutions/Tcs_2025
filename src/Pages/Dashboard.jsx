@@ -1,17 +1,18 @@
 import {
-  BarChart3,
-  ShoppingCart,
-  CreditCard,
+  ArrowRight,
   ArrowUpCircle,
-  Wallet,
-  TrendingUp,
-  Receipt,
-  IndianRupee,
+  BarChart3,
   Calendar,
-  ArrowRight
+  CreditCard,
+  IndianRupee,
+  Receipt,
+  ShoppingCart,
+  TrendingUp,
+  Wallet
 } from "lucide-react";
 import { useState } from "react";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import TodoComponent from "./TodoComponent";
 
 export default function Dashboard() {
   const salesData = [
@@ -51,7 +52,8 @@ export default function Dashboard() {
         </div>
         <div className="flex gap-3">
             <button className="px-6 py-3 bg-white border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all">Download Report</button>
-            <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95">Settings</button>
+          <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95">Settings</button>
+          <TodoComponent/>
         </div>
       </div>
 

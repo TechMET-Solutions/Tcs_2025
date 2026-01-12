@@ -2,6 +2,7 @@ import { Bell, LogOut, Settings, X } from "lucide-react"; // Added X icon
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
+import { BASEURL } from "./API/Url";
 
 export default function Navbar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -126,7 +127,16 @@ const { permissions, user, loading, role } = useAuth();
                   }}
                 >
                   Work Panel
-                </li>
+                  </li>
+                  <li
+  className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600 font-medium"
+  onClick={() => {
+    navigate("/expense-panel");
+    setSettingsOpen(false);
+  }}
+>
+  Expense Panel
+</li>
               </ul>
             </div>
           )}
@@ -143,7 +153,7 @@ const { permissions, user, loading, role } = useAuth();
             <img
               src={
                 user?.profile_photo
-                  ? `http://localhost:5000/uploads/employees/${user.profile_photo}`
+                  ? `${BASEURL}/uploads/employees/${user.profile_photo}`
                   : "https://i.pravatar.cc/40"
               }
               alt={user?.name || "User"}
