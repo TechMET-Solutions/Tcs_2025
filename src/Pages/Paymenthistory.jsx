@@ -50,6 +50,7 @@ const PaymentHistory = () => {
               <th className="px-6 py-4">Party Name</th>
                 <th className="px-6 py-4">Party Number</th>
               <th className="px-6 py-4">Date</th>
+              <th className="px-6 py-4">Payment Type</th>
               <th className="px-6 py-4">Remark</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4 text-right">Amount</th>
@@ -65,6 +66,7 @@ const PaymentHistory = () => {
                 <td className="px-6 py-4 text-sm text-gray-600">
                   {new Date(item.created_at).toLocaleDateString()}
                 </td>
+                <td className="px-6 py-4 text-xs font-bold text-gray-400">{item.payment_type}</td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-700">{item.remark || '---'}</td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${
@@ -123,24 +125,20 @@ const PaymentHistory = () => {
 
         {/* Content Display */}
         {loading ? (
-          <div className="flex justify-center py-20"><History className="animate-spin text-slate-300" size={48}/></div>
+          <div className="flex justify-center py-20">
+            <History className="animate-spin text-slate-300" size={48} />
+          </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <TableSection 
-              title="Cash Payments" 
-              icon={<Wallet size={20}/>} 
-              data={cashPayments}
-              color="bg-emerald-50 text-emerald-700 border-emerald-100"
-            />
-
-            <TableSection 
-              title="Digital Payments (UPI/Bank)" 
-              icon={<Landmark size={20}/>} 
-              data={digitalPayments}
-              color="bg-blue-50 text-blue-700 border-blue-100"
+            <TableSection
+              title="All Payments"
+              icon={<Wallet size={20} />}
+              data={currentTabData}
+              color="bg-indigo-50 text-indigo-700 border-indigo-100"
             />
           </div>
         )}
+
       </div>
     </div>
   );

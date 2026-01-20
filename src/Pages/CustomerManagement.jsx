@@ -143,6 +143,7 @@ export default function CustomerManagement() {
   const [employeesData, setEmployeesData] = useState([]);
   console.log(employees, "employees");
   const [architects, setArchitects] = useState([]);
+  const [architectsData, setArchitectsData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [customer, setCustomer] = useState({
@@ -161,6 +162,7 @@ export default function CustomerManagement() {
     siteType: "",
     priority: "Low",
     assignedEmployeeId: "",
+    assignedArchitectId:"",
   });
   const [priorityFilter, setPriorityFilter] = useState("");
   console.log(customer, "custoemr");
@@ -206,10 +208,12 @@ export default function CustomerManagement() {
       const res = await axios.get(`${BASEURL}/api/architects/list`);
 
       const architectNames = res.data.architects.map((arch) =>
-        `${arch.firstname} ${arch.lastname}`.trim(),
+        `${arch.firstname} ${arch.lastname}`.trim()
       );
 
+
       setArchitects([...architectNames]);
+      setArchitectsData(res.data.architects)
       console.log("Architect Names:", architectNames);
     } catch (err) {
       console.log("Error fetching architects:", err);
@@ -235,22 +239,43 @@ export default function CustomerManagement() {
   }, [role, user, currentPage]); // Added dependencies to re-run if they change
 
   const handleChange = (e) => {
-    const { name, value } = e.target; // value = "sumit pathak"
+    const { name, value } = e.target;
 
     if (name === "assignedEmployee") {
-      // value is NAME, so match by name
-      const selectedEmployee = employeesData.find((emp) => emp.name === value);
+      const selectedEmployee = employeesData.find(
+        (emp) => emp.name === value
+      );
 
       setCustomer((prev) => ({
         ...prev,
-        assignedEmployee: value, // store name (for UI / display)
-        assignedEmployeeId: selectedEmployee ? selectedEmployee.id : "", // store ID
+        assignedEmployee: value,
         assignedEmployeeName: value,
+        assignedEmployeeId: selectedEmployee ? selectedEmployee.id : "",
       }));
-    } else {
-      setCustomer((prev) => ({ ...prev, [name]: value }));
+    }
+    else if (name === "assignedArchitect") {
+      const selectedArchitect = architectsData.find(
+        (arch) =>
+          `${arch.firstname} ${arch.lastname}`.trim() === value
+      );
+
+      setCustomer((prev) => ({
+        ...prev,
+        assignedArchitect: value,
+        assignedArchitectName: value,
+        assignedArchitectId: selectedArchitect ? selectedArchitect.id : "",
+      }));
+    }
+
+
+    else {
+      setCustomer((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
+
 
   const handleFollowupInput = (e) =>
     setFollowupUpdate({ ...followupUpdate, [e.target.name]: e.target.value });

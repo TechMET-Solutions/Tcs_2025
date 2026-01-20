@@ -9,17 +9,17 @@ export default function AddInventory() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [rows, setRows] = useState([]);
-  console.log(rows,"rows")
+  console.log(rows, "rows")
   const [subTotal, setSubTotal] = useState(0);
-const location = useLocation();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-const [suggestions, setSuggestions] = useState([]);
-const [isOpen, setIsOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
   // 1. Extract the passed data
-  const editData = location.state?.data; 
+  const editData = location.state?.data;
   const isEditMode = !!editData;
 
-  console.log(editData,isEditMode,"data")
+  console.log(editData, isEditMode, "data")
   // Brand Colors from your screenshots
   const BRAND_ORANGE = "#FF7A00";
   const SIDEBAR_DARK = "#1E1E1E";
@@ -41,78 +41,78 @@ const [isOpen, setIsOpen] = useState(false);
 
   const emptyRow = {
     productId: "", productName: "", size: "", quality: "", rate: "",
-    cov: 1, batches: [], batchNo: "", availQty: 0, qty: "", total: 0, discount:"",
+    cov: 1, batches: [], batchNo: "", availQty: 0, qty: "", total: 0, discount: "",
     godown: "KKW", filteredProducts: [],
   };
   useEffect(() => {
     debugger
     if (isEditMode && editData && products.length > 0) {
-    debugger
-    // 1. Populate Metadata (Matching your JSON keys)
-    setPurchaseMeta({
-      purchaseDate: editData.purchase_date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
-      clientName: editData.client_name || "",
-      clientContact: editData.client_contact || "",
-      billNo: editData.bill_no || "",
-    });
-
-    // 2. Populate Rows
-      if (editData.items && editData.items.length > 0) {
       debugger
-      const mappedRows = editData.items.map(item => {
-        // Find the product details from the 'products' state using the product_id
-        const productInfo = products.find(p => p.id === item.product_id) || {};
-
-        return {
-          productId: item.product_id, // Match JSON key: product_id
-          productName: productInfo.name || "Unknown Product",
-          size: productInfo.size || "",
-          quality: productInfo.quality || "",
-          rate: item.rate,
-          cov: item.cov || 1,
-          batchNo: item.batch_no || "", // Match JSON key: batch_no
-          availQty: 0, // Will be updated if user selects batch
-          qty: item.qty,
-          total: Number(item.total),
-          godown: item.godown || "KKW",
-          batches: productInfo.batches || [], // Fill batches from master product list
-          filteredProducts: []
-        };
+      // 1. Populate Metadata (Matching your JSON keys)
+      setPurchaseMeta({
+        purchaseDate: editData.purchase_date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+        clientName: editData.client_name || "",
+        clientContact: editData.client_contact || "",
+        billNo: editData.bill_no || "",
       });
-      setRows(mappedRows);
+
+      // 2. Populate Rows
+      if (editData.items && editData.items.length > 0) {
+        debugger
+        const mappedRows = editData.items.map(item => {
+          // Find the product details from the 'products' state using the product_id
+          const productInfo = products.find(p => p.id === item.product_id) || {};
+
+          return {
+            productId: item.product_id, // Match JSON key: product_id
+            productName: productInfo.name || "Unknown Product",
+            size: productInfo.size || "",
+            quality: productInfo.quality || "",
+            rate: item.rate,
+            cov: item.cov || 1,
+            batchNo: item.batch_no || "", // Match JSON key: batch_no
+            availQty: 0, // Will be updated if user selects batch
+            qty: item.qty,
+            total: Number(item.total),
+            godown: item.godown || "KKW",
+            batches: productInfo.batches || [], // Fill batches from master product list
+            filteredProducts: []
+          };
+        });
+        setRows(mappedRows);
+      }
     }
-  }
-}, [isEditMode, editData, products]); // Added products to dependency to ensure info is available
+  }, [isEditMode, editData, products]); // Added products to dependency to ensure info is available
   useEffect(() => {
     getProductAPI().then((res) => {
       setProducts(res.data.products || []);
       setRows([{ ...emptyRow }]);
     });
   }, []);
-useEffect(() => {
-  const fetchSuppliers = async () => {
-    if (searchTerm.length < 2) { // Only search after 2 characters
-      setSuggestions([]);
-      return;
-    }
-    
-    try {
-      const response = await fetch(`${BASEURL}/api/suppliers/list?search=${searchTerm}`);
-      const data = await response.json();
-      if (data.success) {
-        setSuggestions(data.suppliers);
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      if (searchTerm.length < 2) { // Only search after 2 characters
+        setSuggestions([]);
+        return;
       }
-    } catch (error) {
-      console.error("Error fetching suppliers:", error);
-    }
-  };
 
-  const delayDebounceFn = setTimeout(() => {
-    fetchSuppliers();
-  }, 300); // Debounce to prevent too many API calls
+      try {
+        const response = await fetch(`${BASEURL}/api/suppliers/list?search=${searchTerm}`);
+        const data = await response.json();
+        if (data.success) {
+          setSuggestions(data.suppliers);
+        }
+      } catch (error) {
+        console.error("Error fetching suppliers:", error);
+      }
+    };
 
-  return () => clearTimeout(delayDebounceFn);
-}, [searchTerm]);
+    const delayDebounceFn = setTimeout(() => {
+      fetchSuppliers();
+    }, 300); // Debounce to prevent too many API calls
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
   // Global click listener to close dropdowns
   useEffect(() => {
     const handleGlobalClick = (e) => {
@@ -145,7 +145,7 @@ useEffect(() => {
     updated[i] = {
       ...updated[i],
       productId: product.id, productName: product.name, size: product.size,
-      quality: product.quality, rate: Number(product.rate), 
+      quality: product.quality, rate: Number(product.rate),
       batches: product.batches || [],
       availQty: 0, qty: "", total: 0, batchNo: ""
     };
@@ -170,58 +170,58 @@ useEffect(() => {
     setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null });
   };
 
- const updateRowField = (i, field, value) => {
-  const updatedRows = [...rows];
-  const row = updatedRows[i];
-  
-  // Update the specific field
-  row[field] = value;
+  const updateRowField = (i, field, value) => {
+    const updatedRows = [...rows];
+    const row = updatedRows[i];
 
-  // Perform calculations
-  const rate = parseFloat(row.rate) || 0;
-  const qty = parseFloat(row.qty) || 0;
-  const discountPercent = parseFloat(row.discount) || 0;
+    // Update the specific field
+    row[field] = value;
 
-  // Formula: (Rate * Qty) - Discount
-  const grossAmount = rate * qty;
-  const discountAmount = (grossAmount * discountPercent) / 100;
-  
-  row.total = grossAmount - discountAmount;
+    // Perform calculations
+    const rate = parseFloat(row.rate) || 0;
+    const qty = parseFloat(row.qty) || 0;
+    const discountPercent = parseFloat(row.discount) || 0;
 
-  setRows(updatedRows);
-};
+    // Formula: (Rate * Qty) - Discount
+    const grossAmount = rate * qty;
+    const discountAmount = (grossAmount * discountPercent) / 100;
+
+    row.total = grossAmount - discountAmount;
+
+    setRows(updatedRows);
+  };
 
   const addRow = () => setRows([...rows, { ...emptyRow }]);
   const removeRow = (i) => setRows(rows.filter((_, idx) => idx !== i));
 
   const savePurchase = async (e) => {
     e.preventDefault();
-    if(!purchaseMeta.clientName || !purchaseMeta.billNo) return alert("Fill Bill No and Supplier Name");
+    if (!purchaseMeta.clientName || !purchaseMeta.billNo) return alert("Fill Bill No and Supplier Name");
     try {
-        await addPurchaseAPI({ ...purchaseMeta, items: rows, subTotal });
-        alert("Saved Successfully");
-        navigate("/inventory/manage");
+      await addPurchaseAPI({ ...purchaseMeta, items: rows, subTotal });
+      alert("Saved Successfully");
+      navigate("/inventory/manage");
     } catch (err) { alert("Error saving purchase"); }
   };
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] p-4 md:p-8 font-['Lexend'] text-slate-800">
       <form onSubmit={savePurchase} className="max-w-[1600px] mx-auto">
-        
-        
+
+
         <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
           <div>
-            <h1 className="text-3xl font-black tracking-tight" style={{ color: SIDEBAR_DARK }}>Stock Inward</h1>
+            <h1 className="text-3xl font-black tracking-tight" style={{ color: SIDEBAR_DARK }}></h1>
             <p className="text-slate-500 font-medium mt-1">Record new arrivals into the inventory ledger</p>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="bg-white px-8 py-3 rounded-[20px] shadow-sm border border-slate-100 text-right">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Grand Total</p>
               <p className="text-2xl font-black" style={{ color: BRAND_ORANGE }}>₹ {subTotal.toLocaleString()}</p>
             </div>
             <button type="submit" className="text-white px-10 py-4 rounded-[20px] font-black transition-all shadow-xl flex items-center gap-2 hover:scale-105 active:scale-95" style={{ backgroundColor: BRAND_ORANGE }}>
-              <CheckCircle2 size={22}/> SAVE INVOICE
+              <CheckCircle2 size={22} /> SAVE INVOICE
             </button>
           </div>
         </div>
@@ -230,68 +230,68 @@ useEffect(() => {
         <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 mb-8 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-2">
             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
-              <Calendar size={14} style={{ color: BRAND_ORANGE }}/> Date
+              <Calendar size={14} style={{ color: BRAND_ORANGE }} /> Date
             </label>
-            <input name="purchaseDate" type="date" value={purchaseMeta.purchaseDate} onChange={handleMetaChange} className="metaInput"/>
+            <input name="purchaseDate" type="date" value={purchaseMeta.purchaseDate} onChange={handleMetaChange} className="metaInput" />
           </div>
           <div className="space-y-2">
             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
-              <Info size={14} style={{ color: BRAND_ORANGE }}/> Bill Number
+              <Info size={14} style={{ color: BRAND_ORANGE }} /> Bill Number
             </label>
-            <input name="billNo" placeholder="Ex: BILL-101" value={purchaseMeta.billNo} onChange={handleMetaChange} className="metaInput"/>
+            <input name="billNo" placeholder="Ex: BILL-101" value={purchaseMeta.billNo} onChange={handleMetaChange} className="metaInput" />
           </div>
           <div className="space-y-2 relative"> {/* Added relative for dropdown positioning */}
-  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
-    <User size={14} style={{ color: BRAND_ORANGE }}/> Supplier
-  </label>
-  
-  <input 
-    name="clientName" 
-    placeholder="Enter Supplier" 
-    value={searchTerm} // Controlled by searchTerm state
-    onChange={(e) => {
-      setSearchTerm(e.target.value);
-      setIsOpen(true);
-    }}
-    onFocus={() => setIsOpen(true)}
-    className="metaInput w-full"
-    autoComplete="off"
-  />
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+              <User size={14} style={{ color: BRAND_ORANGE }} /> Supplier
+            </label>
 
-  {/* Dropdown Menu */}
-  {isOpen && suggestions.length > 0 && (
-    <div className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg mt-1 max-h-60 overflow-auto">
-      {suggestions.map((supplier) => (
-        <div
-          key={supplier.id}
-          className="px-4 py-2 hover:bg-slate-100 cursor-pointer text-sm"
-         onClick={() => {
-  // 1. Update the parent state with both Name and Contact
-  setPurchaseMeta(prev => ({
-    ...prev,
-    clientName: supplier.name,
-    clientContact: supplier.mobile // Storing the mobile number here
-  }));
+            <input
+              name="clientName"
+              placeholder="Enter Supplier"
+              value={searchTerm} // Controlled by searchTerm state
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setIsOpen(true);
+              }}
+              onFocus={() => setIsOpen(true)}
+              className="metaInput w-full"
+              autoComplete="off"
+            />
 
-  // 2. Update the local input field display
-  setSearchTerm(supplier.name);
+            {/* Dropdown Menu */}
+            {isOpen && suggestions.length > 0 && (
+              <div className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg mt-1 max-h-60 overflow-auto">
+                {suggestions.map((supplier) => (
+                  <div
+                    key={supplier.id}
+                    className="px-4 py-2 hover:bg-slate-100 cursor-pointer text-sm"
+                    onClick={() => {
+                      // 1. Update the parent state with both Name and Contact
+                      setPurchaseMeta(prev => ({
+                        ...prev,
+                        clientName: supplier.name,
+                        clientContact: supplier.mobile // Storing the mobile number here
+                      }));
 
-  // 3. Close the dropdown
-  setIsOpen(false);
-}}
-        >
-          <div className="font-medium">{supplier.name}</div>
-          <div className="text-xs text-slate-500">{supplier.mobile}</div>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+                      // 2. Update the local input field display
+                      setSearchTerm(supplier.name);
+
+                      // 3. Close the dropdown
+                      setIsOpen(false);
+                    }}
+                  >
+                    <div className="font-medium">{supplier.name}</div>
+                    <div className="text-xs text-slate-500">{supplier.mobile}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="space-y-2">
             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
-              <Phone size={14} style={{ color: BRAND_ORANGE }}/> Contact
+              <Phone size={14} style={{ color: BRAND_ORANGE }} /> Contact
             </label>
-            <input name="clientContact" placeholder="Mobile / Ref" value={purchaseMeta.clientContact} onChange={handleMetaChange} className="metaInput"/>
+            <input name="clientContact" placeholder="Mobile / Ref" value={purchaseMeta.clientContact} onChange={handleMetaChange} className="metaInput" />
           </div>
         </div>
 
@@ -301,7 +301,7 @@ useEffect(() => {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  {["Product Description", "Size", "Quality", "Rate", "Cov", "Batch Selection", "Stock", "Qty", "Amount", "Discount" ,"Godown", ""].map((h) => (
+                  {["Product Description", "Size", "Quality", "Rate", "Cov", "Batch Selection", "Stock", "Qty", "Amount", "Discount", "Godown", ""].map((h) => (
                     <th key={h} className="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -310,49 +310,61 @@ useEffect(() => {
                 {rows.map((r, i) => (
                   <tr key={i} className="group hover:bg-slate-50/30 transition-colors">
                     <td className="p-3 w-72">
-                      <input value={r.productName} placeholder="Search Product..." 
+                      <input value={r.productName} placeholder="Search Product..."
                         onChange={(e) => handleProductSearch(i, e.target.value)}
                         onFocus={(e) => {
-                            const rect = e.target.getBoundingClientRect();
-                            setDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width, rowIndex: i, type: "product" });
+                          const rect = e.target.getBoundingClientRect();
+                          setDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width, rowIndex: i, type: "product" });
                         }}
-                        className="tableInput font-bold text-[#1E1E1E]"/>
+                        className="tableInput font-bold text-[#1E1E1E]" />
                     </td>
 
                     <td className="p-3"><input value={r.size} onChange={(e) => updateRowField(i, "size", e.target.value)} className="tableInput w-20" /></td>
-                    <td className="p-3"><input value={r.quality} onChange={(e) => updateRowField(i, "quality", e.target.value)} className="tableInput w-24" /></td>
-                    <td className="p-3"><input value={r.rate} onChange={(e) => updateRowField(i, "rate", e.target.value)} className="tableInput w-24 font-black text-orange-600" /></td>
-                    <td className="p-3"><input value={r.cov} onChange={(e) => updateRowField(i, "cov", e.target.value)} className="tableInput w-16" /></td>
-                    
-                    <td className="p-3 w-38">
-                        <input value={r.batchNo} placeholder="Select or New..."
-                          onChange={(e) => handleBatchInput(i, e.target.value)}
-                          onFocus={(e) => {
-                            const rect = e.target.getBoundingClientRect();
-                            setDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width, rowIndex: i, type: "batch" });
-                          }}
-                          className="tableInput font-bold bg-blue-50/30 border-blue-100" />
+                    <td className="p-3">
+                      <input
+                        readOnly
+                        value={r.quality}
+                        className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold"
+                      />
                     </td>
 
-                    <td className="p-3"><input readOnly value={r.availQty} className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold" /></td>
+                    <td className="p-3"><input value={r.rate} onChange={(e) => updateRowField(i, "rate", e.target.value)} className="tableInput w-24 font-black text-orange-600" /></td>
+                    <td className="p-3"><input value={r.cov} onChange={(e) => updateRowField(i, "cov", e.target.value)} className="tableInput w-16" /></td>
+
+                    <td className="p-3 w-38">
+                      <input value={r.batchNo} placeholder="Select or New..."
+                        onChange={(e) => handleBatchInput(i, e.target.value)}
+                        onFocus={(e) => {
+                          const rect = e.target.getBoundingClientRect();
+                          setDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width, rowIndex: i, type: "batch" });
+                        }}
+                        className="tableInput font-bold bg-blue-50/30 border-blue-100" />
+                    </td>
+
+                    <td className="p-3">
+                      <input
+                        readOnly
+                        value={r.availQty}
+                        className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold" />
+                    </td>
                     <td className="p-3"><input value={r.qty} onChange={(e) => updateRowField(i, "qty", e.target.value)} className="tableInput w-20 font-black bg-yellow-50 border-yellow-200 focus:border-yellow-500" /></td>
 
 
 
                     <td className="p-3 font-black text-slate-800 text-sm whitespace-nowrap">₹{r.total.toLocaleString()}</td>
-                   {/* Change this section in your table body */}
-<td className="p-3 w-20">
-  <div className="relative flex items-center">
-    <input 
-      type="number"
-      value={r.discount || 0} 
-      placeholder="0"
-      onChange={(e) => updateRowField(i, "discount", e.target.value)}
-      className="tableInput w-full font-bold text-green-600 pr-5" 
-    />
-    <span className="absolute right-2 text-[10px] text-slate-400">%</span>
-  </div>
-</td>
+                    {/* Change this section in your table body */}
+                    <td className="p-3 w-20">
+                      <div className="relative flex items-center">
+                        <input
+                          type="number"
+                          value={r.discount || 0}
+                          placeholder="0"
+                          onChange={(e) => updateRowField(i, "discount", e.target.value)}
+                          className="tableInput w-full font-bold text-green-600 pr-5"
+                        />
+                        <span className="absolute right-2 text-[10px] text-slate-400">%</span>
+                      </div>
+                    </td>
 
                     <td className="p-3">
                       <select value={r.godown} onChange={(e) => updateRowField(i, "godown", e.target.value)} className="tableInput w-24 appearance-none font-bold bg-white">
@@ -369,54 +381,54 @@ useEffect(() => {
               </tbody>
             </table>
           </div>
-          
+
           <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
             <button type="button" onClick={addRow} className="flex items-center gap-2 text-[#FF7A00] font-black text-xs uppercase tracking-widest bg-white px-6 py-3 rounded-2xl border border-slate-200 hover:border-orange-200 transition-all shadow-sm">
               <Plus size={18} /> Add Product Row
             </button>
             <div className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-              <Info size={14} style={{ color: BRAND_ORANGE }}/> Calculations update automatically
+              <Info size={14} style={{ color: BRAND_ORANGE }} /> Calculations update automatically
             </div>
           </div>
         </div>
 
         {/* ✅ FIXED POSITION DROPDOWN (Solves clipping issue) */}
         {dropdownPos.rowIndex !== null && (
-          <div 
+          <div
             className="fixed z-[9999] bg-white border border-slate-200 rounded-xl shadow-2xl mt-1 overflow-auto dropdown-panel animate-in fade-in slide-in-from-top-1 duration-150"
             style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, maxHeight: '250px' }}
           >
             {/* Product List */}
             {dropdownPos.type === "product" && (
-                rows[dropdownPos.rowIndex].filteredProducts.length > 0 ? (
-                    rows[dropdownPos.rowIndex].filteredProducts.map(p => (
-                        <div key={p.id} onClick={() => selectProductFromSearch(dropdownPos.rowIndex, p)} className="p-3 hover:bg-orange-50 cursor-pointer border-b border-slate-50 last:border-0 transition-colors">
-                            <p className="text-sm font-bold text-slate-700">{p.name}</p>
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">Size: {p.size} | Quality: {p.quality}</p>
-                        </div>
-                    ))
-                ) : <div className="p-4 text-center text-xs text-slate-400 italic">No matches found</div>
+              rows[dropdownPos.rowIndex].filteredProducts.length > 0 ? (
+                rows[dropdownPos.rowIndex].filteredProducts.map(p => (
+                  <div key={p.id} onClick={() => selectProductFromSearch(dropdownPos.rowIndex, p)} className="p-3 hover:bg-orange-50 cursor-pointer border-b border-slate-50 last:border-0 transition-colors">
+                    <p className="text-sm font-bold text-slate-700">{p.name}</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">Size: {p.size} | Quality: {p.quality}</p>
+                  </div>
+                ))
+              ) : <div className="p-4 text-center text-xs text-slate-400 italic">No matches found</div>
             )}
 
             {/* Batch List */}
             {dropdownPos.type === "batch" && (
-                <>
-                  <div className="p-2 bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">Select Existing Batch</div>
-                  {rows[dropdownPos.rowIndex].batches
-                    .filter(b => b.batch_no.toLowerCase().includes(rows[dropdownPos.rowIndex].batchNo.toLowerCase()))
-                    .map((b, idx) => (
-                      <div key={idx} onClick={() => selectBatch(dropdownPos.rowIndex, b)} className="p-3 hover:bg-orange-50 cursor-pointer flex justify-between items-center border-b border-slate-50 transition-colors">
-                        <span className="text-sm font-bold text-slate-700">{b.batch_no}</span>
-                        <span className="text-[10px] font-black bg-orange-100 text-orange-600 px-2 py-0.5 rounded">Stock: {b.qty}</span>
-                      </div>
-                  ))}
-                  {rows[dropdownPos.rowIndex].batchNo && (
-                    <div onClick={() => setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null })}
-                      className="p-3 hover:bg-green-50 cursor-pointer text-green-600 font-bold text-xs flex items-center gap-2 border-t border-slate-100">
-                      <Plus size={14}/> Create New Batch: "{rows[dropdownPos.rowIndex].batchNo}"
+              <>
+                <div className="p-2 bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">Select Existing Batch</div>
+                {rows[dropdownPos.rowIndex].batches
+                  .filter(b => b.batch_no.toLowerCase().includes(rows[dropdownPos.rowIndex].batchNo.toLowerCase()))
+                  .map((b, idx) => (
+                    <div key={idx} onClick={() => selectBatch(dropdownPos.rowIndex, b)} className="p-3 hover:bg-orange-50 cursor-pointer flex justify-between items-center border-b border-slate-50 transition-colors">
+                      <span className="text-sm font-bold text-slate-700">{b.batch_no}</span>
+                      <span className="text-[10px] font-black bg-orange-100 text-orange-600 px-2 py-0.5 rounded">Stock: {b.qty}</span>
                     </div>
-                  )}
-                </>
+                  ))}
+                {rows[dropdownPos.rowIndex].batchNo && (
+                  <div onClick={() => setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null })}
+                    className="p-3 hover:bg-green-50 cursor-pointer text-green-600 font-bold text-xs flex items-center gap-2 border-t border-slate-100">
+                    <Plus size={14} /> Create New Batch: "{rows[dropdownPos.rowIndex].batchNo}"
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
