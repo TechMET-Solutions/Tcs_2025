@@ -9,6 +9,7 @@ export default function AddInventory() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [rows, setRows] = useState([]);
+  console.log(rows,"rows")
   const [subTotal, setSubTotal] = useState(0);
 const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,11 +41,13 @@ const [isOpen, setIsOpen] = useState(false);
 
   const emptyRow = {
     productId: "", productName: "", size: "", quality: "", rate: "",
-    cov: 1, batches: [], batchNo: "", availQty: 0, qty: "", total: 0,
+    cov: 1, batches: [], batchNo: "", availQty: 0, qty: "", total: 0, discount:"",
     godown: "KKW", filteredProducts: [],
   };
   useEffect(() => {
-  if (isEditMode && editData && products.length > 0) {
+    debugger
+    if (isEditMode && editData && products.length > 0) {
+    debugger
     // 1. Populate Metadata (Matching your JSON keys)
     setPurchaseMeta({
       purchaseDate: editData.purchase_date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
@@ -54,7 +57,8 @@ const [isOpen, setIsOpen] = useState(false);
     });
 
     // 2. Populate Rows
-    if (editData.items && editData.items.length > 0) {
+      if (editData.items && editData.items.length > 0) {
+      debugger
       const mappedRows = editData.items.map(item => {
         // Find the product details from the 'products' state using the product_id
         const productInfo = products.find(p => p.id === item.product_id) || {};
@@ -166,12 +170,26 @@ useEffect(() => {
     setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null });
   };
 
-  const updateRowField = (i, field, value) => {
-    const updated = [...rows];
-    updated[i][field] = value;
-    updated[i].total = Number(updated[i].qty || 0) * Number(updated[i].rate || 0) * Number(updated[i].cov || 1);
-    setRows(updated);
-  };
+ const updateRowField = (i, field, value) => {
+  const updatedRows = [...rows];
+  const row = updatedRows[i];
+  
+  // Update the specific field
+  row[field] = value;
+
+  // Perform calculations
+  const rate = parseFloat(row.rate) || 0;
+  const qty = parseFloat(row.qty) || 0;
+  const discountPercent = parseFloat(row.discount) || 0;
+
+  // Formula: (Rate * Qty) - Discount
+  const grossAmount = rate * qty;
+  const discountAmount = (grossAmount * discountPercent) / 100;
+  
+  row.total = grossAmount - discountAmount;
+
+  setRows(updatedRows);
+};
 
   const addRow = () => setRows([...rows, { ...emptyRow }]);
   const removeRow = (i) => setRows(rows.filter((_, idx) => idx !== i));
@@ -190,7 +208,7 @@ useEffect(() => {
     <div className="min-h-screen bg-[#FAFAFA] p-4 md:p-8 font-['Lexend'] text-slate-800">
       <form onSubmit={savePurchase} className="max-w-[1600px] mx-auto">
         
-        {/* HEADER */}
+        
         <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
           <div>
             <h1 className="text-3xl font-black tracking-tight" style={{ color: SIDEBAR_DARK }}>Stock Inward</h1>
@@ -283,7 +301,7 @@ useEffect(() => {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  {["Product Description", "Size", "Quality", "Rate", "Cov", "Batch Selection", "Stock", "Qty", "Amount", "Godown", ""].map((h) => (
+                  {["Product Description", "Size", "Quality", "Rate", "Cov", "Batch Selection", "Stock", "Qty", "Amount", "Discount" ,"Godown", ""].map((h) => (
                     <th key={h} className="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -306,7 +324,7 @@ useEffect(() => {
                     <td className="p-3"><input value={r.rate} onChange={(e) => updateRowField(i, "rate", e.target.value)} className="tableInput w-24 font-black text-orange-600" /></td>
                     <td className="p-3"><input value={r.cov} onChange={(e) => updateRowField(i, "cov", e.target.value)} className="tableInput w-16" /></td>
                     
-                    <td className="p-3 w-48">
+                    <td className="p-3 w-38">
                         <input value={r.batchNo} placeholder="Select or New..."
                           onChange={(e) => handleBatchInput(i, e.target.value)}
                           onFocus={(e) => {
@@ -317,12 +335,28 @@ useEffect(() => {
                     </td>
 
                     <td className="p-3"><input readOnly value={r.availQty} className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold" /></td>
-                    <td className="p-3"><input value={r.qty} onChange={(e) => updateRowField(i, "qty", e.target.value)} className="tableInput w-24 font-black bg-yellow-50 border-yellow-200 focus:border-yellow-500" /></td>
+                    <td className="p-3"><input value={r.qty} onChange={(e) => updateRowField(i, "qty", e.target.value)} className="tableInput w-20 font-black bg-yellow-50 border-yellow-200 focus:border-yellow-500" /></td>
+
+
+
                     <td className="p-3 font-black text-slate-800 text-sm whitespace-nowrap">₹{r.total.toLocaleString()}</td>
-                    
+                   {/* Change this section in your table body */}
+<td className="p-3 w-20">
+  <div className="relative flex items-center">
+    <input 
+      type="number"
+      value={r.discount || 0} 
+      placeholder="0"
+      onChange={(e) => updateRowField(i, "discount", e.target.value)}
+      className="tableInput w-full font-bold text-green-600 pr-5" 
+    />
+    <span className="absolute right-2 text-[10px] text-slate-400">%</span>
+  </div>
+</td>
+
                     <td className="p-3">
                       <select value={r.godown} onChange={(e) => updateRowField(i, "godown", e.target.value)} className="tableInput w-24 appearance-none font-bold bg-white">
-                        <option>KKW</option><option>MN</option><option>TCS</option>
+                        <option>KKW</option><option>TCS</option>
                       </select>
                     </td>
                     <td className="p-3">

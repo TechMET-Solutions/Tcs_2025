@@ -139,7 +139,7 @@ export default function Sidebar() {
         )}
 
         {/* ARCHITECT REGISTRATION - Now visible to Admin/Superadmin bypass */}
-        {hasView("Architect Registration") && role !== "admin" && (
+        {hasView("Architect Registration")&& (
           <NavItem label="Architect Registration" icon={<DraftingCompass />} path="/Architect-Registration" />
         )}
 
@@ -195,9 +195,14 @@ export default function Sidebar() {
 
         {/* BOTTOM MENU SECTION */}
         <div className="mt-4 pt-4 border-t border-white/10">
+
+          {hasView("Delivery Challans") && (
+            <NavItem label="Add Delivery Challan" icon={<Truck />} path="/AddDeliveryChallan" />
+          )}
           {hasView("Delivery Challans") && (
             <NavItem label="Delivery Challan" icon={<Truck />} path="/delivery-challan" />
           )}
+            
           <NavItem label="Reports" icon={<FileChartColumn />} path="/report" />
           <NavItem label="Order Book" icon={<NotebookPen />} path="/orderbook" />
           <NavItem label="Payment History" icon={<WalletCards />} path="/payment-history" />

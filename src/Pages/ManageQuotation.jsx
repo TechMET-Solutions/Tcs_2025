@@ -1,5 +1,13 @@
 import axios from "axios";
-import { CheckCircle, ChevronRight, CreditCard, FileText, Trash2, Truck, X } from "lucide-react";
+import {
+  CheckCircle,
+  ChevronRight,
+  CreditCard,
+  FileText,
+  Trash2,
+  Truck,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendPaymentRequest } from "../Component/API/paymentApi";
@@ -9,121 +17,262 @@ import QuotationHeader from "./QuotationHeader";
 
 export default function ManageQuotation() {
   const [quotationList, setQuotationList] = useState([]);
-  
-const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
+  const [quoteType, setQuoteType] = useState("overall");
+  console.log(quoteType, "quoteType");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
- const { permissions, user, loading, role } = useAuth(); 
+  const { permissions, user, loading, role } = useAuth();
   // Modals Toggle
   const [openDCModal, setOpenDCModal] = useState(false);
   const [openPayModal, setOpenPayModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
-const navigate = useNavigate();
+  const navigate = useNavigate();
   // States
   const [selectedQuotation, setSelectedQuotation] = useState(null);
-  const [dcHeader, setDcHeader] = useState({ deliveryBoy: "", contact: "", tempo: "" });
-  const [dcItems, setDcItems] = useState([]);
-  const [editData, setEditData] = useState({ id: null, clientName: "", contactNo: "", items: [] });
-  const [paymentData, setPaymentData] = useState({
-    amount: "", paymentType: "", remark: "",
-    date: new Date().toISOString().slice(0, 10),
-    grandTotal: 0, paid: 0, due: 0,
+  const [dcHeader, setDcHeader] = useState({
+    deliveryBoy: "",
+    contact: "",
+    tempo: "",
   });
-// 1. Driver Details State
-const [driverDetails, setDriverDetails] = useState({
-    deliveryBoy: '',
-    contact: '',
-    tempo: ''
-});
+  const [dcItems, setDcItems] = useState([]);
+  console.log(dcItems, "dcItems");
+  const [editData, setEditData] = useState({
+    id: null,
+    clientName: "",
+    contactNo: "",
+    items: [],
+  });
+  const [paymentData, setPaymentData] = useState({
+    amount: "",
+    paymentType: "",
+    remark: "",
+    date: new Date().toISOString().slice(0, 10),
+    grandTotal: 0,
+    paid: 0,
+    due: 0,
+    billingType: "",
+  });
+  // 1. Driver Details State
+  const [driverDetails, setDriverDetails] = useState({
+    deliveryBoy: "",
+    contact: "",
+    tempo: "",
+  });
 
-// 2. Handle Box Update for the specific product
-const handleBoxUpdate = (productId, value) => {
-    setDcItems(prev => prev.map(item => 
-        item.productId === productId 
-        ? { ...item, dispatchBoxes: value } 
-        : item
-    ));
-};
- const fetchQuotations = async (page = 1) => {
-  try {
-    // Pass page as a query parameter
-    const res = await axios.get(`${BASEURL}/api/Quotation/list?page=${page}&limit=10`);
-    
-    if (res.data.success) {
-      setQuotationList(res.data.quotations);
-      setTotalPages(res.data.pagination.totalPages);
-      setCurrentPage(res.data.pagination.currentPage);
+  // 2. Handle Box Update for the specific product
+  const handleBoxUpdate = (productId, value) => {
+    // 1. Allow empty string for backspace, otherwise parse number
+    const val = value === "" ? "" : parseInt(value);
+
+    setDcItems((prev) =>
+      prev.map((item) => {
+        if (item.productId === productId) {
+          // 2. Validation: Stock peksha jasta nako
+          if (val !== "" && val > item.currentStock) {
+            alert("insufficient Boxes!");
+            return item;
+          }
+          // FIX: Naming match kara -> dispatchBox
+          return { ...item, dispatchBox: val };
+        }
+        return item;
+      }),
+    );
+  };
+  // 1. For Admin/SuperAdmin (Full List)
+  // 1. For Admin/SuperAdmin
+  const fetchQuotations = async (page = 1) => {
+    try {
+      const res = await axios.get(
+        `${BASEURL}/api/Quotation/list?page=${page}&limit=10`,
+      );
+      if (res.data.success) {
+        setQuotationList(res.data.quotations);
+        setTotalPages(res.data.pagination.totalPages);
+        // REMOVED: setCurrentPage(res.data.pagination.currentPage);
+      }
+    } catch (error) {
+      console.log("Admin Fetch Error:", error);
     }
-  } catch (error) { 
-    console.log(error); 
-  }
-};
+  };
 
-useEffect(() => {
-  fetchQuotations(currentPage);
-}, [currentPage]);
+  const fetchQuotationsParticularEmployee = async (page = 1) => {
+    try {
+      // 1. Target the 'Particular' route (note your spelling: Quatation)
+      let url = `${BASEURL}/api/Quotation/Quatation?page=${page}&limit=10`;
+
+      // 2. Append the employeeId if the filter is set to 'self'
+      if (quoteType === "self" && user?.id) {
+        url += `&employeeId=${user.id}`;
+      }
+
+      const res = await axios.get(url);
+
+      if (res.data.success) {
+        setQuotationList(res.data.quotations);
+        setTotalPages(res.data.pagination.totalPages);
+        // We don't set current page here to avoid the "cascading render" error
+      }
+    } catch (error) {
+      console.log("Employee Fetch Error:", error);
+    }
+  };
+  // 2. For Employee or "Self" view
+  //   const fetchQuotationsParticularEmployee = async (page = 1) => {
+  //   debugger
+  //   try {
+  //     let url = `${BASEURL}api/Quotation/Quatation?page=${page}&limit=10`;
+
+  //     // Ensure user.id exists before appending
+  //     if (quoteType === "self" && user?.id) {
+  //       url += `&employeeId=${user.id}`;
+  //     }
+
+  //     const res = await axios.get(url);
+  //     if (res.data.success) {
+  //       setQuotationList(res.data.quotations);
+  //       setTotalPages(res.data.pagination.totalPages);
+  //     }
+  //   } catch (error) {
+  //     console.log("Employee Fetch Error:", error);
+  //   }
+  // };
+  // 3. The Logic Controller
+  useEffect(() => {
+    debugger;
+    if (quoteType === "self") {
+      fetchQuotationsParticularEmployee(currentPage);
+    } else {
+      fetchQuotations(currentPage);
+    }
+    // Dependency array is correct: it runs when page or filter changes
+  }, [currentPage, quoteType]);
 
   const filteredData = quotationList.filter((q) =>
-    q.clientName?.toLowerCase().includes(search.toLowerCase())
+    q.clientName?.toLowerCase().includes(search.toLowerCase()),
   );
-const handleSubmitDC = async () => {
-    // 1. Filter items where dispatchBoxes > 0
+  //   const handleSubmitDC = async () => {
+  //   debugger
+  //     // 1. Filter items where dispatchBoxes > 0
+  //     const itemsToDispatch = dcItems
+  //         .filter(item => item.dispatchBox
+  //  > 0)
+  //       .map(item => ({
+
+  //             productId: item.productId,
+  //             productName: item.productName,
+  //             dispatchBoxes: parseInt(item.dispatchBoxes),
+  //             // remainingStock sent to backend is: currentStock - what we are sending now
+  //             remainingStock: item.currentStock - parseInt(item.dispatchBoxes)
+  //         }));
+
+  //     if (itemsToDispatch.length === 0) {
+  //         alert("Please enter boxes for at least one item.");
+  //         return;
+  //     }
+
+  //     // 2. Construct the exact JSON structure your backend expects
+  //     const payload = {
+  //         quotationId: selectedQuotation.id, // Ensure this is available
+  //         client: selectedQuotation.clientName,
+  //         contact: selectedQuotation.contactNo,
+  //         address: selectedQuotation.address,
+  //         driverDetails: {
+  //             deliveryBoy: driverDetails.deliveryBoy,
+  //             contact: driverDetails.contact,
+  //             tempo: driverDetails.tempo
+  //         },
+  //         items: itemsToDispatch
+  //     };
+
+  //     try {
+  //         const response = await fetch(`${BASEURL}/api/Quotation/generate-dc`, {
+  //             method: 'POST',
+  //             headers: { 'Content-Type': 'application/json' },
+  //             body: JSON.stringify(payload)
+  //         });
+
+  //         const data = await response.json();
+  //         if (data.success) {
+  //             alert("DC Created Successfully!");
+  //             setOpenDCModal(false);
+  //             // Refresh quotations to update the numbers on the main screen
+  //             fetchQuotations();
+  //         } else {
+  //             alert("Error: " + data.error);
+  //         }
+  //     } catch (error) {
+  //         console.error("Submission error:", error);
+  //     }
+  // };
+  // --- EDIT LOGIC ---
+
+  const handleSubmitDC = async () => {
     const itemsToDispatch = dcItems
-        .filter(item => item.dispatchBoxes > 0)
-        .map(item => ({
-            productId: item.productId,
-            productName: item.productName,
-            dispatchBoxes: parseInt(item.dispatchBoxes),
-            // remainingStock sent to backend is: currentStock - what we are sending now
-            remainingStock: item.currentStock - parseInt(item.dispatchBoxes) 
-        }));
+      .filter((item) => parseInt(item.dispatchBox) > 0)
+      .map((item) => {
+        const boxesToShip = parseInt(item.dispatchBox) || 0;
+        const currentWhStock = parseInt(item.currentStock) || 0;
+
+        return {
+          productId: item.productId,
+          productName: item.productName,
+          rate: item.rate,
+          // Backend expects "dispatchBoxes" (plural) as per your JSON requirement
+          dispatchBoxes: boxesToShip,
+          // Warehouse stock minus what we send now
+          // remainingStock: currentWhStock - boxesToShip
+        };
+      });
 
     if (itemsToDispatch.length === 0) {
-        alert("Please enter boxes for at least one item.");
-        return;
+      alert("Please enter boxes for at least one item.");
+      return;
     }
 
-    // 2. Construct the exact JSON structure your backend expects
     const payload = {
-        quotationId: selectedQuotation.id, // Ensure this is available
-        client: selectedQuotation.clientName,
-        contact: selectedQuotation.contactNo,
-        address: selectedQuotation.address,
-        driverDetails: {
-            deliveryBoy: driverDetails.deliveryBoy,
-            contact: driverDetails.contact,
-            tempo: driverDetails.tempo
-        },
-        items: itemsToDispatch
+      quotationId: selectedQuotation.quotationId || selectedQuotation.id,
+      client: selectedQuotation.clientName,
+      contact: selectedQuotation.contactNo,
+      address: selectedQuotation.address,
+      driverDetails: {
+        deliveryBoy: driverDetails.deliveryBoy || "",
+        contact: driverDetails.contact || "",
+        tempo: driverDetails.tempo || "",
+      },
+      items: itemsToDispatch,
     };
 
-    try {
-        const response = await fetch(`${BASEURL}/api/Quotation/generate-dc`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    console.log("Sending Payload:", payload); // Debugging sathi check kara
 
-        const data = await response.json();
-        if (data.success) {
-            alert("DC Created Successfully!");
-            setOpenDCModal(false);
-            // Refresh quotations to update the numbers on the main screen
-            fetchQuotations(); 
-        } else {
-            alert("Error: " + data.error);
-        }
+    try {
+      const response = await fetch(`${BASEURL}/api/Quotation/generate-dc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (data.success || response.ok) {
+        alert("Challan Generated Successfully!");
+        setOpenDCModal(false);
+        if (typeof fetchQuotations === "function") fetchQuotations();
+      } else {
+        alert("Error: " + (data.message || "Failed to create DC"));
+      }
     } catch (error) {
-        console.error("Submission error:", error);
+      console.error("Submission error:", error);
+      alert("Server error, please try again.");
     }
-};
-  // --- EDIT LOGIC ---
+  };
+
   const handleEditClick = (q) => {
     setEditData({
       id: q.id,
       clientName: q.clientName,
       contactNo: q.contactNo,
-      items: q.items.map(item => ({ ...item })) // Deep copy
+      items: q.items.map((item) => ({ ...item })), // Deep copy
     });
     setOpenEditModal(true);
   };
@@ -140,22 +289,25 @@ const handleSubmitDC = async () => {
   };
 
   const saveUpdatedQuotation = async () => {
-    const total = editData.items.reduce((sum, i) => sum + (i.qty * i.price), 0);
+    const total = editData.items.reduce((sum, i) => sum + i.qty * i.price, 0);
     const payload = { ...editData, grandTotal: total };
-    
+
     try {
       // API CALL HERE: await updateQuotationApi(editData.id, payload);
       alert("Quotation Updated Successfully!");
       setOpenEditModal(false);
       fetchQuotations();
-    } catch (err) { alert("Failed to update"); }
+    } catch (err) {
+      alert("Failed to update");
+    }
   };
-
   // --- DC & PAYMENT LOGIC (Existing) ---
   const openPaymentModal = (q) => {
     setSelectedQuotation(q);
     setPaymentData({
-      amount: "", paymentType: "", remark: "",
+      amount: "",
+      paymentType: "",
+      remark: "",
       date: new Date().toISOString().slice(0, 10),
       grandTotal: q.grandTotal,
       paid: q.paid_amount || 0,
@@ -165,115 +317,190 @@ const handleSubmitDC = async () => {
   };
 
   const openDeliveryChallan = (q) => {
+    debugger;
+
     setSelectedQuotation(q);
-    setDcItems(q.items.map(i => ({
-      productId: i.productId,
-      productName: i.productName,
-      totalBox: i.remainingBoxes || 0,
-      currentStock: i.currentStock || 0,
-      dispatchBox: 0,
-      qtyPerBox: 0,
-    })));
+
+    const formattedItems = q.items.map((i) => {
+      debugger;
+      // Calculation: Jar adhi 0 pathvle astil tar purn quantity dya, nahi tar vaza kara
+      const pendingToDispatch =
+        i.dispatchedBoxes === 0 || i.dispatchedBoxes === "0"
+          ? i.remainingBoxes
+          : i.remainingBoxes;
+
+      return {
+        productId: i.productId,
+        productName: i.productName,
+        rate: i.rate,
+        totalBox: i.totalBox, // Original order quantity
+        remainingInQuote: pendingToDispatch, // Kiti baki ahet (Label sathi)
+        currentStock: i.currentStock || 0, // Warehouse madhe kiti ahet
+        dispatchBox: pendingToDispatch, // ATA KITI PATHVAYCHE (Input value - Editable)
+        qtyPerBox: i.qtyPerBox || 0,
+      };
+    });
+
+    setDcItems(formattedItems);
     setOpenDCModal(true);
   };
 
-  const openQuotationPDF = (id, mode) => window.open(`${BASEURL}/api/Quotation/print/${id}?mode=${mode}`, "_blank");
-const handleSavePaymentRequest = async () => {
+  const openQuotationPDF = (id, mode) =>
+    window.open(`${BASEURL}/api/Quotation/print/${id}?mode=${mode}`, "_blank");
+
+  const handleSavePaymentRequest = async () => {
     try {
-        const payload = {
-            quotation_id: selectedQuotation.id,
-            amount: paymentData.amount,
-            paymentType: paymentData.paymentType,
-            remark: paymentData.remark,
-            
-        };
-        await sendPaymentRequest(payload);
-        alert("Request sent to Admin for approval");
-        setOpenPayModal(false);
+      const payload = {
+        quotation_id: selectedQuotation.id,
+        amount: paymentData.amount,
+        paymentType: paymentData.paymentType,
+        remark: paymentData.remark,
+        billingType: paymentData.billingType,
+      };
+      await sendPaymentRequest(payload);
+      alert("Request sent to Admin for approval");
+      setOpenPayModal(false);
     } catch (err) {
-        alert("Error sending request");
+      alert("Error sending request");
     }
-};
+  };
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-6 md:p-10 font-['Lexend'] text-slate-700">
-      
-      {/* HEADER */}
-      {/* <div className="flex flex-col md:flex-row justify-between items-center mb-10 bg-white p-6 rounded-[30px] shadow-sm border border-slate-100 gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-orange-50 rounded-2xl text-orange-500"><FileText size={28} /></div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-800 tracking-tight underline decoration-orange-200 underline-offset-4">Quotations</h1>
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Inventory & Sales Control</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-96 px-5 py-3 rounded-2xl border bg-slate-50 border-slate-100 focus-within:border-orange-300 focus-within:bg-white transition-all">
-          <Search size={20} className="text-slate-400" />
-          <input className="outline-none w-full bg-transparent font-medium text-sm" placeholder="Search client..." onChange={(e) => setSearch(e.target.value)} />
-        </div>
-      </div> */}
       <QuotationHeader fetchQuotations={fetchQuotations} />
+      {role === "employee" && (
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setQuoteType("overall")}
+            className={`px-4 py-2 rounded-xl text-xs font-black uppercase ${
+              quoteType === "overall"
+                ? "bg-orange-500 text-white"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            Overall
+          </button>
+          <button
+            onClick={() => setQuoteType("self")}
+            className={`px-4 py-2 rounded-xl text-xs font-black uppercase ${
+              quoteType === "self"
+                ? "bg-orange-500 text-white"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            My Quotations
+          </button>
+        </div>
+      )}
 
       {/* TABLE */}
       <div className="bg-white rounded-[35px] shadow-sm border border-slate-100 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50">
-              {["ID", "Client Details", "Date", "Status", "Grand Total", "Paid Amount","Due Amount", "Actions"].map((h) => (
-                <th key={h} className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">{h}</th>
+              {[
+                "ID",
+                "Client Details",
+                "Date",
+                "Status",
+                "Grand Total",
+                "Paid Amount",
+                "Due Amount",
+                "Actions",
+              ].map((h) => (
+                <th
+                  key={h}
+                  className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest"
+                >
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {filteredData.map((q) => (
-              <tr key={q.id} className="hover:bg-slate-50/50 transition-all group">
-                <td className="p-6 text-sm font-black text-slate-300">#{q.id}</td>
+              <tr
+                key={q.id}
+                className="hover:bg-slate-50/50 transition-all group"
+              >
+                <td className="p-6 text-sm font-black text-slate-300">
+                  #{q.id}
+                </td>
                 <td className="p-6">
                   <p className="font-bold text-slate-800">{q.clientName}</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">{q.items.length} Products</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">
+                    {q.items.length} Products
+                  </p>
                 </td>
-                <td className="p-6 text-sm font-medium text-slate-500">{new Date(q.createdAt).toLocaleDateString('en-GB')}</td>
-                <td className="p-6"><span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">Active</span></td>
-                <td className="p-6 text-base font-black text-slate-800">₹{q.grandTotal.toLocaleString()}</td>
-                 <td className="p-6 text-base font-black text-slate-800">₹{q.paid_amount.toLocaleString()}</td>
-                  <td className="p-6 text-base font-black text-slate-800">₹{q.due_amount.toLocaleString()}</td>
+                <td className="p-6 text-sm font-medium text-slate-500">
+                  {new Date(q.createdAt).toLocaleDateString("en-GB")}
+                </td>
+                <td className="p-6">
+                  <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                    Active
+                  </span>
+                </td>
+                <td className="p-6 text-base font-black text-slate-800">
+                  ₹{q.grandTotal.toLocaleString()}
+                </td>
+                <td className="p-6 text-base font-black text-slate-800">
+                  ₹{q.paid_amount.toLocaleString()}
+                </td>
+                <td className="p-6 text-base font-black text-slate-800">
+                  ₹{q.due_amount.toLocaleString()}
+                </td>
                 <td className="p-6">
                   <div className="flex flex-wrap gap-2">
-                     {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Edit"] === true) && (
-   <button 
-  onClick={() => navigate("/quotation/add", { state: { editData: q } })} 
-  className="action-btn text-purple-600 border-purple-100 hover:bg-purple-600"
->
-  <FileText size={14} /> Edit
-</button>
-
+                    {(role === "admin" ||
+                      role === "superadmin" ||
+                      permissions?.["Quotation Management_Edit"] === true) && (
+                      <button
+                        onClick={() =>
+                          navigate("/quotation/add", { state: { editData: q } })
+                        }
+                        className="action-btn text-purple-600 border-purple-100 hover:bg-purple-600"
+                      >
+                        <FileText size={14} /> Edit
+                      </button>
                     )}
-                    {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Pay"] === true) && (
-    <button 
-  onClick={() => openPaymentModal(q)} 
-  disabled={Number(q.due_amount) <= 0} // Disable if due is 0 or less
-  className={`action-btn ${
-    Number(q.due_amount) <= 0 
-    ? "opacity-50 cursor-not-allowed grayscale" 
-    : "text-blue-600 border-blue-100 hover:bg-blue-600"
-  }`}
->
-  <CreditCard size={14} /> Pay
-</button>
-
+                    {(role === "admin" ||
+                      role === "superadmin" ||
+                      permissions?.["Quotation Management_Pay"] === true) && (
+                      <button
+                        onClick={() => openPaymentModal(q)}
+                        className={`action-btn ${
+                          Number(q.due_amount) <= 0
+                            ? "opacity-50 cursor-not-allowed grayscale"
+                            : "text-blue-600 border-blue-100 hover:bg-blue-600"
+                        }`}
+                      >
+                        <CreditCard size={14} /> Pay
+                      </button>
                     )}
-                    
-                     {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_DC"] === true) && (
-    <button onClick={() => openDeliveryChallan(q)} className="action-btn text-orange-600 border-orange-100 hover:bg-orange-600"><Truck size={14} /> DC</button>
 
-                        )}
-                 
-                   
-                   
+                    {(role === "admin" ||
+                      role === "superadmin" ||
+                      permissions?.["Quotation Management_DC"] === true) && (
+                      <button
+                        onClick={() => openDeliveryChallan(q)}
+                        className="action-btn text-orange-600 border-orange-100 hover:bg-orange-600"
+                      >
+                        <Truck size={14} /> DC
+                      </button>
+                    )}
+
                     <div className="w-[1px] bg-slate-100 mx-1"></div>
-                    <button onClick={() => openQuotationPDF(q.id, "qcode")} className="print-btn">Code</button>
-                    <button onClick={() => openQuotationPDF(q.id, "qname")} className="print-btn">Name</button>
-                    
+                    <button
+                      onClick={() => openQuotationPDF(q.id, "qcode")}
+                      className="print-btn"
+                    >
+                      Code
+                    </button>
+                    <button
+                      onClick={() => openQuotationPDF(q.id, "qname")}
+                      className="print-btn"
+                    >
+                      Name
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -281,44 +508,44 @@ const handleSavePaymentRequest = async () => {
           </tbody>
         </table>
         <div className="mt-8 flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm font-['Lexend']">
-  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-    Page {currentPage} of {totalPages}
-  </p>
-  
-  <div className="flex items-center gap-2">
-    <button
-      disabled={currentPage === 1}
-      onClick={() => setCurrentPage(prev => prev - 1)}
-      className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all"
-    >
-      Previous
-    </button>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+            Page {currentPage} of {totalPages}
+          </p>
 
-    <div className="flex gap-1">
-      {[...Array(totalPages)].map((_, i) => (
-        <button
-          key={i}
-          onClick={() => setCurrentPage(i + 1)}
-          className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
-            currentPage === i + 1 
-            ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-100" 
-            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-          }`}
-        >
-          {i + 1}
-        </button>
-      ))}
-    </div>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all"
+            >
+              Previous
+            </button>
 
-    <button
-      disabled={currentPage === totalPages}
-      onClick={() => setCurrentPage(prev => prev + 1)}
-      className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all"
-    >
-      Next
-    </button>
-  </div>
-</div>
+            <div className="flex gap-1">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
+                    currentPage === i + 1
+                      ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-100"
+                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-black text-slate-600 hover:bg-slate-50 disabled:opacity-30 transition-all"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* --- EDIT MODAL --- */}
@@ -327,38 +554,95 @@ const handleSavePaymentRequest = async () => {
           <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-[40px] shadow-2xl flex flex-col animate-in zoom-in duration-200">
             <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-purple-50/30">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-white rounded-xl text-purple-600 shadow-sm"><FileText size={24}/></div>
-                <h2 className="text-xl font-black text-slate-800 uppercase italic">Edit Quotation #{editData.id}</h2>
+                <div className="p-3 bg-white rounded-xl text-purple-600 shadow-sm">
+                  <FileText size={24} />
+                </div>
+                <h2 className="text-xl font-black text-slate-800 uppercase italic">
+                  Edit Quotation #{editData.id}
+                </h2>
               </div>
-              <button onClick={() => setOpenEditModal(false)} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-all"><X size={24}/></button>
+              <button
+                onClick={() => setOpenEditModal(false)}
+                className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-all"
+              >
+                <X size={24} />
+              </button>
             </div>
 
             <div className="p-8 overflow-y-auto space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label className="modal-label">Client Name</label>
-                  <input type="text" className="lux-modal-input" value={editData.clientName} onChange={(e) => setEditData({...editData, clientName: e.target.value})} />
+                <div>
+                  <label className="modal-label">Client Name</label>
+                  <input
+                    type="text"
+                    className="lux-modal-input"
+                    value={editData.clientName}
+                    onChange={(e) =>
+                      setEditData({ ...editData, clientName: e.target.value })
+                    }
+                  />
                 </div>
-                <div><label className="modal-label">Contact</label>
-                  <input type="text" className="lux-modal-input" value={editData.contactNo} onChange={(e) => setEditData({...editData, contactNo: e.target.value})} />
+                <div>
+                  <label className="modal-label">Contact</label>
+                  <input
+                    type="text"
+                    className="lux-modal-input"
+                    value={editData.contactNo}
+                    onChange={(e) =>
+                      setEditData({ ...editData, contactNo: e.target.value })
+                    }
+                  />
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pb-2 border-b">Manage Items</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pb-2 border-b">
+                  Manage Items
+                </h4>
                 <div className="grid grid-cols-1 gap-3">
                   {editData.items.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 group">
-                      <div className="flex-1 font-bold text-slate-700">{item.productName}</div>
+                    <div
+                      key={idx}
+                      className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 group"
+                    >
+                      <div className="flex-1 font-bold text-slate-700">
+                        {item.productName}
+                      </div>
                       <div className="w-24">
-                        <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Qty</label>
-                        <input type="number" className="w-full p-2 rounded-xl border border-slate-200 font-bold" value={item.qty} onChange={(e) => updateEditItem(idx, 'qty', Number(e.target.value))} />
+                        <label className="text-[8px] font-black uppercase text-slate-400 ml-1">
+                          Qty
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full p-2 rounded-xl border border-slate-200 font-bold"
+                          value={item.qty}
+                          onChange={(e) =>
+                            updateEditItem(idx, "qty", Number(e.target.value))
+                          }
+                        />
                       </div>
                       <div className="w-32">
-                        <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Price</label>
-                        <input type="number" className="w-full p-2 rounded-xl border border-slate-200 font-bold" value={item.price} onChange={(e) => updateEditItem(idx, 'price', Number(e.target.value))} />
+                        <label className="text-[8px] font-black uppercase text-slate-400 ml-1">
+                          Price
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full p-2 rounded-xl border border-slate-200 font-bold"
+                          value={item.price}
+                          onChange={(e) =>
+                            updateEditItem(idx, "price", Number(e.target.value))
+                          }
+                        />
                       </div>
-                      <div className="w-28 text-right pt-4 font-black text-slate-800 italic">₹{(item.qty * item.price).toLocaleString()}</div>
-                      <button onClick={() => removeItemFromEdit(idx)} className="p-2 mt-4 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={18}/></button>
+                      <div className="w-28 text-right pt-4 font-black text-slate-800 italic">
+                        ₹{(item.qty * item.price).toLocaleString()}
+                      </div>
+                      <button
+                        onClick={() => removeItemFromEdit(idx)}
+                        className="p-2 mt-4 text-slate-300 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -367,13 +651,28 @@ const handleSavePaymentRequest = async () => {
 
             <div className="p-8 border-t bg-slate-50/50 flex justify-between items-center">
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase">New Grand Total</p>
-                <p className="text-3xl font-black text-purple-600 italic">₹{editData.items.reduce((s, i) => s + (i.qty * i.price), 0).toLocaleString()}</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase">
+                  New Grand Total
+                </p>
+                <p className="text-3xl font-black text-purple-600 italic">
+                  ₹
+                  {editData.items
+                    .reduce((s, i) => s + i.qty * i.price, 0)
+                    .toLocaleString()}
+                </p>
               </div>
               <div className="flex gap-4">
-                <button onClick={() => setOpenEditModal(false)} className="px-8 py-4 font-black text-slate-400 uppercase text-[10px] tracking-widest">Discard</button>
-                <button onClick={saveUpdatedQuotation} className="px-10 py-4 bg-purple-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-purple-100 flex items-center gap-2 hover:bg-purple-700 transition-all">
-                  <CheckCircle size={18}/> Update Quotation
+                <button
+                  onClick={() => setOpenEditModal(false)}
+                  className="px-8 py-4 font-black text-slate-400 uppercase text-[10px] tracking-widest"
+                >
+                  Discard
+                </button>
+                <button
+                  onClick={saveUpdatedQuotation}
+                  className="px-10 py-4 bg-purple-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-purple-100 flex items-center gap-2 hover:bg-purple-700 transition-all"
+                >
+                  <CheckCircle size={18} /> Update Quotation
                 </button>
               </div>
             </div>
@@ -382,167 +681,330 @@ const handleSavePaymentRequest = async () => {
       )}
 
       {/* --- PAYMENT MODAL (Simplified UI) --- */}
-     {openPayModal && (
-  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-    <div className="bg-white p-8 w-full max-w-md rounded-[40px] shadow-2xl animate-in zoom-in duration-200">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-black text-slate-800 flex items-center gap-2 italic">
-          <CreditCard className="text-blue-500" /> Settlement
-        </h3>
-        <button onClick={() => setOpenPayModal(false)} className="p-2 text-slate-300 hover:text-red-500">
-          <X size={20} />
-        </button>
-      </div>
+      {openPayModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white p-8 w-full max-w-md rounded-[40px] shadow-2xl animate-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-slate-800 flex items-center gap-2 italic">
+                <CreditCard className="text-blue-500" /> Settlement
+              </h3>
+              <button
+                onClick={() => setOpenPayModal(false)}
+                className="p-2 text-slate-300 hover:text-red-500"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-          <p className="text-[9px] font-black text-slate-400 uppercase">Paid Amount</p>
-          <p className="text-lg font-black text-slate-800">₹{paymentData.paid}</p>
-        </div>
-        <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-          <p className="text-[9px] font-black text-orange-400 uppercase">Due Amount</p>
-          <p className="text-lg font-black text-orange-600">₹{paymentData.due}</p>
-        </div>
-      </div>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[9px] font-black text-slate-400 uppercase">
+                  Paid Amount
+                </p>
+                <p className="text-lg font-black text-slate-800">
+                  ₹{paymentData.paid}
+                </p>
+              </div>
+              <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                <p className="text-[9px] font-black text-orange-400 uppercase">
+                  Due Amount
+                </p>
+                <p className="text-lg font-black text-orange-600">
+                  ₹{paymentData.due}
+                </p>
+              </div>
+            </div>
 
-      <div className="space-y-4">
-        {/* Payment Method Select */}
-        <div>
-          <label className="modal-label">Payment Method</label>
-          <select 
-            className="lux-modal-input"
-            value={paymentData.paymentType}
-            onChange={(e) => setPaymentData({ ...paymentData, paymentType: e.target.value })}
-          >
-            <option value="">Select Method</option>
-            <option value="Cash">Cash</option>
-            <option value="UPI">UPI</option>
-            <option value="Bank Transfer">Bank Transfer</option>
-          </select>
-        </div>
+            <div className="space-y-4">
+              {/* Payment Method Select */}
+              <div>
+                <label className="modal-label">Payment Method</label>
+                <select
+                  className="lux-modal-input"
+                  value={paymentData.paymentType}
+                  onChange={(e) =>
+                    setPaymentData({
+                      ...paymentData,
+                      paymentType: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Select Method</option>
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+              </div>
 
-        {/* Amount Input */}
-        <div>
-          <label className="modal-label">Amount</label>
-          <input 
-            className="lux-modal-input" // Removed conditional red styling
-            type="number" 
-            placeholder="Enter amount" 
-            value={paymentData.amount}
-            onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-          />
-        </div>
+              {/* Amount Input */}
+              <div>
+                <label className="modal-label">Amount</label>
+                <input
+                  className="lux-modal-input" // Removed conditional red styling
+                  type="number"
+                  placeholder="Enter amount"
+                  value={paymentData.amount}
+                  onChange={(e) =>
+                    setPaymentData({ ...paymentData, amount: e.target.value })
+                  }
+                />
+              </div>
 
-        {/* Remark Input */}
-        <div>
-          <label className="modal-label">Remark</label>
-          <input 
-            className="lux-modal-input" 
-            type="text" 
-            placeholder="e.g. Received by hand" 
-            value={paymentData.remark}
-            onChange={(e) => setPaymentData({ ...paymentData, remark: e.target.value })}
-          />
-        </div>
-      </div>
+              {/* Remark Input */}
+              <div>
+                <label className="modal-label">Remark</label>
+                <input
+                  className="lux-modal-input"
+                  type="text"
+                  placeholder="e.g. Received by hand"
+                  value={paymentData.remark}
+                  onChange={(e) =>
+                    setPaymentData({ ...paymentData, remark: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            {/* Billing Type Radio Group */}
+            {/* Transaction Type Selection */}
+            <div className="mb-6 mt-5">
+              <label className="modal-label">Transaction Type</label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {/* Option 1: Billing */}
+                <label
+                  className={`flex flex-col items-center justify-center py-3 px-2 rounded-2xl border-2 cursor-pointer transition-all duration-200 
+        ${
+          paymentData.billingType === "Billing"
+            ? "border-blue-500 bg-blue-50 text-blue-700 font-bold shadow-sm"
+            : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
+        }`}
+                >
+                  <input
+                    type="radio"
+                    className="hidden"
+                    name="billingType"
+                    value="Billing"
+                    checked={paymentData.billingType === "Billing"}
+                    onChange={(e) =>
+                      setPaymentData({
+                        ...paymentData,
+                        billingType: e.target.value,
+                      })
+                    }
+                  />
+                  <span className="text-[10px] uppercase tracking-tight">
+                    Billing
+                  </span>
+                </label>
 
-      <button 
-        className="w-full mt-8 py-4 rounded-2xl font-black uppercase tracking-widest bg-blue-600 text-white shadow-xl shadow-blue-100 hover:bg-blue-700 active:transform active:scale-[0.98] transition-all duration-200" 
-        onClick={handleSavePaymentRequest}
-        disabled={false} // Always clickable
-      >
-        Save Payment
-      </button>
-    </div>
-  </div>
-)}
+                {/* Option 2: Non-Billing */}
+                <label
+                  className={`flex flex-col items-center justify-center py-3 px-2 rounded-2xl border-2 cursor-pointer transition-all duration-200 
+        ${
+          paymentData.billingType === "Non-Billing"
+            ? "border-blue-500 bg-blue-50 text-blue-700 font-bold shadow-sm"
+            : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
+        }`}
+                >
+                  <input
+                    type="radio"
+                    className="hidden"
+                    name="billingType"
+                    value="Non-Billing"
+                    checked={paymentData.billingType === "Non-Billing"}
+                    onChange={(e) =>
+                      setPaymentData({
+                        ...paymentData,
+                        billingType: e.target.value,
+                      })
+                    }
+                  />
+                  <span className="text-[10px] uppercase tracking-tight">
+                    Non-Bill
+                  </span>
+                </label>
+
+                {/* Option 3: None (Empty String) */}
+                <label
+                  className={`flex flex-col items-center justify-center py-3 px-2 rounded-2xl border-2 cursor-pointer transition-all duration-200 
+        ${
+          paymentData.billingType === ""
+            ? "border-slate-400 bg-slate-200 text-slate-700 font-bold"
+            : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
+        }`}
+                >
+                  <input
+                    type="radio"
+                    className="hidden"
+                    name="billingType"
+                    value=""
+                    checked={paymentData.billingType === ""}
+                    onChange={(e) =>
+                      setPaymentData({
+                        ...paymentData,
+                        billingType: e.target.value,
+                      })
+                    }
+                  />
+                  <span className="text-[10px] uppercase tracking-tight">
+                    None
+                  </span>
+                </label>
+              </div>
+            </div>
+            <button
+              className="w-full mt-8 py-4 rounded-2xl font-black uppercase tracking-widest bg-blue-600 text-white shadow-xl shadow-blue-100 hover:bg-blue-700 active:transform active:scale-[0.98] transition-all duration-200"
+              onClick={handleSavePaymentRequest}
+              disabled={false} // Always clickable
+            >
+              Save Payment
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* --- DC MODAL (Simplified UI) --- */}
       {openDCModal && (
-  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-    <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[40px] shadow-2xl flex flex-col">
-      
-      {/* Header */}
-      <div className="p-8 border-b flex justify-between items-center bg-orange-50/30">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-white rounded-xl text-orange-500 shadow-sm"><Truck size={24}/></div>
-          <h2 className="text-xl font-black text-slate-800 uppercase italic tracking-tighter">Dispatch Challan</h2>
-        </div>
-        <button onClick={() => setOpenDCModal(false)} className="p-2 text-slate-300 hover:text-red-500"><X size={24}/></button>
-      </div>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[40px] shadow-2xl flex flex-col">
+            {/* Header */}
+            <div className="p-8 border-b flex justify-between items-center bg-orange-50/30">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-white rounded-xl text-orange-500 shadow-sm">
+                  <Truck size={24} />
+                </div>
+                <h2 className="text-xl font-black text-slate-800 uppercase italic tracking-tighter">
+                  Dispatch Challan
+                </h2>
+              </div>
+              <button
+                onClick={() => setOpenDCModal(false)}
+                className="p-2 text-slate-300 hover:text-red-500"
+              >
+                <X size={24} />
+              </button>
+            </div>
 
-      <div className="p-8 overflow-y-auto space-y-6">
-        {/* Driver/Delivery Details */}
-        <div className="grid grid-cols-3 gap-4">
-           <div>
-              <label className="modal-label">Delivery Boy</label>
-              <input className="lux-modal-input" placeholder="Name" onChange={(e) => setDriverDetails({...driverDetails, deliveryBoy: e.target.value})} />
-           </div>
-           <div>
-              <label className="modal-label">Contact</label>
-              <input className="lux-modal-input" placeholder="Phone" onChange={(e) => setDriverDetails({...driverDetails, contact: e.target.value})} />
-           </div>
-           <div>
-              <label className="modal-label">Vehicle No (Tempo)</label>
-              <input className="lux-modal-input" placeholder="MH-15..." onChange={(e) => setDriverDetails({...driverDetails, tempo: e.target.value})} />
-           </div>
-        </div>
+            <div className="p-8 overflow-y-auto space-y-6">
+              {/* Driver/Delivery Details */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="modal-label">Delivery Boy</label>
+                  <input
+                    className="lux-modal-input"
+                    placeholder="Name"
+                    onChange={(e) =>
+                      setDriverDetails({
+                        ...driverDetails,
+                        deliveryBoy: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="modal-label">Contact</label>
+                  <input
+                    className="lux-modal-input"
+                    placeholder="Phone"
+                    onChange={(e) =>
+                      setDriverDetails({
+                        ...driverDetails,
+                        contact: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="modal-label">Vehicle No (Tempo)</label>
+                  <input
+                    className="lux-modal-input"
+                    placeholder="MH-15..."
+                    onChange={(e) =>
+                      setDriverDetails({
+                        ...driverDetails,
+                        tempo: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
 
-        {/* Item Selection - BOX ONLY */}
-       <div className="space-y-3">
-  <h3 className="text-[10px] font-black uppercase text-slate-400">Items for Dispatch</h3>
-  {dcItems.map((p, i) => (
-    <div key={i} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-orange-200 transition-all">
-      <div className="flex flex-col gap-1">
-        {/* Physical Stock in Warehouse */}
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${p.currentStock > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-          <span className="text-[10px] font-bold text-slate-500 uppercase">
-            In Warehouse: <span className="text-slate-900">{p.currentStock} Boxes</span>
-          </span>
-        </div>
+              {/* Item Selection - BOX ONLY */}
+              <div className="space-y-3">
+                <h3 className="text-[10px] font-black uppercase text-slate-400">
+                  Items for Dispatch
+                </h3>
+                {dcItems.map((p, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-orange-200 transition-all"
+                  >
+                    <div className="flex flex-col gap-1">
+                      {/* Physical Stock in Warehouse */}
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${p.currentStock > 0 ? "bg-green-500" : "bg-red-500"}`}
+                        ></div>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase">
+                          In Warehouse:{" "}
+                          <span className="text-slate-900">
+                            {p.currentStock} Boxes
+                          </span>
+                        </span>
+                      </div>
 
-        <span className="font-bold text-slate-700 text-lg leading-tight">{p.productName}</span>
-        
-        {/* Quote Progress */}
-        <div className="flex gap-2">
-          <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
-            Pending in Quote: {p.remainingBoxes} Boxes
-          </span>
-        </div>
-      </div>
-      
-      <div className="flex flex-col items-end">
-        <label className="text-[10px] font-black text-slate-400 uppercase mb-1">Dispatch Now</label>
-        <div className="flex items-center bg-white rounded-xl border border-slate-200 px-3 py-2 shadow-sm">
-          <input 
-            type="number" 
-            className="w-20 text-center font-black text-slate-800 outline-none" 
-            placeholder="0"
-            // Ensure they don't dispatch more than what they physically have
-            max={p.currentStock} 
-            onChange={(e) => handleBoxUpdate(p.productId, e.target.value)}
-          />
-          <span className="text-[10px] ml-2 font-bold text-slate-300">BOX</span>
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
-      </div>
+                      <span className="font-bold text-slate-700 text-lg leading-tight">
+                        {p.productName}
+                      </span>
 
-      <div className="p-8 border-t flex justify-end gap-4 bg-slate-50/50">
-          <button onClick={() => setOpenDCModal(false)} className="px-8 font-black text-slate-400 text-[10px] uppercase">Cancel</button>
-          <button 
-            onClick={handleSubmitDC}
-            className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg hover:bg-orange-600 transition-all flex items-center gap-2"
-          >
-            Generate Challan <ChevronRight size={14}/>
-          </button>
-      </div>
-    </div>
-  </div>
-)}
+                      {/* Quote Progress */}
+                      <div className="flex gap-2">
+                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
+                          Pending in Quote: {p.remainingBoxes} Boxes
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-end">
+                      <label className="text-[10px] font-black text-slate-400 uppercase mb-1">
+                        Dispatch Now
+                      </label>
+                      <div className="flex items-center bg-white rounded-xl border border-slate-200 px-3 py-2 shadow-sm">
+                        <input
+                          type="number"
+                          className="w-20 text-center font-black text-slate-800 outline-none"
+                          placeholder="0"
+                          value={p.dispatchBox} // Match with state key
+                          onChange={(e) =>
+                            handleBoxUpdate(p.productId, e.target.value)
+                          }
+                        />
+                        <span className="text-[10px] ml-2 font-bold text-slate-300">
+                          BOX
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-8 border-t flex justify-end gap-4 bg-slate-50/50">
+              <button
+                onClick={() => setOpenDCModal(false)}
+                className="px-8 font-black text-slate-400 text-[10px] uppercase"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitDC}
+                className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg hover:bg-orange-600 transition-all flex items-center gap-2"
+              >
+                Generate Challan <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* STYLES */}
       <style>{`

@@ -201,6 +201,7 @@ console.log(rows,"rows")
 
   // ---------------- CALCULATIONS ----------------
   const recalcRow = (row) => {
+    debugger
   const boxes = parseFloat(row.box) || 0;
   const covPerBox = parseFloat(row.cov) || 0; // Editable coverage per box
   const rate = parseFloat(row.rate) || 0;
@@ -239,10 +240,12 @@ console.log(rows,"rows")
   };
 
   const selectProduct = (i, productId) => {
+    debugger
     const p = products.find(x => x.id == productId);
     if (!p) return;
     const updated = [...rows];
-    updated[i] = recalcRow({ ...updated[i], productId: p.id, productName: p.name, size: p.size, quality: p.quality, rate: Number(p.rate) });
+    updated[i] = recalcRow({ ...updated[i], productId: p.id, productName: p.name, size: p.size, quality: p.quality, 
+cov: p.Cov, rate: Number(p.rate) });
     setRows(updated);
   };
 
@@ -253,7 +256,23 @@ const grandTotal = (Number(itemTotal) - discountAmount).toFixed(2);
   // ---------------- SAVE / UPDATE LOGIC ----------------
   
   const saveQuotation = async () => {
-    debugger
+    
+    if (!rows || rows.length === 0) {
+    alert("Please add at least one item to the quotation.");
+    return; // Stop execution
+  }
+
+  // 2. Check if grandTotal is valid and greater than 0
+  if (Number(grandTotal) <= 0) {
+    alert("Grand Total must be greater than 0 to save the quotation.");
+    return; // Stop execution
+  }
+  
+  // 3. Optional: Check if client name is entered
+  if (!clientName.trim()) {
+    alert("Please enter the Client Name.");
+    return;
+  }
     try {
       const payload = {
         quotationId: isEditMode ? editData.id : undefined,
@@ -486,7 +505,7 @@ const grandTotal = (Number(itemTotal) - discountAmount).toFixed(2);
 </td>
           <td className="p-3 text-center"><input className="table-input w-14 h-10 text-center text-orange-600" value={r.discount} onChange={(e) => updateRowField(i, "discount", e.target.value)} /></td>
           <td className="p-3 text-right font-black text-slate-800 text-sm">₹{Number(r.total).toLocaleString()}</td>
-          <td className="p-3 text-center"><input className="table-input w-16 h-10 text-center text-orange-600" value={r.area} onChange={(e) => updateRowField(i, "Area", e.target.value)} /></td>
+          <td className="p-3 text-center"><input className="table-input w-16 h-10 text-center text-orange-600" value={r.area} onChange={(e) => updateRowField(i, "area", e.target.value)} /></td>
           <td className="p-3 text-center">
             <button onClick={() => setRows(rows.filter((_, idx) => idx !== i))} className="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-lg transition-colors">
               <Trash2 size={16}/>

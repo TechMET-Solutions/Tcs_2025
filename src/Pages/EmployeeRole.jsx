@@ -324,7 +324,7 @@
 //   );
 // }
 
-import { BadgeCheck, ClipboardCheck, DraftingCompass, Factory, FileText, Layers, LayoutDashboard, Package, Save, ShieldCheck, Truck, UserPlus, Users, CheckSquare } from "lucide-react";
+import { BadgeCheck, CheckSquare, ClipboardCheck, DraftingCompass, Factory, FileText, Layers, LayoutDashboard, Package, Save, ShieldCheck, Truck, UserPlus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getEmployeeRolesAPI, getEmployeesAPI, saveEmployeeRolesAPI } from "../Component/API/employeeApi";
 
@@ -342,7 +342,7 @@ export default function EmployeeRole() {
     { title: "Supplier Management", icon: <Factory className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },
     { title: "Product Registration", icon: <Package className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },
     { title: "Architect Registration", icon: <DraftingCompass className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete", "Commission"] },
-    { title: "Inventory Management", icon: <ClipboardCheck className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete"] },
+    { title: "Inventory Management", icon: <ClipboardCheck className="w-4 h-4" />, items: ["View", "Add", "Delete"] },
     { title: "Quotation Management", icon: <FileText className="w-4 h-4" />, items: ["View", "Add", "Edit", "Delete", "Pay", "DC", "Payment Requests"] },
     { title: "Delivery Challans", icon: <Truck className="w-4 h-4" />, items: ["View", "Update Timeline", "Delete", "Print DC", "Return DC"] },
   ];

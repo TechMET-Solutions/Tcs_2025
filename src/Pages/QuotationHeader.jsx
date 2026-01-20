@@ -23,10 +23,10 @@ const fetchRequests = async () => {
   }
 };
 useEffect(() => {
-  if (isModalOpen) {
+ 
     fetchRequests();
-  }
-}, [isModalOpen]);
+ 
+},[]);
 const handleStatusUpdate = async (requestId, status) => {
   try {
     const res = await updateRequestStatus(requestId, status);
@@ -73,22 +73,31 @@ const handleStatusUpdate = async (requestId, status) => {
           </div>
 
           {/* New Payment Request Button */}
-          {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Payment Requests"] === true) && (
-    <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200"
-          >
-            <Bell size={20} />
-            <span className="hidden sm:inline">Requests</span>
-            {requests.length > 0 && (
-              <span className="bg-white text-orange-500 px-2 py-0.5 rounded-full text-xs">
-                {requests.length}
-              </span>
-            )}
-          </button>
+         {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Payment Requests"] === true) && (
+  <button 
+    onClick={() => setIsModalOpen(true)}
+    className="relative flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200 group"
+  >
+    <Bell size={20} className="group-hover:animate-bounce" />
+    <span className="hidden sm:inline">Requests</span>
 
-                        )}
-          
+    {/* Notification Badge */}
+    {requests.length > 0 && (
+      <>
+        {/* The Actual Count Badge */}
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-black text-orange-600 shadow-sm">
+          {requests.length > 99 ? "99+" : requests.length}
+        </span>
+        
+        {/* Animated Ping Effect (Optional: gives a 'Live' feel) */}
+        <span className="absolute -top-1 -right-1 flex h-4 w-4">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-4 w-4 bg-orange-600"></span>
+        </span>
+      </>
+    )}
+  </button>
+)}
         </div>
       </div>
 

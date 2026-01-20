@@ -68,7 +68,7 @@ export default function EmployeeRegistration() {
 
     // Auto-generate email if name field is being changed
     if (name === "name" && value) {
-      updatedEmployee.email = value.toLowerCase().replace(/\s+/g, '.') + '@theceramicstudio.com';
+      updatedEmployee.email = value.toLowerCase().replace(/\s+/g, '.') + '@tcs';
     }
 
     setEmployee(updatedEmployee);

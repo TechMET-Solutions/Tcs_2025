@@ -148,7 +148,7 @@ useEffect(() => {
                   <Eye size={18} />
                 </button>
                 
-                {(role === "admin" || role === "superadmin" || permissions?.["Inventory Management_Edit"] === true) && (
+                {/* {(role === "admin" || role === "superadmin" || permissions?.["Inventory Management_Edit"] === true) && (
                   <button 
                     onClick={() => navigate("/inventory/add", { state: { data: p } })} 
                     className="p-2.5 rounded-xl bg-orange-50 text-[#FF7A00] hover:bg-[#FF7A00] hover:text-white transition-all shadow-sm shadow-orange-100"
@@ -156,7 +156,7 @@ useEffect(() => {
                   >
                     <Edit3 size={18}/>
                   </button>
-                )}
+                )} */}
               </div>
             </td>
           </tr>
@@ -231,7 +231,7 @@ useEffect(() => {
 {/* ✅ BRANDED VIEW MODAL */}
 {showModal && selectedPurchase && (
   <div className="fixed inset-0 bg-[#1E1E1E]/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-    <div className="bg-white w-full rounded-[32px] shadow-2xl overflow-hidden flex flex-col border border-slate-100 animate-in fade-in zoom-in duration-200">
+    <div className="bg-white w-[800px] rounded-[32px] shadow-2xl overflow-hidden flex flex-col border border-slate-100 animate-in fade-in zoom-in duration-200">
       
       {/* HEADER - Using the Dark Sidebar Gray */}
       <div className="p-6 text-white flex justify-between items-center" style={{ backgroundColor: "#1E1E1E" }}>

@@ -31,21 +31,41 @@ const Tooltip = ({ text, children }) => {
 };
 
 /* ✅ REFINED INPUT FIELD */
-const InputField = ({ label, name, value, onChange, error, placeholder, type = "text", icon: Icon }) => (
+const InputField = ({
+  label,
+  name,
+  value,
+  onChange,
+  error,
+  placeholder,
+  type = "text",
+  icon: Icon,
+}) => (
   <div className="flex flex-col gap-1.5">
-    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-tight ml-1">{label}</label>
+    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-tight ml-1">
+      {label}
+    </label>
     <div className="relative group">
-      {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#FA9C42] transition-colors" />}
+      {Icon && (
+        <Icon
+          size={16}
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#FA9C42] transition-colors"
+        />
+      )}
       <input
         type={type}
         name={name}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full ${Icon ? 'pl-11' : 'px-4'} py-3 rounded-2xl bg-white border border-slate-200 transition-all outline-none focus:ring-4 focus:ring-[#FA9C42]/10 focus:border-[#FA9C42] shadow-sm ${error ? "border-red-400 ring-4 ring-red-500/10" : ""}`}
+        className={`w-full ${Icon ? "pl-11" : "px-4"} py-3 rounded-2xl bg-white border border-slate-200 transition-all outline-none focus:ring-4 focus:ring-[#FA9C42]/10 focus:border-[#FA9C42] shadow-sm ${error ? "border-red-400 ring-4 ring-red-500/10" : ""}`}
       />
     </div>
-    {error && <p className="text-[10px] text-red-500 font-bold mt-0.5 ml-1 uppercase tracking-tight">{error}</p>}
+    {error && (
+      <p className="text-[10px] text-red-500 font-bold mt-0.5 ml-1 uppercase tracking-tight">
+        {error}
+      </p>
+    )}
   </div>
 );
 
@@ -60,14 +80,17 @@ const SelectField = ({ label, name, value, onChange, error, options }) => (
       value={value}
       onChange={onChange}
       className={`w-full px-4 py-3 rounded-2xl bg-white border transition-all outline-none appearance-none cursor-pointer shadow-sm
-        ${error
-          ? "border-red-400 ring-4 ring-red-500/10"
-          : "border-slate-200 focus:border-[#FA9C42] focus:ring-4 focus:ring-[#FA9C42]/10"
+        ${
+          error
+            ? "border-red-400 ring-4 ring-red-500/10"
+            : "border-slate-200 focus:border-[#FA9C42] focus:ring-4 focus:ring-[#FA9C42]/10"
         }`}
     >
       <option value="">Select Option</option>
-      {options.map(opt => (
-        <option key={opt} value={opt}>{opt}</option>
+      {options.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
       ))}
     </select>
 
@@ -78,7 +101,6 @@ const SelectField = ({ label, name, value, onChange, error, options }) => (
     )}
   </div>
 );
-
 
 // const SelectField = ({ label, name, value, onChange, error, options }) => (
 //   <div className="flex flex-col gap-1.5">
@@ -107,146 +129,200 @@ export default function CustomerManagement() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const getTodayDate = () => new Date().toISOString().split('T')[0];
-  const [followupUpdate, setFollowupUpdate] = useState({ date: getTodayDate(), response: "" });
+  const getTodayDate = () => new Date().toISOString().split("T")[0];
+  const [followupUpdate, setFollowupUpdate] = useState({
+    date: getTodayDate(),
+    response: "",
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10; // You can make this dynamic if needed
   const { permissions, user, loading, role } = useAuth();
+  console.log(permissions, user, loading, role);
   const [employees, setEmployees] = useState([]);
+  const [employeesData, setEmployeesData] = useState([]);
+  console.log(employees, "employees");
   const [architects, setArchitects] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [customer, setCustomer] = useState({
-    name: "", Last_Name: "", phone: "", altphone: "", email: "", assignedEmployee: "",
-    assignedArchitect: "", status: "New",
-    notes: "", projectName: "", siteName: "", billingName: "", siteType: "", priority: "Low"
+    name: "",
+    Last_Name: "",
+    phone: "",
+    altphone: "",
+    email: "",
+    assignedEmployee: "",
+    assignedArchitect: "",
+    status: "New",
+    notes: "",
+    projectName: "",
+    siteName: "",
+    billingName: "",
+    siteType: "",
+    priority: "Low",
+    assignedEmployeeId: "",
   });
-
+  const [priorityFilter, setPriorityFilter] = useState("");
+  console.log(customer, "custoemr");
   const fetchCustomers = async (page = 1) => {
+    debugger;
     try {
-      const res = await axios.get(`${BASE_URL}/list?page=${page}&limit=${itemsPerPage}`);
+      let url;
+
+      // Check if the user is an employee based on the role data you provided
+      if (role === "employee") {
+        // Use the NEW route and pass the employee ID as a query parameter
+        url = `${BASE_URL}/list/employee?page=${page}&limit=${itemsPerPage}&employeeId=${user.id}`;
+      } else {
+        // Admin/Superadmin uses the original route
+        url = `${BASE_URL}/list?page=${page}&limit=${itemsPerPage}`;
+      }
+
+      const res = await axios.get(url);
+
       setCustomerList(res.data.customers || []);
       setTotalPages(res.data.pagination.totalPages || 1);
       setCurrentPage(page);
     } catch (err) {
-      console.log("Fetch Error:", err);
+      console.error("Fetch Error:", err);
     }
   };
-
   const fetchEmployees = async () => {
     try {
       const res = await axios.get(`${BASEURL}/api/employees/list`);
 
-      const employeeNames = res.data.employees.map(emp => emp.name);
+      const employeeNames = res.data.employees.map((emp) => emp.name);
 
       setEmployees(employeeNames);
+      setEmployeesData(res.data.employees);
       console.log("Employee Names:", employeeNames);
-
     } catch (err) {
       console.log("Error fetching employees:", err);
     }
   };
 
-
   const fetchArchitects = async () => {
     try {
       const res = await axios.get(`${BASEURL}/api/architects/list`);
 
-      const architectNames = res.data.architects.map(
-        arch => `${arch.firstname} ${arch.lastname}`.trim()
+      const architectNames = res.data.architects.map((arch) =>
+        `${arch.firstname} ${arch.lastname}`.trim(),
       );
 
       setArchitects([...architectNames]);
       console.log("Architect Names:", architectNames);
-
     } catch (err) {
       console.log("Error fetching architects:", err);
     }
   };
 
-
   const apiCalled = useRef(false);
+
   useEffect(() => {
-    if (!apiCalled.current) {
+    // 1. Check if role exists (not null/undefined/empty)
+    // 2. Ensure api hasn't been called yet
+    if (role && !apiCalled.current) {
+      // If it's an employee, we also need the user.id to be present
+      if (role === "employee" && !user?.id) {
+        return; // Wait until user data is fully loaded
+      }
+
       apiCalled.current = true;
       fetchCustomers(currentPage);
       fetchEmployees();
       fetchArchitects();
     }
-  }, []);
+  }, [role, user, currentPage]); // Added dependencies to re-run if they change
 
+  const handleChange = (e) => {
+    const { name, value } = e.target; // value = "sumit pathak"
 
+    if (name === "assignedEmployee") {
+      // value is NAME, so match by name
+      const selectedEmployee = employeesData.find((emp) => emp.name === value);
 
-  const handleChange = (e) => setCustomer({ ...customer, [e.target.name]: e.target.value });
-  const handleFollowupInput = (e) => setFollowupUpdate({ ...followupUpdate, [e.target.name]: e.target.value });
-
-   const validate = () => {
-  let newErrors = {};
-
-  // Mandatory Fields
-  if (!customer.name?.trim()) newErrors.name = "First name is required";
-  if (!customer.Last_Name?.trim()) newErrors.Last_Name = "Last name is required";
-  if (!customer.phone?.trim()) newErrors.phone = "Mobile number is required";
-  if (!customer.assignedEmployee?.trim()) newErrors.assignedEmployee = "Employee assignment is required";
-  if (!customer.assignedArchitect?.trim()) newErrors.assignedArchitect = "Architect assignment is required";
-
-  setErrors(newErrors);
-  
-  // Returns true only if no errors found
-  return Object.keys(newErrors).length === 0;
-};
-
-
- const saveCustomer = async (e) => {
-  e.preventDefault();
-  
-  // 1. Run Validation
-  if (!validate()) return;
-  
-  setIsSubmitting(true);
-
-  try {
-    // 2. Prepare Data: Convert empty strings to NULL
-    const dataToSave = Object.keys(customer).reduce((acc, key) => {
-      const value = customer[key];
-      acc[key] = (typeof value === 'string' && value.trim() === "") ? null : value;
-      return acc;
-    }, {});
-
-    // 3. API Call
-    let response;
-    if (isEditing) {
-      response = await axios.put(`${BASE_URL}/update/${customer.id}`, dataToSave);
+      setCustomer((prev) => ({
+        ...prev,
+        assignedEmployee: value, // store name (for UI / display)
+        assignedEmployeeId: selectedEmployee ? selectedEmployee.id : "", // store ID
+        assignedEmployeeName: value,
+      }));
     } else {
-      response = await axios.post(`${BASE_URL}/add`, dataToSave);
+      setCustomer((prev) => ({ ...prev, [name]: value }));
     }
+  };
 
-    // 4. Success Actions
-    fetchCustomers();
-    setShowModal(false);
-    setErrors({});
-    alert("✅ Customer saved successfully!");
+  const handleFollowupInput = (e) =>
+    setFollowupUpdate({ ...followupUpdate, [e.target.name]: e.target.value });
 
-  } catch (err) {
-    console.error("Save Error:", err);
+  const validate = () => {
+    let newErrors = {};
 
-    // 5. Extract the specific error message from the backend
-    const errorMessage = err.response?.data?.message || "Operation failed. Please try again.";
-    
-    // 6. Show the Alert with the specific error (e.g., "Already Exists")
-    alert(errorMessage); 
+    // Mandatory Fields
+    if (!customer.name?.trim()) newErrors.name = "First name is required";
+    if (!customer.Last_Name?.trim())
+      newErrors.Last_Name = "Last name is required";
+    if (!customer.phone?.trim()) newErrors.phone = "Mobile number is required";
+    if (!customer.assignedEmployee?.trim())
+      newErrors.assignedEmployee = "Employee assignment is required";
+    if (!customer.assignedArchitect?.trim())
+      newErrors.assignedArchitect = "Architect assignment is required";
 
-    // Also set it in state if you want to show it on the UI
-    setErrors({ server: errorMessage });
+    setErrors(newErrors);
 
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    // Returns true only if no errors found
+    return Object.keys(newErrors).length === 0;
+  };
 
+  const saveCustomer = async (e) => {
+    e.preventDefault();
 
+    // 1. Run Validation
+    if (!validate()) return;
 
+    setIsSubmitting(true);
+
+    try {
+      // 2. Prepare Data: Convert empty strings to NULL
+      const dataToSave = Object.keys(customer).reduce((acc, key) => {
+        const value = customer[key];
+        acc[key] =
+          typeof value === "string" && value.trim() === "" ? null : value;
+        return acc;
+      }, {});
+
+      // 3. API Call
+      let response;
+      if (isEditing) {
+        response = await axios.put(
+          `${BASE_URL}/update/${customer.id}`,
+          dataToSave,
+        );
+      } else {
+        response = await axios.post(`${BASE_URL}/add`, dataToSave);
+      }
+
+      // 4. Success Actions
+      fetchCustomers();
+      setShowModal(false);
+      setErrors({});
+      alert("✅ Customer saved successfully!");
+    } catch (err) {
+      console.error("Save Error:", err);
+
+      // 5. Extract the specific error message from the backend
+      const errorMessage =
+        err.response?.data?.message || "Operation failed. Please try again.";
+
+      // 6. Show the Alert with the specific error (e.g., "Already Exists")
+      alert(errorMessage);
+
+      // Also set it in state if you want to show it on the UI
+      setErrors({ server: errorMessage });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const saveNewFollowup = async () => {
     try {
@@ -257,22 +333,38 @@ export default function CustomerManagement() {
       });
       setShowUpdateFollowup(false);
       setFollowupUpdate({ date: getTodayDate(), response: "" });
-    } catch (err) { console.log(err); }
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const openHistory = async (item) => {
+    debugger;
     try {
       const res = await axios.get(`${BASE_URL}/followups/${item.id}`);
       setSelectedCustomer({ ...item, followups: res.data.followups || [] });
       setShowHistory(true);
-    } catch (err) { console.log(err); }
+    } catch (err) {
+      console.log(err);
+    }
   };
   const handleOpenModal = () => {
     setIsEditing(false);
     setCustomer({
-      name: "", Last_Name: "", phone: "", altphone: "", email: "", assignedEmployee: "",
-      assignedArchitect: "", status: "New",
-      notes: "", projectName: "", siteName: "", billingName: "", siteType: "", priority: "Low"
+      name: "",
+      Last_Name: "",
+      phone: "",
+      altphone: "",
+      email: "",
+      assignedEmployee: "",
+      assignedArchitect: "",
+      status: "New",
+      notes: "",
+      projectName: "",
+      siteName: "",
+      billingName: "",
+      siteType: "",
+      priority: "Low",
     });
     setShowModal(true);
   };
@@ -282,65 +374,97 @@ export default function CustomerManagement() {
     setCustomer(item); // Populate form with existing data
     setShowModal(true);
   };
+
+  const priorityStyles = {
+    Urgent: "bg-red-50 hover:bg-red-100/80 border-l-4 border-l-red-600",
+    High: "bg-orange-50 hover:bg-orange-100/80 border-l-4 border-l-orange-500",
+    Medium: "bg-blue-50 hover:bg-blue-100/80 border-l-4 border-l-blue-400",
+    Low: "bg-white hover:bg-slate-50",
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-8 font-['Lexend'] text-slate-800">
-
       {/* --- HEADER SECTION --- */}
       <div className=" mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">CRM Portal</h1>
-          <p className="text-slate-500 font-medium">Manage your clients and track project follow-ups</p>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">
+            CRM Portal
+          </h1>
+          <p className="text-slate-500 font-medium">
+            Manage your clients and track project follow-ups
+          </p>
         </div>
-        {(role === "admin" || role === "superadmin" || permissions?.["Customer Management_Add"] === true) && (
-
+        {(role === "admin" ||
+          role === "superadmin" ||
+          permissions?.["Customer Management_Add"] === true) && (
           <button
             onClick={() => handleOpenModal()}
             className="group flex items-center gap-2 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-xl shadow-slate-200 hover:bg-[#FA9C42] hover:shadow-[#FA9C42]/20 transition-all active:scale-95"
           >
-            <Plus size={20} className="group-hover:rotate-90 transition-transform" />
+            <Plus
+              size={20}
+              className="group-hover:rotate-90 transition-transform"
+            />
             <span className="font-bold">New Customer</span>
           </button>
         )}
-
       </div>
 
       {/* --- STATS OVERVIEW (Visual Polish) --- */}
       <div className="mx-auto mb-10 flex flex-wrap items-center justify-between gap-6">
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {[
-            { label: "Total Leads", val: customerList.length, color: "text-blue-600" },
-          ].map((stat, i) => (
-            <div
-              key={i}
-              className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex justify-between items-center min-w-[220px]"
-            >
-              <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">
-                {stat.label}
-              </span>
-              <span className={`text-3xl font-black ${stat.color}`}>
-                {stat.val}
-              </span>
-            </div>
-          ))}
-        </div>
 
-        {/* Search */}
-        <div className="relative bg-white rounded-2xl shadow-sm flex justify-between items-center min-w-[320px]">
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Search customer name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 rounded-xl border-2  border-[#FA9C42]/80 bg-white outline-none transition-all"
-          />
+        {/* Search and Filters */}
+        <div className="flex gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+            {[
+              {
+                label: "Total Leads",
+                val: customerList.length,
+                color: "text-blue-600",
+              },
+            ].map((stat, i) => (
+              <div
+                key={i}
+                className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex justify-between items-center min-w-[220px]"
+              >
+                <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">
+                  {stat.label}
+                </span>
+                <span className={`text-3xl font-black ${stat.color}`}>
+                  {stat.val}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="relative bg-white rounded-2xl shadow-sm flex justify-between items-center min-w-[320px]">
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search customer name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 rounded-xl border-2  border-[#FA9C42]/80 bg-white outline-none transition-all"
+            />
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm min-w-[200px]">
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border-2 border-[#FA9C42]/80 bg-white outline-none transition-all cursor-pointer appearance-none font-bold text-slate-700"
+            >
+              <option value="">All Priorities</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </div>
         </div>
       </div>
-
 
       {/* --- DATA TABLE --- */}
       <div className=" mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden">
@@ -348,146 +472,171 @@ export default function CustomerManagement() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Customer Info</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Assignment</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Project Details</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">PRIORITY LEVEL</th>
-                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Customer Info
+                </th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Assignment
+                </th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Project Details
+                </th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">
+                  PRIORITY LEVEL
+                </th>
+                <th className="px-8 py-6 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {customerList.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-20 text-slate-400 font-medium">
+                  <td
+                    colSpan="5"
+                    className="text-center py-20 text-slate-400 font-medium"
+                  >
                     No records found. Click "New Customer" to start.
                   </td>
                 </tr>
               ) : (
                 customerList
-                  .filter(item =>
-                    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    item.Last_Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    item.phone.includes(searchTerm)
+                  .filter(
+                    (item) =>
+                      ((item.name || "")
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase()) ||
+                        (item.Last_Name || "")
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase()) ||
+                        (item.phone || "").includes(searchTerm)) &&
+                      (priorityFilter === "" ||
+                        item.priority === priorityFilter),
                   )
-                  .map((item, index) => (
-                    <tr key={index} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-lg group-hover:bg-[#FA9C42]/10 group-hover:text-[#FA9C42] transition-colors">
-                            {item.name[0]}
-                          </div>
-                          <div>
-                            <div className="font-black text-slate-900">
-                              {item.name} {item.Last_Name}
+                  .map((item, index) => {
+                    // --- COLOR LOGIC START ---
+                    
+                    return (
+                      <tr
+                        key={index}
+                        className={` transition-colors group`}
+                      >
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-lg group-hover:bg-[#FA9C42]/10 group-hover:text-[#FA9C42] transition-colors">
+                              {(item.name?.[0] || "").toUpperCase()}
+                              {(item.Last_Name?.[0] || "").toUpperCase()}
                             </div>
-                            <div className="text-sm text-slate-500 flex items-center gap-1">
-                              <Phone size={12} /> {item.phone}
+                            <div>
+                              <div className="font-black text-slate-900">
+                                {item.name} {item.Last_Name}
+                              </div>
+                              <div className="text-sm text-slate-500 flex items-center gap-1">
+                                <Phone size={12} /> {item.phone}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                            Employee
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                              Employee
+                            </span>
+                            <span className="font-bold text-slate-700">
+                              {item.assignedEmployee}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">
+                            {item.siteType || "N/A"}
                           </span>
-                          <span className="font-bold text-slate-700">
-                            {item.assignedEmployee}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase text-slate-500">
-                          {item.siteType || "N/A"}
-                        </span>
-                        <div className="mt-1 font-bold text-slate-700">
-                          {item.projectName || "Unnamed Project"}
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        {/* Priority Level Selector */}
-                        <select
-                          value={item.priority || "Low"}
-                          onChange={async (e) => {
-                            const newPriority = e.target.value;
-                            const updatedItem = { ...item, priority: newPriority };
-
-                            // Update in list immediately for UX
-                            const newList = [...customerList];
-                            newList[index] = updatedItem;
-                            setCustomerList(newList);
-
-                            // Save to database
-                            try {
-                              await axios.put(`${BASE_URL}/update/${item.id}`, updatedItem);
-                              console.log("Priority updated successfully");
-                            } catch (err) {
-                              console.log("Error updating priority:", err);
-                              // Revert on error
-                              setCustomerList(customerList);
-                            }
-                          }}
-                          className="px-3 py-2 rounded-lg text-xs font-bold uppercase border border-slate-200 bg-white cursor-pointer focus:border-[#FA9C42] focus:ring-2 focus:ring-[#FA9C42]/20 transition-all hover:shadow-md"
-                        >
-                          <option value="Low" className="text-blue-600">Low</option>
-                          <option value="Medium" className="text-orange-600">Medium</option>
-                          <option value="High" className="text-red-600">High</option>
-                          <option value="Urgent" className="text-red-700 font-black">Urgent</option>
-                        </select>
-                      </td>
-
-                      {/* --- ACTIONS COLUMN: ALWAYS VISIBLE --- */}
-                      <td className="px-8 py-6">
-                        <div className="flex flex-col gap-3 items-end">
-
-
-                          {/* Action Buttons */}
-                          <div className="flex justify-end gap-3 transition-opacity">
-                            {(role === "admin" || role === "superadmin" || permissions?.["Customer Management_Edit"] === true) && (
-
+                          <div className="mt-1 font-bold text-slate-700">
+                            {item.projectName || "Unnamed Project"}
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <select
+                            value={item.priority || "Low"}
+                            onChange={async (e) => {
+                              const newPriority = e.target.value;
+                              const updatedItem = {
+                                ...item,
+                                priority: newPriority,
+                              };
+                              const newList = [...customerList];
+                              newList[index] = updatedItem;
+                              setCustomerList(newList);
+                              try {
+                                await axios.put(
+                                  `${BASE_URL}/update/${item.id}`,
+                                  updatedItem,
+                                );
+                                fetchCustomers();
+                              } catch (err) {
+                                console.log("Error updating priority:", err);
+                                setCustomerList(customerList);
+                              }
+                            }}
+                            className="px-3 py-2 rounded-lg text-xs font-bold uppercase border border-slate-200 bg-white cursor-pointer focus:border-[#FA9C42] focus:ring-2 focus:ring-[#FA9C42]/20 transition-all hover:shadow-md"
+                          >
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Urgent">Urgent</option>
+                          </select>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex flex-col gap-3 items-end">
+                            <div className="flex justify-end gap-3 transition-opacity">
+                              {(role === "admin" ||
+                                role === "superadmin" ||
+                                permissions?.["Customer Management_Edit"] ===
+                                  true) && (
+                                <button
+                                  onClick={() => handleEdit(item)}
+                                  title="Edit Details"
+                                  className="p-2.5 rounded-xl border border-slate-200 text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95"
+                                >
+                                  <Edit2 size={18} />
+                                </button>
+                              )}
                               <button
-                                onClick={() => handleEdit(item)}
-                                title="Edit Details"
-                                className="p-2.5 rounded-xl border border-slate-200 text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95"
+                                onClick={() => openHistory(item)}
+                                title="View History"
+                                className="p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:shadow-md transition-all active:scale-95"
                               >
-                                <Edit2 size={18} />
+                                <History size={18} />
                               </button>
-                            )}
-
-                            <button
-                              onClick={() => openHistory(item)}
-                              title="View History"
-                              className="p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:shadow-md transition-all active:scale-95"
-                            >
-                              <History size={18} />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setActiveIndex(index);
-                                setShowUpdateFollowup(true);
-                              }}
-                              className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-700 hover:border-[#FA9C42] hover:text-[#FA9C42] hover:shadow-md transition-all active:scale-95"
-                            >
-                              Follow-up <ChevronRight size={16} />
-                            </button>
+                              <button
+                                onClick={() => {
+                                  setActiveIndex(index);
+                                  setShowUpdateFollowup(true);
+                                }}
+                                className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-700 hover:border-[#FA9C42] hover:text-[#FA9C42] hover:shadow-md transition-all active:scale-95"
+                              >
+                                Follow-up <ChevronRight size={16} />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      {/* -------------------------------------- */}
-                    </tr>
-                  ))
+                        </td>
+                      </tr>
+                    );
+                  })
               )}
             </tbody>
           </table>
           {/* --- PAGINATION FOOTER --- */}
           <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-slate-500 font-medium">
-              Showing page <span className="text-slate-900 font-bold">{currentPage}</span> of <span className="text-slate-900 font-bold">{totalPages}</span>
+              Showing page{" "}
+              <span className="text-slate-900 font-bold">{currentPage}</span> of{" "}
+              <span className="text-slate-900 font-bold">{totalPages}</span>
             </p>
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
@@ -499,10 +648,11 @@ export default function CustomerManagement() {
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
-                    className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${currentPage === i + 1
-                      ? "bg-[#FA9C42] text-white shadow-lg shadow-[#FA9C42]/20"
-                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}
+                    className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
+                      currentPage === i + 1
+                        ? "bg-[#FA9C42] text-white shadow-lg shadow-[#FA9C42]/20"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
                   >
                     {i + 1}
                   </button>
@@ -510,7 +660,9 @@ export default function CustomerManagement() {
               </div>
 
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
@@ -525,14 +677,15 @@ export default function CustomerManagement() {
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="bg-[#FCFCFC] w-full max-w-5xl rounded-[40px] shadow-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-300">
-
             {/* Header */}
             <div className="px-10 py-8 flex justify-between items-center border-b border-slate-100 bg-white">
               <div>
                 <h2 className="text-2xl font-black text-slate-900">
                   {isEditing ? "Edit Client Details" : "Register New Client"}
                 </h2>
-                <p className="text-slate-500 text-sm font-medium">Fill in the details to create a new project record</p>
+                <p className="text-slate-500 text-sm font-medium">
+                  Fill in the details to create a new project record
+                </p>
               </div>
               <button
                 onClick={() => setShowModal(false)}
@@ -542,21 +695,68 @@ export default function CustomerManagement() {
               </button>
             </div>
 
-            <form onSubmit={saveCustomer} className="p-10 overflow-y-auto custom-scrollbar bg-[#FCFCFC]">
+            <form
+              onSubmit={saveCustomer}
+              className="p-10 overflow-y-auto custom-scrollbar bg-[#FCFCFC]"
+            >
               <div className="space-y-12">
-
                 {/* SECTION 1: PERSONAL CONTACT */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                   <div className="col-span-1">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-[#FA9C42]">Personal Contact</h3>
-                    <p className="text-slate-400 text-xs mt-2 leading-relaxed">Basic information about the client and how to reach them.</p>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[#FA9C42]">
+                      Personal Contact
+                    </h3>
+                    <p className="text-slate-400 text-xs mt-2 leading-relaxed">
+                      Basic information about the client and how to reach them.
+                    </p>
                   </div>
                   <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField label="First Name" name="name" value={customer.name} onChange={handleChange} error={errors.name} placeholder="e.g. Rahul" icon={User} />
-                    <InputField label="Last Name" name="Last_Name" value={customer.Last_Name} onChange={handleChange} error={errors.Last_Name} placeholder="e.g. Sharma" />
-                    <InputField type="number" label="Mobile Number" name="phone" value={customer.phone} onChange={handleChange} error={errors.phone} placeholder="98XXXXXXXX" icon={Phone} />
-                    <InputField type="number" label="Alt Mobile Number" name="altphone" value={customer.altphone} onChange={handleChange} error={errors.altphone} placeholder="98XXXXXXXX" icon={Phone} />
-                    <InputField label="Email Address" name="email" value={customer.email} onChange={handleChange} error={errors.email} placeholder="rahul@example.com" icon={Mail} />
+                    <InputField
+                      label="First Name"
+                      name="name"
+                      value={customer.name}
+                      onChange={handleChange}
+                      error={errors.name}
+                      placeholder="e.g. Rahul"
+                      icon={User}
+                    />
+                    <InputField
+                      label="Last Name"
+                      name="Last_Name"
+                      value={customer.Last_Name}
+                      onChange={handleChange}
+                      error={errors.Last_Name}
+                      placeholder="e.g. Sharma"
+                    />
+                    <InputField
+                      type="number"
+                      label="Mobile Number"
+                      name="phone"
+                      value={customer.phone}
+                      onChange={handleChange}
+                      error={errors.phone}
+                      placeholder="98XXXXXXXX"
+                      icon={Phone}
+                    />
+                    <InputField
+                      type="number"
+                      label="Alt Mobile Number"
+                      name="altphone"
+                      value={customer.altphone}
+                      onChange={handleChange}
+                      error={errors.altphone}
+                      placeholder="98XXXXXXXX"
+                      icon={Phone}
+                    />
+                    <InputField
+                      label="Email Address"
+                      name="email"
+                      value={customer.email}
+                      onChange={handleChange}
+                      error={errors.email}
+                      placeholder="rahul@example.com"
+                      icon={Mail}
+                    />
                   </div>
                 </div>
 
@@ -565,15 +765,57 @@ export default function CustomerManagement() {
                 {/* SECTION 2: PROJECT SPECIFICS */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                   <div className="col-span-1">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-[#FA9C42]">Project Details</h3>
-                    <p className="text-slate-400 text-xs mt-2 leading-relaxed">Specifics about the construction site or project location.</p>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[#FA9C42]">
+                      Project Details
+                    </h3>
+                    <p className="text-slate-400 text-xs mt-2 leading-relaxed">
+                      Specifics about the construction site or project location.
+                    </p>
                   </div>
                   <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField label="Project Name" name="projectName" value={customer.projectName} onChange={handleChange} placeholder="e.g. Skyline Heights" icon={Briefcase} />
-                    <InputField label="Site Name/Location" name="siteName" value={customer.siteName} onChange={handleChange} placeholder="e.g. Bandra West" icon={MapPin} />
-                    <SelectField label="Site Type" name="siteType" value={customer.siteType} onChange={handleChange} options={["Residential", "Commercial", "Industrial", "Other"]} />
-                    <SelectField label="Priority Level" name="priority" value={customer.priority} onChange={handleChange} options={["Low", "Medium", "High", "Urgent"]} />
-                    <InputField label="Billing Name" name="billingName" value={customer.billingName} onChange={handleChange} placeholder="e.g. Billing Name" icon={Receipt} />
+                    <InputField
+                      label="Project Name"
+                      name="projectName"
+                      value={customer.projectName}
+                      onChange={handleChange}
+                      placeholder="e.g. Skyline Heights"
+                      icon={Briefcase}
+                    />
+                    <InputField
+                      label="Site Name/Location"
+                      name="siteName"
+                      value={customer.siteName}
+                      onChange={handleChange}
+                      placeholder="e.g. Bandra West"
+                      icon={MapPin}
+                    />
+                    <SelectField
+                      label="Site Type"
+                      name="siteType"
+                      value={customer.siteType}
+                      onChange={handleChange}
+                      options={[
+                        "Residential",
+                        "Commercial",
+                        "Industrial",
+                        "Other",
+                      ]}
+                    />
+                    <SelectField
+                      label="Priority Level"
+                      name="priority"
+                      value={customer.priority}
+                      onChange={handleChange}
+                      options={["Low", "Medium", "High", "Urgent"]}
+                    />
+                    <InputField
+                      label="Billing Name"
+                      name="billingName"
+                      value={customer.billingName}
+                      onChange={handleChange}
+                      placeholder="e.g. Billing Name"
+                      icon={Receipt}
+                    />
                   </div>
                 </div>
 
@@ -582,15 +824,19 @@ export default function CustomerManagement() {
                 {/* SECTION 3: ASSIGNMENT & NOTES */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                   <div className="col-span-1">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-[#FA9C42]">Internal Assignment</h3>
-                    <p className="text-slate-400 text-xs mt-2 leading-relaxed">Assign team members and add administrative remarks.</p>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[#FA9C42]">
+                      Internal Assignment
+                    </h3>
+                    <p className="text-slate-400 text-xs mt-2 leading-relaxed">
+                      Assign team members and add administrative remarks.
+                    </p>
                   </div>
                   <div className="md:col-span-2 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <SelectField
                         label="Assigned Employee"
                         name="assignedEmployee"
-                        value={customer.assignedEmployee}
+                        value={customer.assignedEmployee} // This is now the ID, so it matches the option values
                         onChange={handleChange}
                         options={employees}
                         error={errors.assignedEmployee}
@@ -606,7 +852,9 @@ export default function CustomerManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Additional Notes</label>
+                      <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                        Additional Notes
+                      </label>
                       <textarea
                         name="notes"
                         value={customer.notes}
@@ -636,9 +884,12 @@ export default function CustomerManagement() {
                   <span className="flex items-center gap-2">
                     {/* Dynamic Text Logic */}
                     {isSubmitting
-                      ? (isEditing ? "Updating..." : "Creating...")
-                      : (isEditing ? "Update Record" : "Confirm & Save Record")
-                    }
+                      ? isEditing
+                        ? "Updating..."
+                        : "Creating..."
+                      : isEditing
+                        ? "Update Record"
+                        : "Confirm & Save Record"}
 
                     {/* Dynamic Icon Logic */}
                     {!isSubmitting && (
@@ -659,12 +910,15 @@ export default function CustomerManagement() {
       {showHistory && selectedCustomer && (
         <div className="fixed inset-0 z-[120] flex justify-end bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-lg h-full shadow-2xl animate-in slide-in-from-right duration-500 flex flex-col">
-
             {/* Header */}
             <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <div>
-                <h2 className="text-2xl font-black text-slate-900">Interaction History</h2>
-                <p className="text-slate-500 text-sm font-medium">Timeline for {selectedCustomer.name}</p>
+                <h2 className="text-2xl font-black text-slate-900">
+                  Interaction History
+                </h2>
+                <p className="text-slate-500 text-sm font-medium">
+                  Timeline for {selectedCustomer.name}
+                </p>
               </div>
               <button
                 onClick={() => setShowHistory(false)}
@@ -676,7 +930,8 @@ export default function CustomerManagement() {
 
             {/* Timeline Content */}
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              {selectedCustomer.followups && selectedCustomer.followups.length > 0 ? (
+              {selectedCustomer.followups &&
+              selectedCustomer.followups.length > 0 ? (
                 <div className="relative border-l-2 border-slate-100 ml-3 space-y-10">
                   {selectedCustomer.followups.map((log, idx) => (
                     <div key={idx} className="relative pl-8">
@@ -686,12 +941,17 @@ export default function CustomerManagement() {
                       <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 hover:border-[#FA9C42]/30 transition-colors">
                         <div className="flex justify-between items-center mb-3">
                           <span className="text-[10px] font-black uppercase tracking-widest text-[#FA9C42] bg-[#FA9C42]/10 px-3 py-1 rounded-full">
-                            {new Date(log.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {new Date(log.date).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })}
                           </span>
                           <History size={14} className="text-slate-300" />
                         </div>
                         <p className="text-slate-700 font-medium leading-relaxed">
-                          {log.response || "No notes provided for this interaction."}
+                          {log.response ||
+                            "No notes provided for this interaction."}
                         </p>
                       </div>
                     </div>
@@ -704,7 +964,9 @@ export default function CustomerManagement() {
                   </div>
                   <div>
                     <p className="font-bold text-slate-400">No History Found</p>
-                    <p className="text-sm text-slate-300">Start a follow-up to see logs here.</p>
+                    <p className="text-sm text-slate-300">
+                      Start a follow-up to see logs here.
+                    </p>
                   </div>
                 </div>
               )}
@@ -727,12 +989,25 @@ export default function CustomerManagement() {
           <div className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-3xl animate-in slide-in-from-bottom-4 duration-300">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-black">Log Interaction</h2>
-              <button onClick={() => setShowUpdateFollowup(false)} className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
+              <button
+                onClick={() => setShowUpdateFollowup(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X size={24} />
+              </button>
             </div>
             <div className="space-y-5">
-              <InputField label="Date" name="date" value={followupUpdate.date} disabled icon={History} />
+              <InputField
+                label="Date"
+                name="date"
+                value={followupUpdate.date}
+                disabled
+                icon={History}
+              />
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Notes / Feedback</label>
+                <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">
+                  Notes / Feedback
+                </label>
                 <textarea
                   name="response"
                   value={followupUpdate.response}
@@ -742,12 +1017,16 @@ export default function CustomerManagement() {
                   className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#FA9C42] outline-none transition-all resize-none shadow-inner"
                 />
               </div>
-              <button onClick={saveNewFollowup} className="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-[#FA9C42] transition-colors shadow-lg">Save Follow-up</button>
+              <button
+                onClick={saveNewFollowup}
+                className="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-[#FA9C42] transition-colors shadow-lg"
+              >
+                Save Follow-up
+              </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

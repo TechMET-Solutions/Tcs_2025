@@ -4,6 +4,7 @@ import { BASEURL } from "./Url";
 const BASE_URL = `${BASEURL}/api/purchase`;
 
 export const addPurchaseAPI = (data) => {
+  console.log(data, "api data");
   return axios.post(`${BASE_URL}/add`, data);
 };
 

@@ -163,9 +163,9 @@ export default function ArchitectRegistration() {
               <tr className="bg-slate-50/80 border-b border-slate-100">
                 <th className="py-5 px-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Profile / Name</th>
                 <th className="py-5 px-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Contact</th>
-                <th className="py-5 px-6 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Commission</th>
+                {/* <th className="py-5 px-6 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Commission</th> */}
                 <th className="py-5 px-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Birthdate</th>
-                <th className="py-5 px-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Loyalty</th>
+                <th className="py-5 px-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Client Count</th>
                 <th className="py-5 px-6 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
@@ -183,7 +183,7 @@ export default function ArchitectRegistration() {
               ) : (
                 filteredList.map((item) => (
                   <tr key={item.id} className="hover:bg-[#FA9C42]/5 transition-colors group">
-                    <td className="py-4 px-6 cursor-pointer" onClick={() => navigate(`/architect/${item.id}`)}>
+                    {/* <td className="py-4 px-6 cursor-pointer" onClick={() => navigate(`/architect/${item.id}`)}>
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-[#FA9C42] group-hover:text-white transition-all">
                           <UserCircle size={20} />
@@ -193,17 +193,35 @@ export default function ArchitectRegistration() {
                         </span>
 
                       </div>
-                    </td>
+                    </td> */}
+                    <td 
+  className={`py-4 px-6 ${ (role === "admin" || role === "superadmin") ? "cursor-pointer" : "cursor-default" }`} 
+  onClick={() => {
+    if (role === "admin" || role === "superadmin") {
+      navigate(`/architect/${item.id}`);
+    }
+  }}
+>
+  <div className="flex items-center gap-3">
+    <div className={`h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 transition-all ${ (role === "admin" || role === "superadmin") ? "group-hover:bg-[#FA9C42] group-hover:text-white" : "" }`}>
+      <UserCircle size={20} />
+    </div>
+    
+    <span className={`font-bold text-slate-700 transition-all ${ (role === "admin" || role === "superadmin") ? "hover:text-[#FA9C42] underline decoration-dotted" : "" }`}>
+      {item.firstname} {item.lastname}
+    </span>
+  </div>
+</td>
                     <td className="py-4 px-6 text-sm font-medium text-slate-600">
                       <div className="flex items-center gap-2">
                         <Phone size={14} className="text-green-500" /> {item.whatsapp}
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-center">
+                    {/* <td className="py-4 px-6 text-center">
                       <span className="px-3 py-1 bg-orange-50 text-[#FA9C42] rounded-full text-xs font-black">
                         {item.commission}%
                       </span>
-                    </td>
+                    </td> */}
                     <td className="py-4 px-6 text-sm text-slate-500 font-medium">{formatIndianDate(item.birthdate)}</td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-1.5 text-blue-600 font-bold">

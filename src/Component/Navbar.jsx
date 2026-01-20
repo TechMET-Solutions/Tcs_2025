@@ -1,4 +1,4 @@
-import { Bell, LogOut, Settings, X } from "lucide-react"; // Added X icon
+import { Bell, LogOut, Settings, Wallet, X } from "lucide-react"; // Added X icon
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
@@ -85,9 +85,8 @@ const { permissions, user, loading, role } = useAuth();
         </div>
 
         {/* ⚙️ SETTINGS */}
-        {(role === "admin" || role === "superadmin") && (
-
- <div className="relative">
+       
+        <div className="relative">
           <div
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow hover:shadow-lg cursor-pointer border border-gray-300 hover:bg-gray-200 transition"
             onClick={() => {
@@ -101,7 +100,8 @@ const { permissions, user, loading, role } = useAuth();
           {settingsOpen && (
             <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 shadow-lg rounded-lg z-50 text-sm">
               <ul className="py-2">
-                <li
+                {(role === "admin" || role === "superadmin") && (
+   <li
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   onClick={() => {
                     navigate("/employee-role");
@@ -110,7 +110,11 @@ const { permissions, user, loading, role } = useAuth();
                 >
                   Employee Role
                 </li>
-                <li
+ 
+                        )}
+               
+                 {(role === "admin" || role === "superadmin") && (
+   <li
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   onClick={() => {
                     navigate("/employee-attendance");
@@ -119,7 +123,11 @@ const { permissions, user, loading, role } = useAuth();
                 >
                   Employee Attendance
                 </li>
-                <li
+ 
+                        )}
+              
+                                 {(role === "admin" || role === "superadmin") && (
+ <li
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   onClick={() => {
                     navigate("/work-panel"); // Route for Admin to assign tasks
@@ -127,8 +135,12 @@ const { permissions, user, loading, role } = useAuth();
                   }}
                 >
                   Work Panel
-                  </li>
-                  <li
+                </li>
+ 
+                        )}
+               
+                 {(role === "admin" || role === "superadmin") && (
+ <li
   className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600 font-medium"
   onClick={() => {
     navigate("/expense-panel");
@@ -136,13 +148,25 @@ const { permissions, user, loading, role } = useAuth();
   }}
 >
   Expense Panel
-</li>
+                  </li>
+ 
+                        )}
+                 {role !== "admin" && role !== "superadmin" && (
+          <>
+            <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-blue-600 font-bold flex items-center gap-2" onClick={() => { navigate("/WalletSystem"); setSettingsOpen(false); }}>
+              <Wallet size={14} /> My Wallet
+            </li>
+            {/* <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600 font-medium" onClick={() => { navigate("/expense-panel"); setSettingsOpen(false); }}>
+              Expense Panel
+            </li> */}
+          </>
+        )}
+                  
+                  
               </ul>
             </div>
           )}
         </div>
-                        )}
-        
 
         {/* 👤 PROFILE */}
         <div className="relative">

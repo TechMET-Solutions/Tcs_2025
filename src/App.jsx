@@ -23,9 +23,12 @@ import ExpensePanel from "./Pages/ExpensePanel";
 import GenerateQuote from "./Pages/GenerateQuote";
 import ManageInventory from "./Pages/ManageInventory";
 import ManageQuotation from "./Pages/ManageQuotation";
+import PaymentHistory from "./Pages/paymenthistory";
 import ProductRegistration from "./Pages/ProductRegistration";
 import QualityManagement from "./Pages/QualityManagement";
 import Supplier from "./Pages/Supplier";
+import DeliveryChallanCreator from "./Pages/DeliveryChallanCreator";
+import CreditWalletSystem from "./Pages/CreditWalletSystem";
 
 
 
@@ -87,12 +90,14 @@ export default function App() {
 
           <Route path="quotation/add" element={<AddQuotation />} />
           <Route path="quotation/manage" element={<ManageQuotation />} />
-
+<Route path="/payment-history" element={<PaymentHistory />} />
           <Route path="employee-role" element={<EmployeeRole />} />
           <Route path="employee-attendance" element={<EmployeeAttendance />} />
           <Route path="Architect-Registration" element={<ArchitectRegistration />} />
           <Route path="/employee-reviews" element={<EmployeeReviews />} />
           <Route path="/architect/:id" element={<ArchitectDetails />} />
+          <Route path="/AddDeliveryChallan" element={<DeliveryChallanCreator />} />
+          <Route path="/WalletSystem" element={<CreditWalletSystem />} />
         </Route>
 
       </Routes>
