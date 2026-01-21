@@ -2,8 +2,11 @@ import axios from "axios";
 import {
   CheckCircle,
   ChevronRight,
+  Clock,
   CreditCard,
   FileText,
+  History,
+  MoreVertical,
   Trash2,
   Truck,
   X,
@@ -35,6 +38,8 @@ export default function ManageQuotation() {
     contact: "",
     tempo: "",
   });
+  const [remarks, setRemarks] = useState("");
+
   const [dcItems, setDcItems] = useState([]);
   console.log(dcItems, "dcItems");
   const [editData, setEditData] = useState({
@@ -59,6 +64,45 @@ export default function ManageQuotation() {
     contact: "",
     tempo: "",
   });
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  // Function to toggle the menu
+  const toggleMenu = (id) => {
+    setOpenMenuId(openMenuId === id ? null : id);
+  };
+  const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  // const [selectedQuotation, setSelectedQuotation] = useState(null);
+
+  const [historyData, setHistoryData] = useState([]);
+
+  const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+
+  const openFollowUpModal = (q) => {
+    setSelectedQuotation(q);
+    setIsFollowUpOpen(true);
+  };
+
+  const openFollowUpHistory = async (quotation) => {
+    try {
+      setSelectedQuotation(quotation);
+      setIsHistoryOpen(true);
+
+      const res = await fetch(
+        `${BASEURL}/api/Quotation/followup/${quotation.id}`,
+      );
+      const result = await res.json();
+
+      if (result.success) {
+        setHistoryData(result.data);
+      } else {
+        setHistoryData([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch follow-up history", err);
+      setHistoryData([]);
+    }
+  };
 
   // 2. Handle Box Update for the specific product
   const handleBoxUpdate = (productId, value) => {
@@ -80,17 +124,47 @@ export default function ManageQuotation() {
       }),
     );
   };
+  const handleSaveFollowUp = async () => {
+    if (!selectedQuotation || !remarks.trim()) return;
+
+    const followUpData = {
+      quotation_id: selectedQuotation.id,
+      remarks: remarks,
+      date: today,
+    };
+
+    try {
+      const response = await fetch(`${BASEURL}/api/Quotation/followup/store`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(followUpData),
+      });
+
+      const result = await response.json();
+
+      // Close modal only on successful creation
+      if (response.status === 201 && result.success) {
+        setIsFollowUpOpen(false);
+        setRemarks("");
+      } else {
+        console.error("Failed to save follow-up:", result.message);
+      }
+    } catch (error) {
+      console.error("Error saving follow up:", error);
+    }
+  };
+
   // 1. For Admin/SuperAdmin (Full List)
   // 1. For Admin/SuperAdmin
-  const fetchQuotations = async (page = 1) => {
+  const fetchQuotations = async (page = 1, search = "") => {
     try {
       const res = await axios.get(
-        `${BASEURL}/api/Quotation/list?page=${page}&limit=10`,
+        `${BASEURL}/api/Quotation/list?page=${page}&limit=10&search=${encodeURIComponent(search)}`,
       );
+
       if (res.data.success) {
         setQuotationList(res.data.quotations);
         setTotalPages(res.data.pagination.totalPages);
-        // REMOVED: setCurrentPage(res.data.pagination.currentPage);
       }
     } catch (error) {
       console.log("Admin Fetch Error:", error);
@@ -364,6 +438,29 @@ export default function ManageQuotation() {
       alert("Error sending request");
     }
   };
+
+  const handlePriorityChange = async (quotationId, priority) => {
+    debugger;
+    try {
+      const res = await axios.put(
+        `${BASEURL}api/Quotation/priority/${quotationId}`,
+        { priority: Number(priority) },
+      );
+
+      if (res.data && res.data.success === true) {
+        setQuotationList((prev) =>
+          prev.map((q) =>
+            q.id === quotationId ? { ...q, priority: Number(priority) } : q,
+          ),
+        );
+
+        fetchQuotations(currentPage);
+      }
+    } catch (err) {
+      console.error("Failed to update priority", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-6 md:p-10 font-['Lexend'] text-slate-700">
       <QuotationHeader fetchQuotations={fetchQuotations} />
@@ -405,6 +502,7 @@ export default function ManageQuotation() {
                 "Grand Total",
                 "Paid Amount",
                 "Due Amount",
+                "Priority",
                 "Actions",
               ].map((h) => (
                 <th
@@ -449,58 +547,143 @@ export default function ManageQuotation() {
                   ₹{q.due_amount.toLocaleString()}
                 </td>
                 <td className="p-6">
-                  <div className="flex flex-wrap gap-2">
-                    {(role === "admin" ||
-                      role === "superadmin" ||
-                      permissions?.["Quotation Management_Edit"] === true) && (
-                      <button
-                        onClick={() =>
-                          navigate("/quotation/add", { state: { editData: q } })
-                        }
-                        className="action-btn text-purple-600 border-purple-100 hover:bg-purple-600"
-                      >
-                        <FileText size={14} /> Edit
-                      </button>
-                    )}
-                    {(role === "admin" ||
-                      role === "superadmin" ||
-                      permissions?.["Quotation Management_Pay"] === true) && (
-                      <button
-                        onClick={() => openPaymentModal(q)}
-                        className={`action-btn ${
-                          Number(q.due_amount) <= 0
-                            ? "opacity-50 cursor-not-allowed grayscale"
-                            : "text-blue-600 border-blue-100 hover:bg-blue-600"
-                        }`}
-                      >
-                        <CreditCard size={14} /> Pay
-                      </button>
-                    )}
+                  <select
+                    value={q.priority}
+                    onChange={(e) => handlePriorityChange(q.id, e.target.value)}
+                    className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border outline-none
+      ${
+        Number(q.priority) === 1
+          ? "bg-slate-50 text-slate-600 border-slate-200"
+          : Number(q.priority) === 2
+            ? "bg-yellow-50 text-yellow-600 border-yellow-200"
+            : "bg-red-50 text-red-600 border-red-200"
+      }
+    `}
+                  >
+                    <option value={1}>Low</option>
+                    <option value={2}>Medium</option>
+                    <option value={3}>Urgent</option>
+                  </select>
+                </td>
 
-                    {(role === "admin" ||
-                      role === "superadmin" ||
-                      permissions?.["Quotation Management_DC"] === true) && (
-                      <button
-                        onClick={() => openDeliveryChallan(q)}
-                        className="action-btn text-orange-600 border-orange-100 hover:bg-orange-600"
-                      >
-                        <Truck size={14} /> DC
-                      </button>
-                    )}
+                <td className="p-6">
+                  <div className="relative inline-block text-left">
+                    {/* 3-Dot Trigger Button - Now with onClick */}
+                    <button
+                      onClick={() => toggleMenu(q.id)}
+                      className={`p-2 rounded-full transition-colors ${openMenuId === q.id ? "bg-slate-200" : "hover:bg-slate-100"}`}
+                    >
+                      <MoreVertical size={20} className="text-slate-600" />
+                    </button>
 
-                    <div className="w-[1px] bg-slate-100 mx-1"></div>
-                    <button
-                      onClick={() => openQuotationPDF(q.id, "qcode")}
-                      className="print-btn"
-                    >
-                      Code
-                    </button>
-                    <button
-                      onClick={() => openQuotationPDF(q.id, "qname")}
-                      className="print-btn"
-                    >
-                      Name
-                    </button>
+                    {/* Dropdown Menu - Shown only if openMenuId matches this row's ID */}
+                    {openMenuId === q.id && (
+                      <>
+                        {/* Transparent overlay to close menu when clicking outside */}
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setOpenMenuId(null)}
+                        ></div>
+
+                        <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-50 flex flex-col p-2 gap-1 animate-in fade-in zoom-in-95 duration-100">
+                          {(role === "admin" ||
+                            role === "superadmin" ||
+                            permissions?.["Quotation Management_Edit"]) && (
+                            <button
+                              onClick={() => {
+                                navigate("/quotation/add", {
+                                  state: { editData: q },
+                                });
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 rounded-md text-left"
+                            >
+                              <FileText size={14} /> Edit
+                            </button>
+                          )}
+
+                          {(role === "admin" ||
+                            role === "superadmin" ||
+                            permissions?.["Quotation Management_Pay"]) && (
+                            <button
+                              onClick={() => {
+                                openPaymentModal(q);
+                                setOpenMenuId(null);
+                              }}
+                              disabled={Number(q.due_amount) <= 0}
+                              className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md text-left ${
+                                Number(q.due_amount) <= 0
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : "text-blue-600 hover:bg-blue-50"
+                              }`}
+                            >
+                              <CreditCard size={14} /> Pay
+                            </button>
+                          )}
+
+                          {(role === "admin" ||
+                            role === "superadmin" ||
+                            permissions?.["Quotation Management_DC"]) && (
+                            <button
+                              onClick={() => {
+                                openDeliveryChallan(q);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded-md text-left"
+                            >
+                              <Truck size={14} /> DC
+                            </button>
+                          )}
+
+                          {(role === "admin" ||
+                            role === "superadmin" ||
+                            permissions?.["Quotation Management_FollowUp"]) && (
+                            <button
+                              onClick={() => {
+                                openFollowUpModal(q);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-md text-left"
+                            >
+                              <Clock size={14} /> Follow Up
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => {
+                              openFollowUpHistory(q);
+                              setOpenMenuId(null);
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-md text-left"
+                          >
+                            <History size={14} /> History
+                          </button>
+
+                          <div className="h-[1px] bg-slate-100 my-1"></div>
+
+                          <div className="flex gap-1 p-1">
+                            <button
+                              onClick={() => {
+                                openQuotationPDF(q.id, "qcode");
+                                setOpenMenuId(null);
+                              }}
+                              className="flex-1 py-1 text-[10px] font-bold text-slate-500 border border-slate-200 hover:bg-slate-50 rounded uppercase"
+                            >
+                              Code
+                            </button>
+                            <button
+                              onClick={() => {
+                                openQuotationPDF(q.id, "qname");
+                                setOpenMenuId(null);
+                              }}
+                              className="flex-1 py-1 text-[10px] font-bold text-slate-500 border border-slate-200 hover:bg-slate-50 rounded uppercase"
+                            >
+                              Name
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -858,6 +1041,115 @@ export default function ManageQuotation() {
             >
               Save Payment
             </button>
+          </div>
+        </div>
+      )}
+      {isFollowUpOpen && (
+        /* Overlay: fixed, centered, with a dark backdrop */
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          {/* Modal Content */}
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800">
+                Add Follow Up
+              </h3>
+              <button
+                onClick={() => setIsFollowUpOpen(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Date Field (Locked) */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Follow Up Date
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={today}
+                    disabled
+                    className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed font-medium"
+                  />
+                </div>
+                <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
+                  Note: Tracking date is automatically set to today.
+                </p>
+              </div>
+
+              {/* Notes Field */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Details / Remarks
+                </label>
+                <textarea
+                  className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  rows="4"
+                  placeholder="What was discussed with the client?"
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                ></textarea>
+              </div>
+            </div>
+
+            {/* Footer / Actions */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+              <button
+                onClick={() => setIsFollowUpOpen(false)}
+                className="px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                className="px-5 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-md shadow-emerald-200 transition-all active:scale-95"
+                onClick={handleSaveFollowUp}
+              >
+                Save Entry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isHistoryOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            className="absolute inset-0 bg-black/20"
+            onClick={() => setIsHistoryOpen(false)}
+          ></div>
+
+          <div className="relative w-80 bg-white h-full shadow-2xl p-6 transition-transform">
+            <div className="flex justify-between items-center border-b pb-4 mb-4">
+              <h3 className="font-bold text-lg">Follow-up Tracking</h3>
+              <button
+                onClick={() => setIsHistoryOpen(false)}
+                className="text-gray-500"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {historyData.length === 0 && (
+                <p className="text-sm text-slate-400">No follow-ups found.</p>
+              )}
+
+              {historyData.map((item) => (
+                <div
+                  key={item.id}
+                  className="relative pl-6 border-l-2 border-emerald-500"
+                >
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-emerald-500"></div>
+                  <p className="text-xs text-gray-400 font-mono">
+                    {new Date(item.follow_up_date).toLocaleDateString("en-GB")}
+                  </p>
+                  <p className="text-sm font-medium">{item.remarks}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

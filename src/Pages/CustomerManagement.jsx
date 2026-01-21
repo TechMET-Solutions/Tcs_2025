@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
   Briefcase,
+  Calendar,
   ChevronRight,
   Edit2,
   History,
@@ -12,6 +13,10 @@ import {
   Search,
   User,
   X,
+  FileText,
+  ChevronLeft,
+  Package,
+   Eye 
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BASEURL } from "../Component/API/Url";
@@ -102,24 +107,8 @@ const SelectField = ({ label, name, value, onChange, error, options }) => (
   </div>
 );
 
-// const SelectField = ({ label, name, value, onChange, error, options }) => (
-//   <div className="flex flex-col gap-1.5">
-//     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-tight ml-1">{label}</label>
-//     <select
-//       name={name}
-//       value={value}
-//       onChange={onChange}
-//       className={`w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 transition-all outline-none appearance-none cursor-pointer focus:border-[#FA9C42] focus:ring-4 focus:ring-[#FA9C42]/10 shadow-sm ${error ? "border-red-400" : ""}`}
-//     >
-//       <option value="">Select Option</option>
-//       {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-//     </select>
-//     {error && <p className="text-[10px] text-red-500 font-bold mt-0.5 ml-1 uppercase tracking-tight">{error}</p>}
-//   </div>
-// );
-
 export default function CustomerManagement() {
-  const BASE_URL = `${BASEURL}/api/users`;
+  const BASE_URL = `${BASEURL}api/users`;
   const [showModal, setShowModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showUpdateFollowup, setShowUpdateFollowup] = useState(false);
@@ -135,6 +124,7 @@ export default function CustomerManagement() {
     response: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
+  console.log(currentPage, "currentPage");
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10; // You can make this dynamic if needed
   const { permissions, user, loading, role } = useAuth();
@@ -162,7 +152,7 @@ export default function CustomerManagement() {
     siteType: "",
     priority: "Low",
     assignedEmployeeId: "",
-    assignedArchitectId:"",
+    assignedArchitectId: "",
   });
   const [priorityFilter, setPriorityFilter] = useState("");
   console.log(customer, "custoemr");
@@ -189,6 +179,12 @@ export default function CustomerManagement() {
       console.error("Fetch Error:", err);
     }
   };
+  const [isQuotationModalOpen, setIsQuotationModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [clientQuotations, setClientQuotations] = useState([]);
+  const [qPage, setQPage] = useState(1);
+  const [qTotalPages, setQTotalPages] = useState(1);
+
   const fetchEmployees = async () => {
     try {
       const res = await axios.get(`${BASEURL}/api/employees/list`);
@@ -208,12 +204,11 @@ export default function CustomerManagement() {
       const res = await axios.get(`${BASEURL}/api/architects/list`);
 
       const architectNames = res.data.architects.map((arch) =>
-        `${arch.firstname} ${arch.lastname}`.trim()
+        `${arch.firstname} ${arch.lastname}`.trim(),
       );
 
-
       setArchitects([...architectNames]);
-      setArchitectsData(res.data.architects)
+      setArchitectsData(res.data.architects);
       console.log("Architect Names:", architectNames);
     } catch (err) {
       console.log("Error fetching architects:", err);
@@ -223,6 +218,7 @@ export default function CustomerManagement() {
   const apiCalled = useRef(false);
 
   useEffect(() => {
+    debugger;
     // 1. Check if role exists (not null/undefined/empty)
     // 2. Ensure api hasn't been called yet
     if (role && !apiCalled.current) {
@@ -232,19 +228,18 @@ export default function CustomerManagement() {
       }
 
       apiCalled.current = true;
-      fetchCustomers(currentPage);
+
       fetchEmployees();
       fetchArchitects();
     }
+    fetchCustomers(currentPage);
   }, [role, user, currentPage]); // Added dependencies to re-run if they change
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "assignedEmployee") {
-      const selectedEmployee = employeesData.find(
-        (emp) => emp.name === value
-      );
+      const selectedEmployee = employeesData.find((emp) => emp.name === value);
 
       setCustomer((prev) => ({
         ...prev,
@@ -252,11 +247,9 @@ export default function CustomerManagement() {
         assignedEmployeeName: value,
         assignedEmployeeId: selectedEmployee ? selectedEmployee.id : "",
       }));
-    }
-    else if (name === "assignedArchitect") {
+    } else if (name === "assignedArchitect") {
       const selectedArchitect = architectsData.find(
-        (arch) =>
-          `${arch.firstname} ${arch.lastname}`.trim() === value
+        (arch) => `${arch.firstname} ${arch.lastname}`.trim() === value,
       );
 
       setCustomer((prev) => ({
@@ -265,17 +258,13 @@ export default function CustomerManagement() {
         assignedArchitectName: value,
         assignedArchitectId: selectedArchitect ? selectedArchitect.id : "",
       }));
-    }
-
-
-    else {
+    } else {
       setCustomer((prev) => ({
         ...prev,
         [name]: value,
       }));
     }
   };
-
 
   const handleFollowupInput = (e) =>
     setFollowupUpdate({ ...followupUpdate, [e.target.name]: e.target.value });
@@ -405,6 +394,28 @@ export default function CustomerManagement() {
     High: "bg-orange-50 hover:bg-orange-100/80 border-l-4 border-l-orange-500",
     Medium: "bg-blue-50 hover:bg-blue-100/80 border-l-4 border-l-blue-400",
     Low: "bg-white hover:bg-slate-50",
+  };
+  const openCustomerQuotations = async (client, page = 1) => {
+    try {
+      setSelectedClient(client);
+      setIsQuotationModalOpen(true);
+
+      const res = await fetch(
+        `${BASEURL}/api/Quotation/customer/${client.id}?page=${page}&limit=10`,
+      );
+      const result = await res.json();
+
+      if (result.success) {
+        setClientQuotations(result.quotations);
+        setQTotalPages(result.pagination.totalPages);
+        setQPage(result.pagination.currentPage);
+      } else {
+        setClientQuotations([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch customer quotations", err);
+      setClientQuotations([]);
+    }
   };
 
   return (
@@ -540,15 +551,15 @@ export default function CustomerManagement() {
                   )
                   .map((item, index) => {
                     // --- COLOR LOGIC START ---
-                    
+
                     return (
-                      <tr
-                        key={index}
-                        className={` transition-colors group`}
-                      >
+                      <tr key={index} className={` transition-colors group`}>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-lg group-hover:bg-[#FA9C42]/10 group-hover:text-[#FA9C42] transition-colors">
+                            <div
+                              className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-lg group-hover:bg-[#FA9C42]/10 group-hover:text-[#FA9C42] transition-colors"
+                              onClick={() => openCustomerQuotations(item)}
+                            >
                               {(item.name?.[0] || "").toUpperCase()}
                               {(item.Last_Name?.[0] || "").toUpperCase()}
                             </div>
@@ -651,6 +662,178 @@ export default function CustomerManagement() {
               )}
             </tbody>
           </table>
+          {isQuotationModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              {/* Backdrop with blur */}
+              <div
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                onClick={() => setIsQuotationModalOpen(false)}
+              ></div>
+
+              <div className="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                {/* Header */}
+                <div className="px-8 py-5 border-b flex justify-between items-center bg-slate-50/50">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800">
+                      Quotation History
+                    </h3>
+                    <p className="text-sm text-slate-500 font-medium">
+                      Client: {selectedClient?.name} {selectedClient?.Last_Name}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsQuotationModalOpen(false)}
+                    className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Main Content Area */}
+                <div className="p-6 overflow-y-auto space-y-4 bg-slate-50/30">
+                  {clientQuotations.length === 0 ? (
+                    <div className="text-center py-20">
+                      <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FileText size={32} className="text-slate-300" />
+                      </div>
+                      <p className="text-slate-500 font-medium">
+                        No quotations found for this client.
+                      </p>
+                    </div>
+                  ) : (
+                    clientQuotations.map((q) => (
+                      <div
+                        key={q.id}
+                        className="group bg-white border border-slate-200 rounded-2xl p-5 hover:border-blue-400 hover:shadow-md transition-all"
+                      >
+                        <div className="flex flex-col md:flex-row justify-between gap-4">
+                          {/* Left Side: ID and Info */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-bold text-sm">
+                                #Q{q.id}
+                              </span>
+                              <span
+                                className={`text-[11px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                  Number(q.due_amount) <= 0
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : "bg-amber-100 text-amber-700"
+                                }`}
+                              >
+                                {Number(q.due_amount) <= 0
+                                  ? "Settled"
+                                  : "Pending"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4 text-slate-400 text-xs">
+                              <span className="flex items-center gap-1">
+                                <Calendar size={12} />{" "}
+                                {new Date(q.createdAt).toLocaleDateString(
+                                  "en-GB",
+                                )}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Package size={12} /> {q.items?.length || 0}{" "}
+                                Products
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Right Side: Financials */}
+                          <div className="flex items-center gap-6">
+                            <div className="text-right border-r pr-6 border-slate-100">
+                              <p className="text-xs text-slate-400 font-medium uppercase tracking-tighter">
+                                Total Amount
+                              </p>
+                              <p className="text-lg font-black text-slate-800">
+                                ₹{Number(q.grandTotal).toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-slate-400 font-medium uppercase tracking-tighter">
+                                Due Balance
+                              </p>
+                              <p
+                                className={`text-lg font-black ${Number(q.due_amount) > 0 ? "text-rose-600" : "text-emerald-600"}`}
+                              >
+                                ₹{Number(q.due_amount).toLocaleString()}
+                              </p>
+                            </div>
+                            {/* Quick Action inside card */}
+                            <button className="p-2 bg-slate-100 text-slate-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                              <Eye size={18} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Collapsible Item Preview (Optional) */}
+                        {q.items && q.items.length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-dashed border-slate-100">
+                            <p className="text-[11px] font-bold text-slate-400 uppercase mb-2">
+                              Primary Item
+                            </p>
+                            <div className="flex items-center justify-between text-sm text-slate-600">
+                              <span>{q.items[0].productName}</span>
+                              <span className="font-medium">
+                                {q.items[0].size} | {q.items[0].box} Boxes
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Pagination Footer */}
+                <div className="px-8 py-4 border-t bg-white flex items-center justify-between">
+                  <p className="text-xs text-slate-400 font-medium">
+                    Showing Page {qPage} of {qTotalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={qPage === 1}
+                      onClick={() =>
+                        openCustomerQuotations(selectedClient, qPage - 1)
+                      }
+                      className="flex items-center gap-1 px-4 py-2 text-sm font-semibold text-slate-600 border rounded-xl hover:bg-slate-50 disabled:opacity-30 transition-all"
+                    >
+                      <ChevronLeft size={16} /> Prev
+                    </button>
+
+                    <div className="flex gap-1">
+                      {[...Array(qTotalPages)].map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() =>
+                            openCustomerQuotations(selectedClient, i + 1)
+                          }
+                          className={`w-8 h-8 text-xs font-bold rounded-lg transition-all ${
+                            qPage === i + 1
+                              ? "bg-blue-600 text-white shadow-lg"
+                              : "text-slate-400 hover:bg-slate-100"
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      disabled={qPage === qTotalPages}
+                      onClick={() =>
+                        openCustomerQuotations(selectedClient, qPage + 1)
+                      }
+                      className="flex items-center gap-1 px-4 py-2 text-sm font-semibold text-slate-600 border rounded-xl hover:bg-slate-50 disabled:opacity-30 transition-all"
+                    >
+                      Next <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* --- PAGINATION FOOTER --- */}
           <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-slate-500 font-medium">
