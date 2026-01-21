@@ -7,15 +7,19 @@ import { useAuth } from '../utils/AuthContext';
 const API_URL_Post = `${BASEURL}/api/todo/CreateTodo`;
 const API_URL_GET = `${BASEURL}/api/todo/getTodo`;
 const API_URL_DeleteT = `${BASEURL}/api/todo/Delete`;
+const API_URL_UpdateStatus = `${BASEURL}/api/todo/status`;
+
+
 const TodoComponent = ({ section = "General", employeeId = 1 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newTask, setNewTask] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-    const { permissions, user, role } = useAuth(); 
-    console.log(permissions, user, loading, role);
+  const { permissions, user, role } = useAuth();
+  
   const fetchTodos = async () => {
+    // debugger
     setLoading(true);
     try {
       const res = await axios.get(API_URL_GET, { params: { role: role, section } });
@@ -27,6 +31,7 @@ const TodoComponent = ({ section = "General", employeeId = 1 }) => {
   useEffect(() => { if (isOpen) fetchTodos(); }, [isOpen, section]);
 
   const handleAddTodo = async (e) => {
+    debugger
     e.preventDefault();
     if (!newTask.trim()) return;
     setIsSubmitting(true);
@@ -34,8 +39,8 @@ const TodoComponent = ({ section = "General", employeeId = 1 }) => {
       const payload = { title: newTask, section, userId: user.id, role: role };
       const res = await axios.post(API_URL_Post, payload);
       setTodos([res.data, ...todos]);
-        setNewTask('');
-        fetchTodos()
+      setNewTask('');
+      fetchTodos()
     } catch (err) { console.error(err); }
     setIsSubmitting(false);
   };
@@ -46,6 +51,25 @@ const TodoComponent = ({ section = "General", employeeId = 1 }) => {
       setTodos(todos.filter(t => t.id !== id));
     } catch (err) { console.error(err); }
   };
+
+  const toggleStatus = async (todo) => {
+    const newStatus = todo.status === "done" ? "pending" : "done";
+
+    try {
+      await axios.put(`${API_URL_UpdateStatus}/${todo.id}`, {
+        status: newStatus,
+      });
+
+      setTodos(
+        todos.map(t =>
+          t.id === todo.id ? { ...t, status: newStatus } : t
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
 
   return (
     <>
@@ -72,13 +96,19 @@ const TodoComponent = ({ section = "General", employeeId = 1 }) => {
             </form>
 
             <div className="max-h-[400px] overflow-y-auto p-6 space-y-4">
-              {loading ? <Loader2 className="animate-spin mx-auto" /> : 
+              {loading ? <Loader2 className="animate-spin mx-auto" /> :
                 todos.map((todo) => (
                   <div key={todo.id} className="flex items-center justify-between p-5 rounded-[24px] border border-l-4 border-l-indigo-500">
-                    <div className="flex items-center gap-4">
-                      {todo.status === 'done' ? <CheckCircle2 className="text-emerald-500" /> : <Circle className="text-slate-300" />}
-                      <span className="font-bold text-slate-700">{todo.title}</span>
+                    <div className="flex items-center gap-4 cursor-pointer" onClick={() => toggleStatus(todo)}>
+                      {todo.status === 'done'
+                        ? <CheckCircle2 className="text-emerald-500" />
+                        : <Circle className="text-slate-300" />
+                      }
+                      <span className={`font-bold ${todo.status === "done" ? "line-through text-slate-400" : "text-slate-700"}`}>
+                        {todo.title}
+                      </span>
                     </div>
+
                     <button onClick={() => handleDelete(todo.id)} className="text-rose-500"><Trash2 size={18} /></button>
                   </div>
                 ))

@@ -14,21 +14,24 @@ import {
 import { useEffect, useState } from "react";
 import { BASEURL } from "../Component/API/Url";
 import { useAuth } from "../utils/AuthContext";
+import TodoComponent from "./TodoComponent";
 
 const EmpDashboard = () => {
   // State Management
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [currentStatus, setCurrentStatus] = useState(""); // READY, IN, or COMPLETED
-  console.log(currentStatus,"currentStatus")
+  console.log(currentStatus, "currentStatus")
   const [stats, setStats] = useState({ quotationCount: 0, followUpCount: 0 });
   const [followUps, setFollowUps] = useState([]);
-const [tasks, setTasks] = useState([]);
- 
+  const [tasks, setTasks] = useState([]);
+  const [taskStatus, setTaskStatus] = useState("pending");
+
+
   const [selectedTask, setSelectedTask] = useState(null);
   const [remark, setRemark] = useState("");
-   const { user } = useAuth(); 
-  console.log(user,"user")
+  const { user } = useAuth();
+  console.log(user, "user")
   // 1. Fetch all dashboard data on component mount
   useEffect(() => {
     if (user?.id) {
@@ -36,7 +39,7 @@ const [tasks, setTasks] = useState([]);
     }
   }, [user]);
 
-const fetchMyTasks = async () => {
+  const fetchMyTasks = async () => {
     try {
       const res = await axios.get(`${BASEURL}/api/tasks/employee/${user?.id}`);
       if (res.data.success) {
@@ -75,7 +78,8 @@ const fetchMyTasks = async () => {
       setLoading(false);
     }
   };
-const handleUpdateStatus = async (taskId) => {
+
+  const handleUpdateStatus = async (taskId) => {
     if (!remark.trim()) {
       alert("Please provide a remark before completing the task.");
       return;
@@ -83,19 +87,21 @@ const handleUpdateStatus = async (taskId) => {
 
     try {
       const res = await axios.put(`${BASEURL}/api/tasks/update/${taskId}`, {
-        status: 'done',
+        status: taskStatus,
         remark: remark
       });
 
       if (res.data.success) {
         setRemark("");
+        setTaskStatus("done");
         setSelectedTask(null);
-        fetchMyTasks(); // Refresh list
+        fetchMyTasks();
       }
     } catch (err) {
       alert(err.response?.data?.message || "Update failed");
     }
   };
+
 
   const handlePunch = async (type) => {
     setLoading(true);
@@ -139,41 +145,39 @@ const handleUpdateStatus = async (taskId) => {
     }
 
     return (
-    <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-slate-200 gap-3">
-  {/* PUNCH IN BUTTON */}
-  <button
-    disabled={loading || currentStatus !== "READY"}
-    onClick={() => handlePunch("IN")}
-    className={`flex-1 px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-      currentStatus !== "READY"
-        ? "bg-slate-50 text-slate-400 cursor-not-allowed border border-slate-100"
-        : "bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-100"
-    }`}
-  >
-    {currentStatus !== "READY" && <CheckCircle size={18} />}
-    {currentStatus === "READY" ? "Punch In" : "Already Punched In"}
-  </button>
+      <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-slate-200 gap-3">
+        {/* PUNCH IN BUTTON */}
+        <button
+          disabled={loading || currentStatus !== "READY"}
+          onClick={() => handlePunch("IN")}
+          className={`flex-1 px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${currentStatus !== "READY"
+            ? "bg-slate-50 text-slate-400 cursor-not-allowed border border-slate-100"
+            : "bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-100"
+            }`}
+        >
+          {currentStatus !== "READY" && <CheckCircle size={18} />}
+          {currentStatus === "READY" ? "Punch In" : "Already Punched In"}
+        </button>
 
-  <button
-    
-    disabled={loading || currentStatus !== "IN"}
-    onClick={() => handlePunch("OUT")}
-    className={`flex-1 px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-      currentStatus !== "IN"
-        ? "bg-slate-50 text-slate-400 cursor-not-allowed border border-slate-100"
-        : "bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-100"
-    }`}
-  >
-    {currentStatus === "COMPLETED" && <CheckCircle size={18} />}
-    {currentStatus === "COMPLETED" ? "Shift Completed" : "Punch Out"}
-  </button>
-</div>
+        <button
+
+          disabled={loading || currentStatus !== "IN"}
+          onClick={() => handlePunch("OUT")}
+          className={`flex-1 px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${currentStatus !== "IN"
+            ? "bg-slate-50 text-slate-400 cursor-not-allowed border border-slate-100"
+            : "bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-100"
+            }`}
+        >
+          {currentStatus === "COMPLETED" && <CheckCircle size={18} />}
+          {currentStatus === "COMPLETED" ? "Shift Completed" : "Punch Out"}
+        </button>
+      </div>
     );
   };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans">
-      
+
       {/* --- SIDEBAR: PERSONAL INFO --- */}
       <aside className="w-full md:w-80 bg-white border-r border-slate-200 p-8 flex flex-col">
         <div className="flex flex-col items-center text-center pb-8 border-b border-slate-100">
@@ -235,13 +239,14 @@ const handleUpdateStatus = async (taskId) => {
 
       {/* --- MAIN CONTENT AREA --- */}
       <main className="flex-1 p-6 md:p-10">
-        
+
         {/* HEADER */}
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Daily Workspace</h1>
             <p className="text-slate-500 font-medium mt-1">Today is {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
           </div>
+          <TodoComponent />
           <PunchControl />
         </header>
 
@@ -284,100 +289,127 @@ const handleUpdateStatus = async (taskId) => {
         </div>
 
         {/* FOLLOW UPS DATA TABLE */}
-       <div className="space-y-6">
-      <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white">
-          <h3 className="text-xl font-black text-slate-800">My Assigned Tasks</h3>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase">Status:</span>
-            <span className="px-3 py-1 bg-amber-100 text-amber-600 text-[10px] font-black rounded-full uppercase">Pending</span>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50">
-                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Task Details</th>
-                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Date Assigned</th>
-                <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {tasks.length > 0 ? tasks.map((task) => (
-                <tr key={task.id} className="group hover:bg-slate-50/80 transition-all">
-                  <td className="px-8 py-5">
-                    <div className="font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{task.title}</div>
-                    <div className="text-xs text-slate-400 mt-1 max-w-md italic">"{task.description}"</div>
-                    {task.remark && (
-                      <div className="mt-2 text-[10px] bg-indigo-50 text-indigo-500 p-2 rounded-lg font-medium">
-                        <strong>Remark:</strong> {task.remark}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-8 py-5 text-slate-500 font-medium text-sm">
-                    {new Date(task.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-8 py-5 text-right">
-                    {task.status === 'pending' ? (
-                      <button 
-                        onClick={() => setSelectedTask(task.id)}
-                        className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-extrabold hover:bg-indigo-700 transition-all shadow-md flex items-center gap-2 ml-auto"
-                      >
-                        <Clock size={14} /> Mark as Done
-                      </button>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-green-500 font-black text-[10px] uppercase">
-                        <CheckCircle size={14} /> Completed
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan="3" className="px-8 py-20 text-center text-slate-400 font-bold">
-                    No tasks found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* MODAL / OVERLAY FOR REMARK */}
-      {selectedTask && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl">
-            <h4 className="text-xl font-black text-slate-800 mb-2">Complete Task</h4>
-            <p className="text-sm text-slate-500 mb-6">Please provide a brief remark on what was done.</p>
-            
-            <textarea 
-              className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm focus:border-indigo-500 outline-none transition-all"
-              placeholder="Type your remark here..."
-              rows="4"
-              value={remark}
-              onChange={(e) => setRemark(e.target.value)}
-            />
-
-            <div className="flex gap-3 mt-6">
-              <button 
-                onClick={() => setSelectedTask(null)}
-                className="flex-1 px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-all"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => handleUpdateStatus(selectedTask)}
-                className="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg flex items-center justify-center gap-2"
-              >
-                <Send size={16} /> Submit
-              </button>
+        <div className="space-y-6">
+          <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white">
+              <h3 className="text-xl font-black text-slate-800">My Assigned Tasks</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-400 uppercase">Status:</span>
+                <span className="px-3 py-1 bg-amber-100 text-amber-600 text-[10px] font-black rounded-full uppercase">Pending</span>
+              </div>
             </div>
-          </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-50/50">
+                    <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Task Details</th>
+                    <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Date Assigned</th>
+                    <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {tasks.length > 0 ? tasks.map((task) => (
+                    <tr key={task.id} className="group hover:bg-slate-50/80 transition-all">
+                      <td className="px-8 py-5">
+                        <div className="font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{task.title}</div>
+                        <div className="text-xs text-slate-400 mt-1 max-w-md italic">"{task.description}"</div>
+                        {task.remark && (() => {
+                          let latest = null;
+                          try {
+                            const arr = JSON.parse(task.remark);
+                            if (Array.isArray(arr) && arr.length > 0) {
+                              latest = arr[arr.length - 1];
+                            }
+                          } catch { }
+
+                          return latest ? (
+                            <div className="mt-2 text-[10px] bg-indigo-50 text-indigo-500 p-2 rounded-lg font-medium">
+                              <strong>Remark:</strong> {latest.text}
+                            </div>
+                          ) : null;
+                        })()}
+
+                      </td>
+                      <td className="px-8 py-5 text-slate-500 font-medium text-sm">
+                        {new Date(task.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        {task.status === 'pending' ? (
+                          <button
+                            onClick={() => setSelectedTask(task.id)}
+                            className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-extrabold hover:bg-indigo-700 transition-all shadow-md flex items-center gap-2 ml-auto"
+                          >
+                            <Clock size={14} /> Mark as Done
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-green-500 font-black text-[10px] uppercase">
+                            <CheckCircle size={14} /> Completed
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="3" className="px-8 py-20 text-center text-slate-400 font-bold">
+                        No tasks found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* MODAL / OVERLAY FOR REMARK */}
+          {selectedTask && (
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl">
+                <h4 className="text-xl font-black text-slate-800 mb-2">Complete Task</h4>
+                <p className="text-sm text-slate-500 mb-6">Please provide a brief remark on what was done.</p>
+
+
+
+                <textarea
+                  className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm focus:border-indigo-500 outline-none transition-all"
+                  placeholder="Type your remark here..."
+                  rows="4"
+                  value={remark}
+                  onChange={(e) => setRemark(e.target.value)}
+                />
+
+                <select
+                  className={`w-full border-2 rounded-2xl p-3 text-sm outline-none transition-all mb-4
+                     ${taskStatus === "done"
+                      ? " bg-emerald-50 text-emerald-700"
+                      : " bg-amber-50 text-amber-700"}
+                     `}
+                  value={taskStatus}
+                  onChange={(e) => setTaskStatus(e.target.value)}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="done">Done</option>
+                </select>
+
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setSelectedTask(null)}
+                    className="flex-1 px-6 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus(selectedTask)}
+                    className="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <Send size={16} /> Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
 
       </main>
     </div>

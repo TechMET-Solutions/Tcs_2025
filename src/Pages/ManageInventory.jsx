@@ -148,7 +148,7 @@ useEffect(() => {
                   <Eye size={18} />
                 </button>
                 
-                {/* {(role === "admin" || role === "superadmin" || permissions?.["Inventory Management_Edit"] === true) && (
+                {(role === "admin" || role === "superadmin" || permissions?.["Inventory Management_Edit"] === true) && (
                   <button 
                     onClick={() => navigate("/inventory/add", { state: { data: p } })} 
                     className="p-2.5 rounded-xl bg-orange-50 text-[#FF7A00] hover:bg-[#FF7A00] hover:text-white transition-all shadow-sm shadow-orange-100"
@@ -156,7 +156,7 @@ useEffect(() => {
                   >
                     <Edit3 size={18}/>
                   </button>
-                )} */}
+                )}
               </div>
             </td>
           </tr>

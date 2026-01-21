@@ -15,6 +15,10 @@ export const AdminWorkPanel = () => {
   const [loading, setLoading] = useState(false);
   const [taskLoading, setTaskLoading] = useState(false);
 
+  const [showRemarkModal, setShowRemarkModal] = useState(false);
+  const [activeRemarks, setActiveRemarks] = useState([]);
+
+
   // 1. Fetch Employees for the Dropdown
   const fetchEmployees = async (page = 1) => {
     setLoading(true);
@@ -88,6 +92,17 @@ const handleDelete = async (taskId) => {
       alert("Failed to assign task");
     }
   };
+
+  const openRemarks = (remarkJson) => {
+    try {
+      const parsed = remarkJson ? JSON.parse(remarkJson) : [];
+      setActiveRemarks(parsed);
+    } catch {
+      setActiveRemarks([]);
+    }
+    setShowRemarkModal(true);
+  };
+
 
   return (
     <div className="space-y-8">
@@ -197,13 +212,19 @@ const handleDelete = async (taskId) => {
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <div className="flex items-start gap-2 max-w-xs">
-                      <MessageSquare size={14} className="text-slate-300 mt-1 flex-shrink-0" />
-                      <p className="text-xs text-slate-500 italic truncate" title={item.remark}>
-                        {item.remark || "No remark yet"}
-                      </p>
-                    </div>
+                    {item.remark ? (
+                      <button
+                        onClick={() => openRemarks(item.remark)}
+                        className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:underline"
+                      >
+                        <MessageSquare size={14} />
+                        View
+                      </button>
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">No remark</span>
+                    )}
                   </td>
+
                   <td className="px-8 py-5 text-right">
                     <button 
                       onClick={() => handleDelete(item.id)}
@@ -222,7 +243,55 @@ const handleDelete = async (taskId) => {
             )}
           </tbody>
         </table>
-      </div>
+        </div>
+        
+        {showRemarkModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="text-lg font-black text-slate-800">Task Remarks</h4>
+                <button
+                  onClick={() => setShowRemarkModal(false)}
+                  className="text-slate-400 hover:text-slate-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {activeRemarks.length > 0 ? (
+                <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                  {activeRemarks.map((r, i) => (
+                    <div
+                      key={i}
+                      className={`p-4 rounded-xl border ${r.status === "done"
+                          ? "border-emerald-200 bg-emerald-50"
+                          : "border-amber-200 bg-amber-50"
+                        }`}
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <span
+                          className={`text-[10px] font-black uppercase ${r.status === "done"
+                              ? "text-emerald-600"
+                              : "text-amber-600"
+                            }`}
+                        >
+                          {r.status}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {new Date(r.at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-700">{r.text}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 italic">No remarks available.</p>
+              )}
+            </div>
+          </div>
+        )}
+
     </section>
     </div>
   );

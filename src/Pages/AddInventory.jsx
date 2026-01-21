@@ -1,7 +1,7 @@
 import { Calendar, CheckCircle2, Info, Phone, Plus, Trash2, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { addPurchaseAPI } from "../Component/API/inventoryApi";
+import { addPurchaseAPI, updatePurchaseAPI } from "../Component/API/inventoryApi";
 import { getProductAPI } from "../Component/API/productApi";
 import { BASEURL } from "../Component/API/Url";
 
@@ -44,11 +44,50 @@ export default function AddInventory() {
     cov: 1, batches: [], batchNo: "", availQty: 0, qty: "", total: 0, discount: "",
     godown: "KKW", filteredProducts: [],
   };
+  // useEffect(() => {
+  //   debugger
+  //   if (isEditMode && editData && products.length > 0) {
+  //     debugger
+  //     // 1. Populate Metadata (Matching your JSON keys)
+  //     setPurchaseMeta({
+  //       purchaseDate: editData.purchase_date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+  //       clientName: editData.client_name || "",
+  //       clientContact: editData.client_contact || "",
+  //       billNo: editData.bill_no || "",
+  //     });
+
+      // 2. Populate Rows
+      //   if (editData.items && editData.items.length > 0) {
+      //     debugger
+      //     const mappedRows = editData.items.map(item => {
+      //       // Find the product details from the 'products' state using the product_id
+      //       const productInfo = products.find(p => p.id === item.product_id) || {};
+        
+      //     return {
+      //       productId: item.product_id,
+      //       productName: productInfo.name || "Unknown Product",
+      //       size: productInfo.size || "",
+      //       quality: productInfo.quality || "",
+      //       rate: item.rate,
+      //       cov: item.cov || 1,
+      //       batchNo: item.batch_no || "",
+      //       availQty: item.availQty || 0, // jo API se aa raha (jaise 550)
+      //       qty: item.qty,                // 50
+      //       originalQty: item.qty,        // 🔴 save original
+      //       total: Number(item.total),
+      //       godown: item.godown || "KKW",
+      //       batches: productInfo.batches || [],
+      //       filteredProducts: []
+      //     };
+        
+      //     setRows(mappedRows);
+      //   }
+      // }
+      // }, [isEditMode, editData, products]); // Added products to dependency to ensure info is available
+  
   useEffect(() => {
-    debugger
     if (isEditMode && editData && products.length > 0) {
-      debugger
-      // 1. Populate Metadata (Matching your JSON keys)
+      // 1. Populate Metadata
       setPurchaseMeta({
         purchaseDate: editData.purchase_date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
         clientName: editData.client_name || "",
@@ -58,31 +97,33 @@ export default function AddInventory() {
 
       // 2. Populate Rows
       if (editData.items && editData.items.length > 0) {
-        debugger
         const mappedRows = editData.items.map(item => {
-          // Find the product details from the 'products' state using the product_id
           const productInfo = products.find(p => p.id === item.product_id) || {};
 
           return {
-            productId: item.product_id, // Match JSON key: product_id
+            productId: item.product_id,
             productName: productInfo.name || "Unknown Product",
             size: productInfo.size || "",
             quality: productInfo.quality || "",
             rate: item.rate,
             cov: item.cov || 1,
-            batchNo: item.batch_no || "", // Match JSON key: batch_no
-            availQty: 0, // Will be updated if user selects batch
-            qty: item.qty,
+            batchNo: item.batch_no || "",
+            availQty: item.availQty || 0, // DB ka stock (jaise 550)
+            qty: item.qty,                // current qty (50)
+            originalQty: item.qty,        // original qty save
             total: Number(item.total),
             godown: item.godown || "KKW",
-            batches: productInfo.batches || [], // Fill batches from master product list
+            batches: productInfo.batches || [],
             filteredProducts: []
           };
         });
+
         setRows(mappedRows);
       }
     }
-  }, [isEditMode, editData, products]); // Added products to dependency to ensure info is available
+  }, [isEditMode, editData, products]);
+
+
   useEffect(() => {
     getProductAPI().then((res) => {
       setProducts(res.data.products || []);
@@ -194,15 +235,56 @@ export default function AddInventory() {
   const addRow = () => setRows([...rows, { ...emptyRow }]);
   const removeRow = (i) => setRows(rows.filter((_, idx) => idx !== i));
 
+  // const savePurchase = async (e) => {
+  //   e.preventDefault();
+  //   if (!purchaseMeta.clientName || !purchaseMeta.billNo) return alert("Fill Bill No and Supplier Name");
+  //   try {
+  //     await addPurchaseAPI({ ...purchaseMeta, items: rows, subTotal });
+  //     alert("Saved Successfully");
+  //     navigate("/inventory/manage");
+  //   } catch (err) { alert("Error saving purchase"); }
+  // };
+
   const savePurchase = async (e) => {
+    debugger
     e.preventDefault();
-    if (!purchaseMeta.clientName || !purchaseMeta.billNo) return alert("Fill Bill No and Supplier Name");
+
+    if (!purchaseMeta.clientName || !purchaseMeta.billNo) {
+      return alert("Fill Bill No and Supplier Name");
+    }
+
+    // const payload = {
+    //   ...purchaseMeta,
+    //   items: rows,
+    //   subTotal,
+    // };
+
+    const payload = {
+      ...purchaseMeta,
+      items: rows.map(r => ({
+        ...r,
+        stockDiff: (Number(r.qty) || 0) - (Number(r.originalQty) || 0)
+      })),
+      subTotal,
+    };
+
     try {
-      await addPurchaseAPI({ ...purchaseMeta, items: rows, subTotal });
-      alert("Saved Successfully");
+      if (isEditMode) {
+        // 🔁 UPDATE
+        await updatePurchaseAPI(editData.id, payload);
+        alert("Updated Successfully");
+      } else {
+        // ➕ ADD
+        await addPurchaseAPI(payload);
+        alert("Saved Successfully");
+      }
+
       navigate("/inventory/manage");
-    } catch (err) { alert("Error saving purchase"); }
+    } catch (err) {
+      alert(isEditMode ? "Error updating purchase" : "Error saving purchase");
+    }
   };
+
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] p-4 md:p-8 font-['Lexend'] text-slate-800">
@@ -342,11 +424,29 @@ export default function AddInventory() {
                     </td>
 
                     <td className="p-3">
-                      <input
+                      {/* <input
                         readOnly
-                        value={r.availQty}
-                        className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold" />
+                        value={
+                          isEditMode
+                            ? Math.max(
+                              0,
+                              // baseStock = availQty - originalQty
+                              ((Number(r.availQty) || 0) - (Number(r.originalQty) || 0)) +
+                              (Number(r.qty) || 0)
+                            )
+                            : r.availQty
+                        }
+                        className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold"
+                      /> */}
+
+                      <td className="p-3">
+                        <input
+                          readOnly
+                          value={r.availQty}
+                          className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold" />
+                      </td>
                     </td>
+
                     <td className="p-3"><input value={r.qty} onChange={(e) => updateRowField(i, "qty", e.target.value)} className="tableInput w-20 font-black bg-yellow-50 border-yellow-200 focus:border-yellow-500" /></td>
 
 
