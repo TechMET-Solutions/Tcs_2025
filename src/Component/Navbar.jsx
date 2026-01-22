@@ -98,7 +98,7 @@ const { permissions, user, loading, role } = useAuth();
           </div>
 
           {settingsOpen && (
-            <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 shadow-lg rounded-lg z-50 text-sm">
+            <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 shadow-lg rounded-lg z-80 text-sm">
               <ul className="py-2">
                 {(role === "admin" || role === "superadmin") && (
    <li
