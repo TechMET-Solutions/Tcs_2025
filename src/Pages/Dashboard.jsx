@@ -32,6 +32,7 @@ import {
 } from "../Component/API/paymentApi";
 import { useAuth } from "../utils/AuthContext";
 import TodoComponent from "./TodoComponent";
+import { getDashboardStats } from "../Component/API/dashboardApi";
 
 export default function Dashboard() {
   const { permissions, user, loading, role } = useAuth();
@@ -54,50 +55,74 @@ export default function Dashboard() {
     { day: "Fri", in: 8000, out: 3000 },
   ];
 
-  const [cards] = useState([
+    const [stats, setStats] = useState({
+    customerCurrentMonthCount: 0,
+    monthlyPurchasesTotal: 0,
+    monthlyQuestionCount: 0,
+    deliveryChallanCount: 0
+  });
+
+  // Function to fetch stats
+  const fetchStats = async () => {
+    try {
+      const res = await getDashboardStats();
+      if (res.data.success) {
+        setStats(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+    fetchRequests();
+  }, []);
+
+  const cards = [
     {
-      title: "Monthly Sales",
-      value: "₹1,50,000",
+      title: "Monthly Customers",
+      value: stats.customerCurrentMonthCount,
       icon: <ShoppingCart size={22} />,
       color: "text-blue-600",
       bg: "bg-blue-50",
     },
     {
       title: "Monthly Purchase",
-      value: "₹82,000",
+      value: `₹${Number(stats.monthlyPurchasesTotal).toLocaleString()}`,
       icon: <CreditCard size={22} />,
       color: "text-purple-600",
       bg: "bg-purple-50",
     },
     {
-      title: "Net Profit",
-      value: "+ ₹68,000",
-      icon: <TrendingUp size={22} />,
+      title: "Quotations",
+      value: stats.monthlyQuestionCount,
+      icon: <Receipt size={22} />,
       color: "text-emerald-600",
       bg: "bg-emerald-50",
     },
     {
-      title: "Daily Expenses",
-      value: "₹4,200",
-      icon: <Receipt size={22} />,
+      title: "Delivery Challans",
+      value: stats.deliveryChallanCount,
+      icon: <BarChart3 size={22} />,
       color: "text-rose-600",
       bg: "bg-rose-50",
     },
     {
-      title: "Cash Flow Today",
-      value: "₹12.5k / ₹6k",
-      icon: <ArrowUpCircle size={22} />,
+      title: "New Architects",
+      value: stats.architectsCount,
+      icon: <TrendingUp size={22} />,
       color: "text-amber-600",
       bg: "bg-amber-50",
     },
     {
-      title: "Cash Balance",
-      value: "₹3,85,000",
+      title: "New Products",
+      value: stats.productsCount,
       icon: <Wallet size={22} />,
       color: "text-indigo-600",
       bg: "bg-indigo-50",
     },
-  ]);
+  ];
 
   const fetchRequests = async () => {
     try {
