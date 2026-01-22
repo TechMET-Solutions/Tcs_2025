@@ -544,10 +544,19 @@ export default function AddQuotation() {
                   <input
                     className="lux-input"
                     placeholder="+91"
+                    type="tel"
+                    maxLength={10}
                     value={clientContact}
-                    onChange={(e) => setClientContact(e.target.value)}
+                    onChange={(e) => {
+                      // allow only numbers and limit to 10 digits
+                      const onlyNumbers = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
+                      setClientContact(onlyNumbers);
+                    }}
                   />
                 </div>
+
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                     Alt Number
@@ -555,8 +564,15 @@ export default function AddQuotation() {
                   <input
                     className="lux-input"
                     placeholder="+91"
+                    type="tel"
+                    maxLength={10}
                     value={clientContactAlt}
-                    onChange={(e) => setClientContactAlt(e.target.value)}
+                    onChange={(e) => {
+                      const onlyNumbers = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
+                      setClientContactAlt(onlyNumbers);
+                    }}
                   />
                 </div>
 
