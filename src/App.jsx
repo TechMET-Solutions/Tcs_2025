@@ -29,6 +29,7 @@ import QualityManagement from "./Pages/QualityManagement";
 import Supplier from "./Pages/Supplier";
 import DeliveryChallanCreator from "./Pages/DeliveryChallanCreator";
 import CreditWalletSystem from "./Pages/CreditWalletSystem";
+import OrderBook from "./Pages/OrderBook";
 
 
 
@@ -56,23 +57,23 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-       <Route 
-            index 
+          <Route
+            index
             element={
               <ProtectedRoute adminOnly={true}>
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
           {/* Employee Dashboard: Blocked for regular Admins */}
-          <Route 
-            path="employee/dashboard" 
+          <Route
+            path="employee/dashboard"
             element={
               <ProtectedRoute employeeOnly={true}>
                 <EmpDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
           <Route path="product-registration" element={<ProductRegistration />} />
           <Route path="generate-quote" element={<GenerateQuote />} />
@@ -84,13 +85,14 @@ export default function App() {
           <Route path="Brand-Management" element={<BrandManagement />} />
           <Route path="supplier" element={<Supplier />} />
           <Route path="/expense-panel" element={<ExpensePanel />} />
-        <Route path="/work-panel" element={<AdminWorkPanel />} />
+          <Route path="/work-panel" element={<AdminWorkPanel />} />
           <Route path="inventory/add" element={<AddInventory />} />
           <Route path="inventory/manage" element={<ManageInventory />} />
 
           <Route path="quotation/add" element={<AddQuotation />} />
           <Route path="quotation/manage" element={<ManageQuotation />} />
-<Route path="/payment-history" element={<PaymentHistory />} />
+          <Route path="/payment-history" element={<PaymentHistory />} />
+          <Route path="/orderbook" element={<OrderBook />} />
           <Route path="employee-role" element={<EmployeeRole />} />
           <Route path="employee-attendance" element={<EmployeeAttendance />} />
           <Route path="Architect-Registration" element={<ArchitectRegistration />} />

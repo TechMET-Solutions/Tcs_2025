@@ -315,20 +315,22 @@ const EmpDashboard = () => {
                         <div className="font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{task.title}</div>
                         <div className="text-xs text-slate-400 mt-1 max-w-md italic">"{task.description}"</div>
                         {task.remark && (() => {
-                          let latest = null;
+                          let arr = [];
                           try {
-                            const arr = JSON.parse(task.remark);
-                            if (Array.isArray(arr) && arr.length > 0) {
-                              latest = arr[arr.length - 1];
-                            }
+                            arr = JSON.parse(task.remark);
                           } catch { }
 
-                          return latest ? (
-                            <div className="mt-2 text-[10px] bg-indigo-50 text-indigo-500 p-2 rounded-lg font-medium">
-                              <strong>Remark:</strong> {latest.text}
+                          return arr.length ? (
+                            <div className="mt-2 space-y-1">
+                              {arr.map((r, i) => (
+                                <div key={i} className="text-[10px] bg-indigo-50 text-indigo-500 p-2 rounded-lg font-medium">
+                                  <strong>{r.status}:</strong> {r.text}
+                                </div>
+                              ))}
                             </div>
                           ) : null;
                         })()}
+
 
                       </td>
                       <td className="px-8 py-5 text-slate-500 font-medium text-sm">

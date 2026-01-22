@@ -93,15 +93,26 @@ const handleDelete = async (taskId) => {
     }
   };
 
-  const openRemarks = (remarkJson) => {
+  const openRemarks = (remarkData) => {
     try {
-      const parsed = remarkJson ? JSON.parse(remarkJson) : [];
-      setActiveRemarks(parsed);
-    } catch {
+      if (Array.isArray(remarkData)) {
+        // Already parsed JSON
+        setActiveRemarks(remarkData);
+      } else if (typeof remarkData === "string") {
+        // JSON string
+        const parsed = JSON.parse(remarkData);
+        setActiveRemarks(Array.isArray(parsed) ? parsed : []);
+      } else {
+        setActiveRemarks([]);
+      }
+    } catch (e) {
       setActiveRemarks([]);
     }
+
     setShowRemarkModal(true);
   };
+
+
 
 
   return (

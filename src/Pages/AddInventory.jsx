@@ -130,6 +130,7 @@ export default function AddInventory() {
       setRows([{ ...emptyRow }]);
     });
   }, []);
+  
   useEffect(() => {
     const fetchSuppliers = async () => {
       if (searchTerm.length < 2) { // Only search after 2 characters
