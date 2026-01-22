@@ -156,10 +156,26 @@ export default function ManageQuotation() {
 
   // 1. For Admin/SuperAdmin (Full List)
   // 1. For Admin/SuperAdmin
-  const fetchQuotations = async (page = 1, search = "") => {
+  // const fetchQuotations = async (page = 1, search = "") => {
+  //   try {
+  //     const res = await axios.get(
+  //       `${BASEURL}/api/Quotation/list?page=${page}&limit=10&search=${encodeURIComponent(search)}`,
+  //     );
+
+  //     if (res.data.success) {
+  //       setQuotationList(res.data.quotations);
+  //       setTotalPages(res.data.pagination.totalPages);
+  //     }
+  //   } catch (error) {
+  //     console.log("Admin Fetch Error:", error);
+  //   }
+  // };
+  const fetchQuotations = async (page = 1, search = "", priority = "") => {
     try {
       const res = await axios.get(
-        `${BASEURL}/api/Quotation/list?page=${page}&limit=10&search=${encodeURIComponent(search)}`,
+        `${BASEURL}/api/Quotation/list?page=${page}&limit=10&search=${encodeURIComponent(
+          search,
+        )}&priority=${priority}`,
       );
 
       if (res.data.success) {
@@ -171,27 +187,27 @@ export default function ManageQuotation() {
     }
   };
 
-  const fetchQuotationsParticularEmployee = async (page = 1) => {
-    try {
-      // 1. Target the 'Particular' route (note your spelling: Quatation)
-      let url = `${BASEURL}/api/Quotation/Quatation?page=${page}&limit=10`;
+  // const fetchQuotationsParticularEmployee = async (page = 1) => {
+  //   try {
+  //     // 1. Target the 'Particular' route (note your spelling: Quatation)
+  //     let url = `${BASEURL}/api/Quotation/Quatation?page=${page}&limit=10`;
 
-      // 2. Append the employeeId if the filter is set to 'self'
-      if (quoteType === "self" && user?.id) {
-        url += `&employeeId=${user.id}`;
-      }
+  //     // 2. Append the employeeId if the filter is set to 'self'
+  //     if (quoteType === "self" && user?.id) {
+  //       url += `&employeeId=${user.id}`;
+  //     }
 
-      const res = await axios.get(url);
+  //     const res = await axios.get(url);
 
-      if (res.data.success) {
-        setQuotationList(res.data.quotations);
-        setTotalPages(res.data.pagination.totalPages);
-        // We don't set current page here to avoid the "cascading render" error
-      }
-    } catch (error) {
-      console.log("Employee Fetch Error:", error);
-    }
-  };
+  //     if (res.data.success) {
+  //       setQuotationList(res.data.quotations);
+  //       setTotalPages(res.data.pagination.totalPages);
+  //       // We don't set current page here to avoid the "cascading render" error
+  //     }
+  //   } catch (error) {
+  //     console.log("Employee Fetch Error:", error);
+  //   }
+  // };
   // 2. For Employee or "Self" view
   //   const fetchQuotationsParticularEmployee = async (page = 1) => {
   //   debugger
@@ -213,6 +229,38 @@ export default function ManageQuotation() {
   //   }
   // };
   // 3. The Logic Controller
+
+  const fetchQuotationsParticularEmployee = async (
+    page = 1,
+    search = "",
+    priority = "",
+  ) => {
+    try {
+      let url = `${BASEURL}/api/Quotation/Quatation?page=${page}&limit=10`;
+
+      if (quoteType === "self" && user?.id) {
+        url += `&employeeId=${user.id}`;
+      }
+
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
+
+      if (priority) {
+        url += `&priority=${priority}`;
+      }
+
+      const res = await axios.get(url);
+
+      if (res.data.success) {
+        setQuotationList(res.data.quotations);
+        setTotalPages(res.data.pagination.totalPages);
+      }
+    } catch (error) {
+      console.log("Employee Fetch Error:", error);
+    }
+  };
+
   useEffect(() => {
     debugger;
     if (quoteType === "self") {
@@ -463,7 +511,7 @@ export default function ManageQuotation() {
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-6 md:p-10 font-['Lexend'] text-slate-700">
-      <QuotationHeader fetchQuotations={fetchQuotations} />
+      <QuotationHeader fetchQuotations={fetchQuotations} fetchQuotationsParticularEmployee={fetchQuotationsParticularEmployee} quoteType={quoteType} />
       {role === "employee" && (
         <div className="flex gap-2 mb-4">
           <button
@@ -526,7 +574,7 @@ export default function ManageQuotation() {
                 <td className="p-6">
                   <p className="font-bold text-slate-800">{q.clientName}</p>
                   <p className="text-[10px] text-slate-400 font-bold uppercase">
-                    {q.items.length} Products
+                    {q?.items?.length} Products
                   </p>
                 </td>
                 <td className="p-6 text-sm font-medium text-slate-500">

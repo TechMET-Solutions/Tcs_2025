@@ -11,21 +11,33 @@ import {
   ShoppingCart,
   TrendingUp,
   Wallet,
-  X
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import TodoComponent from "./TodoComponent";
+import { useNavigate } from "react-router-dom";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  getPendingRequests,
+  updateRequestStatus,
+} from "../Component/API/paymentApi";
 import { useAuth } from "../utils/AuthContext";
-import {  getPendingRequests, updateRequestStatus } from "../Component/API/paymentApi";
+import TodoComponent from "./TodoComponent";
 
 export default function Dashboard() {
-
   const { permissions, user, loading, role } = useAuth();
-
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
 
   const salesData = [
     { month: "Jan", sales: 52000, purchase: 31000 },
@@ -43,15 +55,50 @@ export default function Dashboard() {
   ];
 
   const [cards] = useState([
-    { title: "Monthly Sales", value: "₹1,50,000", icon: <ShoppingCart size={22} />, color: "text-blue-600", bg: "bg-blue-50" },
-    { title: "Monthly Purchase", value: "₹82,000", icon: <CreditCard size={22} />, color: "text-purple-600", bg: "bg-purple-50" },
-    { title: "Net Profit", value: "+ ₹68,000", icon: <TrendingUp size={22} />, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { title: "Daily Expenses", value: "₹4,200", icon: <Receipt size={22} />, color: "text-rose-600", bg: "bg-rose-50" },
-    { title: "Cash Flow Today", value: "₹12.5k / ₹6k", icon: <ArrowUpCircle size={22} />, color: "text-amber-600", bg: "bg-amber-50" },
-    { title: "Cash Balance", value: "₹3,85,000", icon: <Wallet size={22} />, color: "text-indigo-600", bg: "bg-indigo-50" },
+    {
+      title: "Monthly Sales",
+      value: "₹1,50,000",
+      icon: <ShoppingCart size={22} />,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+    },
+    {
+      title: "Monthly Purchase",
+      value: "₹82,000",
+      icon: <CreditCard size={22} />,
+      color: "text-purple-600",
+      bg: "bg-purple-50",
+    },
+    {
+      title: "Net Profit",
+      value: "+ ₹68,000",
+      icon: <TrendingUp size={22} />,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+    {
+      title: "Daily Expenses",
+      value: "₹4,200",
+      icon: <Receipt size={22} />,
+      color: "text-rose-600",
+      bg: "bg-rose-50",
+    },
+    {
+      title: "Cash Flow Today",
+      value: "₹12.5k / ₹6k",
+      icon: <ArrowUpCircle size={22} />,
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+    },
+    {
+      title: "Cash Balance",
+      value: "₹3,85,000",
+      icon: <Wallet size={22} />,
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+    },
   ]);
 
-  
   const fetchRequests = async () => {
     try {
       const res = await getPendingRequests();
@@ -63,43 +110,45 @@ export default function Dashboard() {
     }
   };
   useEffect(() => {
-   
-      fetchRequests();
-   
-  },[]);
+    fetchRequests();
+  }, []);
 
-const handleStatusUpdate = async (requestId, status) => {
-  try {
-    const res = await updateRequestStatus(requestId, status);
-    if (res.data.success) {
-      alert(res.data.message);
-      // Refresh the list locally
-      setRequests(prev => prev.filter(req => req.id !== requestId));
-      // Optional: if you are on the ManageQuotation page, refresh that list too
-      if (typeof fetchQuotations === 'function') fetchQuotations();
+  const handleStatusUpdate = async (requestId, status) => {
+    try {
+      const res = await updateRequestStatus(requestId, status);
+      if (res.data.success) {
+        alert(res.data.message);
+        // Refresh the list locally
+        setRequests((prev) => prev.filter((req) => req.id !== requestId));
+        // Optional: if you are on the ManageQuotation page, refresh that list too
+        if (typeof fetchQuotations === "function") fetchQuotations();
+      }
+    } catch (error) {
+      alert("Action failed: " + error.message);
     }
-  } catch (error) {
-    alert("Action failed: " + error.message);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-10 font-['Lexend'] text-slate-800">
-
       {/* --- HEADER --- */}
       <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">Dashboard Overview</h1>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">
+            Dashboard Overview
+          </h1>
           <p className="text-slate-500 font-medium flex items-center gap-2">
             <Calendar size={16} /> Real-time analytics for your business status.
           </p>
         </div>
         <div className="flex gap-3">
           {/* New Payment Request Button */}
-          {(role === "admin" || role === "superadmin" || permissions?.["Quotation Management_Payment Requests"] === true) && (
+          {(role === "admin" ||
+            role === "superadmin" ||
+            permissions?.["Quotation Management_Payment Requests"] ===
+              true) && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="relative flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200 group"
+              className=" flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200 group"
             >
               <Bell size={20} className="group-hover:animate-bounce" />
               <span className="hidden sm:inline">Requests</span>
@@ -121,8 +170,14 @@ const handleStatusUpdate = async (requestId, status) => {
               )}
             </button>
           )}
-          <button className="px-6 py-3 bg-white border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all">Download Report</button>
-          <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95">Settings</button>
+          <button
+            onClick={() => navigate("/work-panel")}
+            className="px-6 py-3 bg-white border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all"
+          >
+            Work Panel
+          </button>
+
+          {/* <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95">Settings</button> */}
           <TodoComponent />
         </div>
       </div>
@@ -130,24 +185,34 @@ const handleStatusUpdate = async (requestId, status) => {
       {/* --- STAT CARDS GRID --- */}
       <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-10">
         {cards.map((card, index) => (
-          <div key={index} className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-xl shadow-slate-200/50 hover:translate-y-[-4px] transition-all duration-300 group">
-            <div className={`${card.bg} ${card.color} w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+          <div
+            key={index}
+            className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-xl shadow-slate-200/50 hover:translate-y-[-4px] transition-all duration-300 group"
+          >
+            <div
+              className={`${card.bg} ${card.color} w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+            >
               {card.icon}
             </div>
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] mb-1">{card.title}</p>
-            <h2 className="text-xl font-black text-slate-800 tracking-tight">{card.value}</h2>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] mb-1">
+              {card.title}
+            </p>
+            <h2 className="text-xl font-black text-slate-800 tracking-tight">
+              {card.value}
+            </h2>
           </div>
         ))}
       </div>
 
       {/* --- CHARTS SECTION --- */}
       <div className="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8 mb-10">
-
         {/* BAR CHART */}
         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-2xl">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 uppercase tracking-tight">
-              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><BarChart3 size={20} /></div>
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <BarChart3 size={20} />
+              </div>
               Sales vs Purchase
             </h2>
             <select className="bg-slate-50 border-none rounded-xl px-4 py-2 text-xs font-black uppercase text-slate-500 outline-none">
@@ -155,16 +220,48 @@ const handleStatusUpdate = async (requestId, status) => {
             </select>
           </div>
           <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={salesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 700 }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 700 }} />
-              <Tooltip
-                cursor={{ fill: '#F8FAFC' }}
-                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
+            <BarChart
+              data={salesData}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="#F1F5F9"
               />
-              <Bar dataKey="sales" fill="#2563EB" radius={[6, 6, 0, 0]} barSize={35} />
-              <Bar dataKey="purchase" fill="#9333EA" radius={[6, 6, 0, 0]} barSize={35} />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
+                dy={10}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
+              />
+              <Tooltip
+                cursor={{ fill: "#F8FAFC" }}
+                contentStyle={{
+                  borderRadius: "16px",
+                  border: "none",
+                  boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)",
+                  fontWeight: "bold",
+                }}
+              />
+              <Bar
+                dataKey="sales"
+                fill="#2563EB"
+                radius={[6, 6, 0, 0]}
+                barSize={35}
+              />
+              <Bar
+                dataKey="purchase"
+                fill="#9333EA"
+                radius={[6, 6, 0, 0]}
+                barSize={35}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -173,22 +270,65 @@ const handleStatusUpdate = async (requestId, status) => {
         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-2xl">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-xl font-black text-slate-800 flex items-center gap-3 uppercase tracking-tight">
-              <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><IndianRupee size={20} /></div>
+              <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                <IndianRupee size={20} />
+              </div>
               Cash Flow Trend
             </h2>
             <div className="flex gap-4">
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> In</div>
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Out</div>
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span> In
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400">
+                <span className="w-2 h-2 rounded-full bg-rose-500"></span> Out
+              </div>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={dailyReport} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-              <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 700 }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 700 }} />
-              <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
-              <Line type="monotone" dataKey="in" stroke="#10B981" strokeWidth={4} dot={{ r: 6, fill: '#10B981', strokeWidth: 3, stroke: '#fff' }} activeDot={{ r: 8 }} />
-              <Line type="monotone" dataKey="out" stroke="#EF4444" strokeWidth={4} dot={{ r: 6, fill: '#EF4444', strokeWidth: 3, stroke: '#fff' }} activeDot={{ r: 8 }} />
+            <LineChart
+              data={dailyReport}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="#F1F5F9"
+              />
+              <XAxis
+                dataKey="day"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
+                dy={10}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "16px",
+                  border: "none",
+                  boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="in"
+                stroke="#10B981"
+                strokeWidth={4}
+                dot={{ r: 6, fill: "#10B981", strokeWidth: 3, stroke: "#fff" }}
+                activeDot={{ r: 8 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="out"
+                stroke="#EF4444"
+                strokeWidth={4}
+                dot={{ r: 6, fill: "#EF4444", strokeWidth: 3, stroke: "#fff" }}
+                activeDot={{ r: 8 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -199,12 +339,21 @@ const handleStatusUpdate = async (requestId, status) => {
         <div className="absolute top-[-20%] right-[-5%] w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px]"></div>
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div>
-            <span className="bg-emerald-500/20 text-emerald-400 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Performance Update</span>
-            <h2 className="text-4xl font-black text-white mt-4 tracking-tight">Your business is up by 12%</h2>
-            <p className="text-slate-400 font-medium mt-1 text-lg">You have earned <span className="text-emerald-400 font-black">₹68,000</span> more than last month.</p>
+            <span className="bg-emerald-500/20 text-emerald-400 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+              Performance Update
+            </span>
+            <h2 className="text-4xl font-black text-white mt-4 tracking-tight">
+              Your business is up by 12%
+            </h2>
+            <p className="text-slate-400 font-medium mt-1 text-lg">
+              You have earned{" "}
+              <span className="text-emerald-400 font-black">₹68,000</span> more
+              than last month.
+            </p>
           </div>
           <button className="flex items-center gap-3 bg-white text-slate-900 px-10 py-5 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-emerald-400 hover:text-white transition-all shadow-xl group">
-            View Full Summary <ArrowRight className="group-hover:translate-x-2 transition-transform" />
+            View Full Summary{" "}
+            <ArrowRight className="group-hover:translate-x-2 transition-transform" />
           </button>
         </div>
       </div>
@@ -213,14 +362,18 @@ const handleStatusUpdate = async (requestId, status) => {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden border border-slate-100">
-
             {/* Header - Using your Logo/Sidebar Orange */}
             <div className="bg-[#ff7300] p-6 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <CreditCard className="text-white" size={24} />
-                <h2 className="text-xl font-bold text-white tracking-tight">Payment Requests</h2>
+                <h2 className="text-xl font-bold text-white tracking-tight">
+                  Payment Requests
+                </h2>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-white/80 hover:text-white transition-colors">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-white/80 hover:text-white transition-colors"
+              >
                 <X size={24} />
               </button>
             </div>
@@ -234,8 +387,10 @@ const handleStatusUpdate = async (requestId, status) => {
               ) : (
                 <div className="divide-y divide-slate-50">
                   {requests.map((req) => (
-                    <div key={req.id} className="p-5 hover:bg-slate-50 transition-colors">
-
+                    <div
+                      key={req.id}
+                      className="p-5 hover:bg-slate-50 transition-colors"
+                    >
                       {/* Meta Row: ID & Date */}
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-[10px] font-black bg-slate-800 text-white px-2 py-0.5 rounded uppercase">
@@ -249,11 +404,17 @@ const handleStatusUpdate = async (requestId, status) => {
                       {/* Client & Amount */}
                       <div className="flex justify-between items-end mb-4">
                         <div>
-                          <h4 className="text-lg font-bold text-slate-800 leading-none capitalize">{req.client_name}</h4>
-                          <p className="text-xs text-[#ff7300] font-bold mt-1 uppercase tracking-wider">{req.payment_type}</p>
+                          <h4 className="text-lg font-bold text-slate-800 leading-none capitalize">
+                            {req.client_name}
+                          </h4>
+                          <p className="text-xs text-[#ff7300] font-bold mt-1 uppercase tracking-wider">
+                            {req.payment_type}
+                          </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-black text-slate-900">₹{Number(req.amount).toLocaleString()}</p>
+                          <p className="text-xl font-black text-slate-900">
+                            ₹{Number(req.amount).toLocaleString()}
+                          </p>
                         </div>
                       </div>
 
@@ -267,13 +428,13 @@ const handleStatusUpdate = async (requestId, status) => {
                       {/* Buttons - Matching Sidebar Styles */}
                       <div className="flex gap-3">
                         <button
-                          onClick={() => handleStatusUpdate(req.id, 'rejected')}
+                          onClick={() => handleStatusUpdate(req.id, "rejected")}
                           className="flex-1 py-2.5 rounded-xl border-2 border-slate-100 text-slate-400 font-bold text-sm hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all"
                         >
                           Reject
                         </button>
                         <button
-                          onClick={() => handleStatusUpdate(req.id, 'approved')}
+                          onClick={() => handleStatusUpdate(req.id, "approved")}
                           className="flex-[2] py-2.5 rounded-xl bg-[#ff7300] text-white font-bold text-sm hover:bg-[#e66700] shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-2"
                         >
                           Approve Payment <Check size={16} />
@@ -297,7 +458,6 @@ const handleStatusUpdate = async (requestId, status) => {
           </div>
         </div>
       )}
-
     </div>
   );
 }

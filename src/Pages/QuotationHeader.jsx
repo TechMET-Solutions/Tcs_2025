@@ -1,16 +1,25 @@
 import { FileText, Search } from "lucide-react";
 import { useState } from "react";
-import { useAuth } from "../utils/AuthContext";
 
-const QuotationHeader = ({ fetchQuotations }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const QuotationHeader = ({
+  fetchQuotations,
+  fetchQuotationsParticularEmployee,
+  quoteType, // "overall" | "self"
+}) => {
   const [search, setSearch] = useState("");
-  const [requests, setRequests] = useState([]);
-  const { permissions, user, loading, role } = useAuth();
+  const [priority, setPriority] = useState(""); // "", 1, 2, 3
+
+  const handleFetch = (page, s, p) => {
+    debugger;
+    if (quoteType === "overall") {
+      fetchQuotations(page, s, p);
+    } else {
+      fetchQuotationsParticularEmployee(page, s, p);
+    }
+  };
 
   return (
     <div className="relative">
-      {/* --- HEADER SECTION --- */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-10 bg-white p-6 rounded-[30px] shadow-sm border border-slate-100 gap-4">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-orange-50 rounded-2xl text-orange-500">
@@ -28,7 +37,7 @@ const QuotationHeader = ({ fetchQuotations }) => {
 
         <div className="flex items-center gap-4 w-full md:w-auto">
           {/* Search Bar */}
-          <div className="flex items-center gap-3 w-full md:w-80 px-5 py-3 rounded-2xl border bg-slate-50 border-slate-100 focus-within:border-orange-300 focus-within:bg-white transition-all">
+          <div className="flex items-center gap-3 w-full md:w-72 px-5 py-3 rounded-2xl border bg-slate-50 border-slate-100 focus-within:border-orange-300 focus-within:bg-white transition-all">
             <Search size={20} className="text-slate-400" />
             <input
               className="outline-none w-full bg-transparent font-medium text-sm"
@@ -37,12 +46,26 @@ const QuotationHeader = ({ fetchQuotations }) => {
               onChange={(e) => {
                 const value = e.target.value;
                 setSearch(value);
-
-                // Call API with search term
-                fetchQuotations(1, value); // always start from page 1 when searching
+                handleFetch(1, value, priority);
               }}
             />
           </div>
+
+          {/* Priority Dropdown */}
+          <select
+            value={priority}
+            onChange={(e) => {
+              const val = e.target.value;
+              setPriority(val);
+              handleFetch(1, search, val);
+            }}
+            className="px-4 py-3 rounded-2xl border bg-slate-50 border-slate-100 font-bold text-sm outline-none"
+          >
+            <option value="">All Priority</option>
+            <option value="1">Low</option>
+            <option value="2">Medium</option>
+            <option value="3">Urgent</option>
+          </select>
         </div>
       </div>
     </div>
