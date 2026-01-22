@@ -30,6 +30,7 @@ import Supplier from "./Pages/Supplier";
 import DeliveryChallanCreator from "./Pages/DeliveryChallanCreator";
 import CreditWalletSystem from "./Pages/CreditWalletSystem";
 import OrderBook from "./Pages/OrderBook";
+import Report from "./Pages/Report";
 
 
 
@@ -100,6 +101,7 @@ export default function App() {
           <Route path="/architect/:id" element={<ArchitectDetails />} />
           <Route path="/AddDeliveryChallan" element={<DeliveryChallanCreator />} />
           <Route path="/WalletSystem" element={<CreditWalletSystem />} />
+           <Route path="/report" element={<Report />} />
         </Route>
 
       </Routes>

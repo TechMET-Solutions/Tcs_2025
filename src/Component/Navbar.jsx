@@ -1,9 +1,9 @@
+import axios from "axios";
 import { Bell, LogOut, Settings, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
 import { BASEURL } from "./API/Url";
-import axios from "axios";
 
 export default function Navbar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -35,7 +35,9 @@ export default function Navbar() {
               limit: 10,
             };
 
-      const res = await axios.get(`${BASEURL}/api/users/GetNotification`, { params });
+      const res = await axios.get(`${BASEURL}/api/users/GetNotification`, {
+        params,
+      });
 
       if (res.data.success) {
         const newData = res.data.data.map((n) => ({
@@ -76,7 +78,6 @@ export default function Navbar() {
       <h1 className="text-2xl font-semibold text-[#1F3A93]">Dashboard</h1>
 
       <div className="flex items-center gap-5">
-
         {/* 🔔 Notifications */}
         <div className="relative">
           <div
@@ -106,7 +107,9 @@ export default function Navbar() {
                       className="px-4 py-3 hover:bg-blue-50 border-b"
                     >
                       <p className="text-sm">{n.text}</p>
-                      <span className="text-[11px] text-gray-400">{n.time}</span>
+                      <span className="text-[11px] text-gray-400">
+                        {n.time}
+                      </span>
                     </div>
                   ))
                 ) : (
@@ -143,33 +146,40 @@ export default function Navbar() {
           </div>
 
           {settingsOpen && (
-            <div className="fixed top-16 right-[200px] w-52 bg-white border shadow rounded-lg z-50 text-sm">
+            <div className="absolute right-0 mt-3 w-52 bg-white border shadow rounded-lg z-50 text-sm">
               <ul className="py-2">
-
                 {(role === "admin" || role === "superadmin") && (
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => navigate("/employee-role")}>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => navigate("/employee-role")}
+                  >
                     Employee Role
                   </li>
                 )}
 
                 {(role === "admin" || role === "superadmin") && (
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => navigate("/employee-attendance")}>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => navigate("/employee-attendance")}
+                  >
                     Employee Attendance
                   </li>
                 )}
 
                 {(role === "admin" || role === "superadmin") && (
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600"
-                      onClick={() => navigate("/expense-panel")}>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600"
+                    onClick={() => navigate("/expense-panel")}
+                  >
                     Expense Panel
                   </li>
                 )}
 
                 {role !== "admin" && role !== "superadmin" && (
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-blue-600"
-                      onClick={() => navigate("/WalletSystem")}>
+                  <li
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-blue-600"
+                    onClick={() => navigate("/WalletSystem")}
+                  >
                     My Wallet
                   </li>
                 )}
@@ -210,7 +220,6 @@ export default function Navbar() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
