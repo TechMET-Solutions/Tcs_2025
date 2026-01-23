@@ -10,7 +10,7 @@ import {
   ShoppingCart,
   TrendingUp,
   Wallet,
-  X
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -39,17 +39,25 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState(""); // "customers" | "quotations"
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+  const openModal = (row, type) => {
+    setSelectedEmployee(row);
+    setModalType(type);
+    setShowModal(true);
+  };
   const [userWiseData, setUserWiseData] = useState([]);
   const [dateRange, setDateRange] = useState({
     start: "2025-01-23",
-    end: "2026-01-23"
+    end: "2026-01-23",
   });
 
   const fetchUserWiseOrders = async () => {
     try {
       const res = await axios.get(`${BASEURL}/api/dashboard/user-wise-orders`, {
-        params: { start: dateRange.start, end: dateRange.end }
+        params: { start: dateRange.start, end: dateRange.end },
       });
       if (res.data.success) {
         setUserWiseData(res.data.data);
@@ -65,7 +73,7 @@ export default function Dashboard() {
     customerCurrentMonthCount: 0,
     monthlyPurchasesTotal: 0,
     monthlyQuestionCount: 0,
-    deliveryChallanCount: 0
+    deliveryChallanCount: 0,
   });
 
   // Function to fetch stats
@@ -84,24 +92,22 @@ export default function Dashboard() {
     const res = await axios.get(`${BASEURL}/api/dashboard/charts`);
     if (res.data.success) {
       setSalesData(
-        res.data.data.salesVsPurchase.map(i => ({
+        res.data.data.salesVsPurchase.map((i) => ({
           month: i.month,
-          sales: 0,               // if you later add sales table
+          sales: 0, // if you later add sales table
           purchase: Number(i.purchase),
-        }))
+        })),
       );
 
       setDailyReport(
-        res.data.data.cashFlow.map(i => ({
+        res.data.data.cashFlow.map((i) => ({
           day: i.day.slice(0, 3),
           in: Number(i.inAmount),
           out: Number(i.outAmount),
-        }))
+        })),
       );
     }
   };
-
-
 
   const cards = [
     {
@@ -165,7 +171,6 @@ export default function Dashboard() {
     fetchUserWiseOrders(); // Add this call
   }, []);
 
-
   const handleStatusUpdate = async (requestId, status) => {
     try {
       const res = await updateRequestStatus(requestId, status);
@@ -198,31 +203,31 @@ export default function Dashboard() {
           {(role === "admin" ||
             role === "superadmin" ||
             permissions?.["Quotation Management_Payment Requests"] ===
-            true) && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className=" flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200 group"
-              >
-                <Bell size={20} className="group-hover:animate-bounce" />
-                <span className="hidden sm:inline">Requests</span>
+              true) && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className=" flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200 group"
+            >
+              <Bell size={20} className="group-hover:animate-bounce" />
+              <span className="hidden sm:inline">Requests</span>
 
-                {/* Notification Badge */}
-                {requests.length > 0 && (
-                  <>
-                    {/* The Actual Count Badge */}
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-black text-orange-600 shadow-sm">
-                      {requests.length > 99 ? "99+" : requests.length}
-                    </span>
+              {/* Notification Badge */}
+              {requests.length > 0 && (
+                <>
+                  {/* The Actual Count Badge */}
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-black text-orange-600 shadow-sm">
+                    {requests.length > 99 ? "99+" : requests.length}
+                  </span>
 
-                    {/* Animated Ping Effect (Optional: gives a 'Live' feel) */}
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-4 w-4 bg-orange-600"></span>
-                    </span>
-                  </>
-                )}
-              </button>
-            )}
+                  {/* Animated Ping Effect (Optional: gives a 'Live' feel) */}
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-4 w-4 bg-orange-600"></span>
+                  </span>
+                </>
+              )}
+            </button>
+          )}
           <button
             onClick={() => navigate("/work-panel")}
             className="px-6 py-3 bg-white border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all"
@@ -256,7 +261,82 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+      <div className="max-w-[1600px] mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden mb-10">
+        <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">
+            User Wise Order
+          </h2>
 
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="date"
+              value={dateRange.start}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, start: e.target.value })
+              }
+              className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <input
+              type="date"
+              value={dateRange.end}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, end: e.target.value })
+              }
+              className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <button
+              onClick={fetchUserWiseOrders}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-md"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50">
+                <th className="p-6 text-sm font-black text-slate-500 uppercase tracking-wider text-center border-b border-slate-100">
+                  Name
+                </th>
+                <th className="p-6 text-sm font-black text-slate-500 uppercase tracking-wider text-center border-b border-slate-100">
+                  Total Attended
+                </th>
+                <th className="p-6 text-sm font-black text-slate-500 uppercase tracking-wider text-center border-b border-slate-100">
+                  Quotation Count
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {userWiseData.map((row, idx) => (
+                <tr
+                  key={idx}
+                  className="hover:bg-slate-50/80 transition-colors"
+                >
+                  <td className="p-5 text-center font-bold text-slate-600">
+                    {row.employeeName}
+                  </td>
+
+                  <td
+                    className="p-5 text-center font-bold text-blue-600 cursor-pointer underline"
+                    onClick={() => openModal(row, "customers")}
+                  >
+                    {row.customerCount}
+                  </td>
+
+                  <td
+                    className="p-5 text-center font-bold text-blue-600 cursor-pointer underline"
+                    onClick={() => openModal(row, "quotations")}
+                  >
+                    {row.quotationCount}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
       {/* --- CHARTS SECTION --- */}
       <div className="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8 mb-10">
         {/* BAR CHART */}
@@ -313,7 +393,6 @@ export default function Dashboard() {
               />
             </BarChart>
           </ResponsiveContainer>
-
         </div>
 
         {/* LINE CHART */}
@@ -383,89 +462,84 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
         {/* --- USER WISE ORDER TABLE --- */}
-
       </div>
-
-      <div className="max-w-[1600px] mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden mb-10">
-        <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">
-            User Wise Order
-          </h2>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500"
-            />
-            <input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500"
-            />
-            <button
-              onClick={fetchUserWiseOrders}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-md"
-            >
-              Submit
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50">
-                <th className="p-6 text-sm font-black text-slate-500 uppercase tracking-wider text-center border-b border-slate-100">Name</th>
-                <th className="p-6 text-sm font-black text-slate-500 uppercase tracking-wider text-center border-b border-slate-100">Total Attended</th>
-                <th className="p-6 text-sm font-black text-slate-500 uppercase tracking-wider text-center border-b border-slate-100">Quotation Count</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {userWiseData.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="p-5 text-center font-bold text-slate-600">{row.name}</td>
-                  <td className="p-5 text-center font-bold text-slate-600">{row.totalAttended}</td>
-                  <td className="p-5 text-center font-bold text-slate-600">{row.quotationCount}</td>
-                </tr>
-              ))}
-              {userWiseData.length === 0 && (
-                <tr>
-                  <td colSpan="3" className="p-10 text-center text-slate-400 font-medium">No data available for selected dates.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* --- BOTTOM SUMMARY SECTION --- */}
-      {/* <div className="max-w-[1600px] mx-auto bg-slate-900 rounded-[40px] p-10 relative overflow-hidden shadow-2xl shadow-slate-400">
-        <div className="absolute top-[-20%] right-[-5%] w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px]"></div>
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div>
-            <span className="bg-emerald-500/20 text-emerald-400 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-              Performance Update
-            </span>
-            <h2 className="text-4xl font-black text-white mt-4 tracking-tight">
-              Your business is up by 12%
-            </h2>
-            <p className="text-slate-400 font-medium mt-1 text-lg">
-              You have earned{" "}
-              <span className="text-emerald-400 font-black">₹68,000</span> more
-              than last month.
-            </p>
-          </div>
-          <button className="flex items-center gap-3 bg-white text-slate-900 px-10 py-5 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-emerald-400 hover:text-white transition-all shadow-xl group">
-            View Full Summary{" "}
-            <ArrowRight className="group-hover:translate-x-2 transition-transform" />
-          </button>
-        </div>
-      </div> */}
 
       {/* --- MODAL OVERLAY --- */}
+      {showModal && selectedEmployee && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-black">
+                {modalType === "customers"
+                  ? "Customers Records of"
+                  : "Quotations Records of"}{" "}
+                {selectedEmployee.employeeName}
+              </h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-slate-500 hover:text-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="max-h-[400px] overflow-y-auto">
+              {modalType === "customers" && (
+                <table className="w-full text-sm border">
+                  <thead className="bg-slate-100">
+                    <tr>
+                      <th className="p-2">Name</th>
+                      <th className="p-2">Phone</th>
+                      <th className="p-2">Email</th>
+                      <th className="p-2">Priority</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedEmployee.customers.map((c) => (
+                      <tr key={c.id} className="border-t">
+                        <td className="p-2">
+                          {c.name} {c.lastName}
+                        </td>
+                        <td className="p-2">{c.phone}</td>
+                        <td className="p-2">{c.email || "-"}</td>
+                        <td className="p-2">{c.priority}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {modalType === "quotations" && (
+                <table className="w-full text-sm border">
+                  <thead className="bg-slate-100">
+                    <tr>
+                      <th className="p-2">Client</th>
+                      <th className="p-2">Contact</th>
+                      <th className="p-2">Total</th>
+                      <th className="p-2">Paid</th>
+                      <th className="p-2">Due</th>
+                      <th className="p-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedEmployee.quotations.map((q) => (
+                      <tr key={q.id} className="border-t">
+                        <td className="p-2">{q.clientName}</td>
+                        <td className="p-2">{q.contactNo}</td>
+                        <td className="p-2">{q.grandTotal}</td>
+                        <td className="p-2">{q.paidAmount}</td>
+                        <td className="p-2">{q.dueAmount}</td>
+                        <td className="p-2">{q.type}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-md rounded-[20px] shadow-2xl overflow-hidden border border-slate-100">

@@ -123,7 +123,7 @@ export default function ProductRegistration() {
       if (data.success) {
         setCategoryList(data.categories);
       }
-      console.log("setCategoryList", data.categories);
+      // console.log("setCategoryList", data.categories);
     } catch (err) {
       console.error("Failed to fetch categories", err);
     }

@@ -31,7 +31,7 @@ export const AdminWorkPanel = () => {
 
   const [showRemarkModal, setShowRemarkModal] = useState(false);
   const [activeRemarks, setActiveRemarks] = useState([]);
-  console.log(activeRemarks, "activeRemarks");
+  
 
   // 1. Fetch Employees for the Dropdown
   const fetchEmployees = async (page = 1) => {

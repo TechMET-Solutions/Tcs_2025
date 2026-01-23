@@ -76,7 +76,7 @@ const fetchEmpSallaryTransactions = async (empId, page = 1) => {
       setEmpRecords(data.data);
     } else {
       setEmpRecords([]);
-      console.error(data.message);
+      // console.error(data.message);
     }
   } catch (e) {
     console.error("Fetch error:", e);
