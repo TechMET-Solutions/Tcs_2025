@@ -443,7 +443,7 @@ export default function ManageQuotation() {
 
     setSelectedQuotation(q);
 
-    const formattedItems = q.items.map((i) => {
+    const formattedItems = q?.items?.map((i) => {
       debugger;
       // Calculation: Jar adhi 0 pathvle astil tar purn quantity dya, nahi tar vaza kara
       const pendingToDispatch =

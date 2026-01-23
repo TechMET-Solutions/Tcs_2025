@@ -33,6 +33,8 @@ import {
 import { useAuth } from "../utils/AuthContext";
 import TodoComponent from "./TodoComponent";
 import { getDashboardStats } from "../Component/API/dashboardApi";
+import axios from "axios";
+import { BASEURL } from "../Component/API/Url";
 
 export default function Dashboard() {
   const { permissions, user, loading, role } = useAuth();
@@ -40,21 +42,8 @@ export default function Dashboard() {
   const [requests, setRequests] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const salesData = [
-    { month: "Jan", sales: 52000, purchase: 31000 },
-    { month: "Feb", sales: 68000, purchase: 42000 },
-    { month: "Mar", sales: 74000, purchase: 39000 },
-    { month: "Apr", sales: 81000, purchase: 52000 },
-  ];
-
-  const dailyReport = [
-    { day: "Mon", in: 5000, out: 3000 },
-    { day: "Tue", in: 6000, out: 2000 },
-    { day: "Wed", in: 4500, out: 2500 },
-    { day: "Thu", in: 7000, out: 4000 },
-    { day: "Fri", in: 8000, out: 3000 },
-  ];
-
+ const [salesData, setSalesData] = useState([]);
+const [dailyReport, setDailyReport] = useState([]);
     const [stats, setStats] = useState({
     customerCurrentMonthCount: 0,
     monthlyPurchasesTotal: 0,
@@ -74,10 +63,28 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchStats();
-    fetchRequests();
-  }, []);
+ const fetchCharts = async () => {
+  const res = await axios.get(`${BASEURL}/api/dashboard/charts`);
+  if (res.data.success) {
+    setSalesData(
+      res.data.data.salesVsPurchase.map(i => ({
+        month: i.month,
+        sales: 0,               // if you later add sales table
+        purchase: Number(i.purchase),
+      }))
+    );
+
+    setDailyReport(
+      res.data.data.cashFlow.map(i => ({
+        day: i.day.slice(0, 3),
+        in: Number(i.inAmount),
+        out: Number(i.outAmount),
+      }))
+    );
+  }
+};
+
+
 
   const cards = [
     {
@@ -134,9 +141,12 @@ export default function Dashboard() {
       console.error("Error fetching requests:", error);
     }
   };
-  useEffect(() => {
-    fetchRequests();
-  }, []);
+ useEffect(() => {
+  fetchStats();
+  fetchCharts();
+  fetchRequests();
+}, []);
+
 
   const handleStatusUpdate = async (requestId, status) => {
     try {
@@ -238,57 +248,54 @@ export default function Dashboard() {
               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                 <BarChart3 size={20} />
               </div>
-              Sales vs Purchase
+               Purchase Record
             </h2>
             <select className="bg-slate-50 border-none rounded-xl px-4 py-2 text-xs font-black uppercase text-slate-500 outline-none">
               <option>Last 4 Months</option>
             </select>
           </div>
           <ResponsiveContainer width="100%" height={320}>
-            <BarChart
-              data={salesData}
-              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#F1F5F9"
-              />
-              <XAxis
-                dataKey="month"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
-                dy={10}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
-              />
-              <Tooltip
-                cursor={{ fill: "#F8FAFC" }}
-                contentStyle={{
-                  borderRadius: "16px",
-                  border: "none",
-                  boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)",
-                  fontWeight: "bold",
-                }}
-              />
-              <Bar
-                dataKey="sales"
-                fill="#2563EB"
-                radius={[6, 6, 0, 0]}
-                barSize={35}
-              />
-              <Bar
-                dataKey="purchase"
-                fill="#9333EA"
-                radius={[6, 6, 0, 0]}
-                barSize={35}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+  <BarChart
+    data={salesData}
+    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+  >
+    <CartesianGrid
+      strokeDasharray="3 3"
+      vertical={false}
+      stroke="#F1F5F9"
+    />
+    <XAxis
+      dataKey="month"
+      axisLine={false}
+      tickLine={false}
+      tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
+      dy={10}
+    />
+    <YAxis
+      axisLine={false}
+      tickLine={false}
+      tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
+    />
+    <Tooltip
+      cursor={{ fill: "#F8FAFC" }}
+      contentStyle={{
+        borderRadius: "16px",
+        border: "none",
+        boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)",
+        fontWeight: "bold",
+      }}
+    />
+
+    {/* Only Purchase */}
+    <Bar
+      dataKey="purchase"
+      fill="#9333EA"
+      radius={[6, 6, 0, 0]}
+      barSize={40}
+    />
+  </BarChart>
+</ResponsiveContainer>
+
         </div>
 
         {/* LINE CHART */}
@@ -360,7 +367,7 @@ export default function Dashboard() {
       </div>
 
       {/* --- BOTTOM SUMMARY SECTION --- */}
-      <div className="max-w-[1600px] mx-auto bg-slate-900 rounded-[40px] p-10 relative overflow-hidden shadow-2xl shadow-slate-400">
+      {/* <div className="max-w-[1600px] mx-auto bg-slate-900 rounded-[40px] p-10 relative overflow-hidden shadow-2xl shadow-slate-400">
         <div className="absolute top-[-20%] right-[-5%] w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px]"></div>
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div>
@@ -381,7 +388,7 @@ export default function Dashboard() {
             <ArrowRight className="group-hover:translate-x-2 transition-transform" />
           </button>
         </div>
-      </div>
+      </div> */}
 
       {/* --- MODAL OVERLAY --- */}
       {isModalOpen && (

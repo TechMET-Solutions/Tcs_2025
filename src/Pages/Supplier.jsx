@@ -107,7 +107,7 @@ export default function Supplier() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 border-b text-center">
+              <tr className="bg-slate-50  text-center">
                 <th className="px-10 py-7 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">
                   Index
                 </th>

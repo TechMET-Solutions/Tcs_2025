@@ -335,7 +335,7 @@ export default function AddInventory() {
   const selectBatch = (i, batchObj) => {
     const updated = [...rows];
     updated[i].batchNo = batchObj.batch_no;
-    updated[i].availQty = batchObj.inStock;
+    updated[i].availQty = batchObj.qty;
     setRows(updated);
     setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null });
   };
