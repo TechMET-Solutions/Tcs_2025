@@ -142,10 +142,19 @@ export default function EmployeeRegistration() {
       "status",
     ];
 
+    // textFields.forEach((field) => {
+    //   formData.append(field, employee[field] ?? "");
+    // });
     textFields.forEach((field) => {
-      formData.append(field, employee[field] ?? "");
-    });
+      let value = employee[field] ?? "";
 
+      // Apply All Caps specifically to the "name" field
+      if (field === "name" && typeof value === "string") {
+        value = value.toUpperCase().trim();
+      }
+
+      formData.append(field, value);
+    });
     // 2. Append File Objects (Names must match backend upload.fields)
     if (employee.aadhar instanceof File)
       formData.append("aadhar", employee.aadhar);
@@ -445,7 +454,7 @@ export default function EmployeeRegistration() {
                       value={employee.name}
                       onChange={handleChange}
                       placeholder="Full Name"
-                      className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all font-medium"
+                      className="p-4 rounded-xl border-2 border-slate-100 bg-white outline-none focus:border-[#FA9C42] transition-all uppercase font-medium"
                       required
                     />
                     <input

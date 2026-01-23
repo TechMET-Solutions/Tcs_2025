@@ -89,7 +89,18 @@ export default function ArchitectRegistration() {
 
   // --- HANDLERS ---
   const handleChange = (e) => {
-    setArchitect({ ...architect, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // Convert value to uppercase for all text fields
+    // If you want to exclude numbers (like whatsapp), you can add a condition
+    const formattedValue = (name === "firstname" || name === "lastname" || name === "remark")
+      ? value.toUpperCase()
+      : value;
+
+    setArchitect({
+      ...architect,
+      [name]: formattedValue
+    });
   };
 
   const handleOpenAddModal = () => {
@@ -372,7 +383,7 @@ export default function ArchitectRegistration() {
                     value={architect.firstname}
                     onChange={handleChange}
                     placeholder="e.g. Rahul"
-                    className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42]"
+                    className="w-full px-4 uppercase py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42]"
                     required
                   />
 
@@ -384,7 +395,7 @@ export default function ArchitectRegistration() {
                     value={architect.lastname}
                     onChange={handleChange}
                     placeholder="e.g. Mehta"
-                    className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium text-slate-700"
+                    className="w-full px-4 py-3 rounded-xl uppercase bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium text-slate-700"
                     required />
                 </div>
                 <div className="space-y-1.5">

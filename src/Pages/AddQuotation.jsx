@@ -431,7 +431,7 @@ export default function AddQuotation() {
         additionalDiscount: additionalDiscount,
         clientDetails: {
           clientid: clientId,
-          name: searchTerm || clientName,
+          name: (searchTerm || clientName).toUpperCase(),
           contactNo: clientContact,
           altContactNo: clientContactAlt,
           email: clientEmail,
@@ -547,7 +547,8 @@ export default function AddQuotation() {
                     placeholder="Type here..."
                     value={searchTerm || clientName}
                     onChange={(e) => {
-                      setSearchTerm(e.target.value);
+                      const value = e.target.value.toUpperCase(); // Force ALL CAPS
+                      setSearchTerm(value);
                       setIsOpen(true);
                     }}
                     onFocus={() => setIsOpen(true)}

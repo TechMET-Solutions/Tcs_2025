@@ -312,7 +312,7 @@ const OrderBook = () => {
                                         </span>
                                     </td>
 
-                                    <td className="px-4 py-5 font-semibold text-slate-700">{order.name}</td>
+                                    <td className="px-4 py-5 font-semibold uppercase text-slate-700">{order.name}</td>
                                     <td className="px-4 py-5 text-center font-medium text-slate-600">{order.size}</td>
                                     <td className="px-4 py-5 text-center font-medium text-slate-600">{order.quality}</td>
                                     <td className="px-4 py-5 text-center font-medium text-slate-500">{formatIndianDate(order.date)}</td>

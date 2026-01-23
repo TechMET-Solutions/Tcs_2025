@@ -2,21 +2,21 @@ import axios from "axios";
 import {
   Briefcase,
   Calendar,
+  ChevronLeft,
   ChevronRight,
   Edit2,
+  Eye,
+  FileText,
   History,
   Mail,
   MapPin,
+  Package,
   Phone,
   Plus,
   Receipt,
   Search,
   User,
-  X,
-  FileText,
-  ChevronLeft,
-  Package,
-   Eye 
+  X
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BASEURL } from "../Component/API/Url";
@@ -44,6 +44,7 @@ const InputField = ({
   error,
   placeholder,
   type = "text",
+  className,
   icon: Icon,
 }) => (
   <div className="flex flex-col gap-1.5">
@@ -63,7 +64,7 @@ const InputField = ({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full ${Icon ? "pl-11" : "px-4"} py-3 rounded-2xl bg-white border border-slate-200 transition-all outline-none focus:ring-4 focus:ring-[#FA9C42]/10 focus:border-[#FA9C42] shadow-sm ${error ? "border-red-400 ring-4 ring-red-500/10" : ""}`}
+        className={`w-full ${Icon ? "pl-11" : "px-4"} py-3 rounded-2xl bg-white border border-slate-200 transition-all outline-none focus:ring-4 focus:ring-[#FA9C42]/10 focus:border-[#FA9C42] shadow-sm ${error ? "border-red-400 ring-4 ring-red-500/10" : ""} ${className}`}
       />
     </div>
     {error && (
@@ -85,10 +86,9 @@ const SelectField = ({ label, name, value, onChange, error, options }) => (
       value={value}
       onChange={onChange}
       className={`w-full px-4 py-3 rounded-2xl bg-white border transition-all outline-none appearance-none cursor-pointer shadow-sm
-        ${
-          error
-            ? "border-red-400 ring-4 ring-red-500/10"
-            : "border-slate-200 focus:border-[#FA9C42] focus:ring-4 focus:ring-[#FA9C42]/10"
+        ${error
+          ? "border-red-400 ring-4 ring-red-500/10"
+          : "border-slate-200 focus:border-[#FA9C42] focus:ring-4 focus:ring-[#FA9C42]/10"
         }`}
     >
       <option value="">Select Option</option>
@@ -129,10 +129,10 @@ export default function CustomerManagement() {
   const [totalPagesCount, setTotalPagesCount] = useState(1);
   const itemsPerPage = 10; // You can make this dynamic if needed
   const { permissions, user, loading, role } = useAuth();
- 
+
   const [employees, setEmployees] = useState([]);
   const [employeesData, setEmployeesData] = useState([]);
- 
+
   const [architects, setArchitects] = useState([]);
   const [architectsData, setArchitectsData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -156,9 +156,9 @@ export default function CustomerManagement() {
     assignedArchitectId: "",
   });
   const [priorityFilter, setPriorityFilter] = useState("");
-  
+
   const fetchCustomers = async (page = 1) => {
-   
+
     try {
       let url;
 
@@ -220,7 +220,7 @@ export default function CustomerManagement() {
   const apiCalled = useRef(false);
 
   useEffect(() => {
-    
+
     // 1. Check if role exists (not null/undefined/empty)
     // 2. Ensure api hasn't been called yet
     if (role && !apiCalled.current) {
@@ -290,6 +290,55 @@ export default function CustomerManagement() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // const saveCustomer = async (e) => {
+  //   e.preventDefault();
+
+  //   // 1. Run Validation
+  //   if (!validate()) return;
+
+  //   setIsSubmitting(true);
+
+  //   try {
+  //     // 2. Prepare Data: Convert empty strings to NULL
+  //     const dataToSave = Object.keys(customer).reduce((acc, key) => {
+  //       const value = customer[key];
+  //       acc[key] =
+  //         typeof value === "string" && value.trim() === "" ? null : value;
+  //       return acc;
+  //     }, {});
+
+  //     // 3. API Call
+  //     let response;
+  //     if (isEditing) {
+  //       response = await axios.put(
+  //         `${BASE_URL}/update/${customer.id}`,
+  //         dataToSave,
+  //       );
+  //     } else {
+  //       response = await axios.post(`${BASE_URL}/add`, dataToSave);
+  //     }
+
+  //     // 4. Success Actions
+  //     fetchCustomers();
+  //     setShowModal(false);
+  //     setErrors({});
+  //     alert("✅ Customer saved successfully!");
+  //   } catch (err) {
+  //     console.error("Save Error:", err);
+
+  //     // 5. Extract the specific error message from the backend
+  //     const errorMessage =
+  //       err.response?.data?.message || "Operation failed. Please try again.";
+
+  //     // 6. Show the Alert with the specific error (e.g., "Already Exists")
+  //     alert(errorMessage);
+
+  //     // Also set it in state if you want to show it on the UI
+  //     setErrors({ server: errorMessage });
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
   const saveCustomer = async (e) => {
     e.preventDefault();
 
@@ -299,11 +348,20 @@ export default function CustomerManagement() {
     setIsSubmitting(true);
 
     try {
-      // 2. Prepare Data: Convert empty strings to NULL
+      // 2. Prepare Data: Handle Uppercase & Null values
       const dataToSave = Object.keys(customer).reduce((acc, key) => {
-        const value = customer[key];
-        acc[key] =
-          typeof value === "string" && value.trim() === "" ? null : value;
+        let value = customer[key];
+
+        // Convert targeted text fields to Uppercase
+        const fieldsToCapitalize = ["name", "Last_Name", "projectName", "siteName", "billingName"];
+
+        if (fieldsToCapitalize.includes(key) && typeof value === "string") {
+          value = value.toUpperCase().trim();
+        }
+
+        // Convert empty strings to NULL for database cleanliness
+        acc[key] = typeof value === "string" && value.trim() === "" ? null : value;
+
         return acc;
       }, {});
 
@@ -312,7 +370,7 @@ export default function CustomerManagement() {
       if (isEditing) {
         response = await axios.put(
           `${BASE_URL}/update/${customer.id}`,
-          dataToSave,
+          dataToSave
         );
       } else {
         response = await axios.post(`${BASE_URL}/add`, dataToSave);
@@ -325,21 +383,13 @@ export default function CustomerManagement() {
       alert("✅ Customer saved successfully!");
     } catch (err) {
       console.error("Save Error:", err);
-
-      // 5. Extract the specific error message from the backend
-      const errorMessage =
-        err.response?.data?.message || "Operation failed. Please try again.";
-
-      // 6. Show the Alert with the specific error (e.g., "Already Exists")
+      const errorMessage = err.response?.data?.message || "Operation failed. Please try again.";
       alert(errorMessage);
-
-      // Also set it in state if you want to show it on the UI
       setErrors({ server: errorMessage });
     } finally {
       setIsSubmitting(false);
     }
   };
-
   const saveNewFollowup = async () => {
     try {
       await axios.post(`${BASE_URL}/followup/add`, {
@@ -355,7 +405,7 @@ export default function CustomerManagement() {
   };
 
   const openHistory = async (item) => {
-  
+
     try {
       const res = await axios.get(`${BASE_URL}/followups/${item.id}`);
       setSelectedCustomer({ ...item, followups: res.data.followups || [] });
@@ -435,17 +485,17 @@ export default function CustomerManagement() {
         {(role === "admin" ||
           role === "superadmin" ||
           permissions?.["Customer Management_Add"] === true) && (
-          <button
-            onClick={() => handleOpenModal()}
-            className="group flex items-center gap-2 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-xl shadow-slate-200 hover:bg-[#FA9C42] hover:shadow-[#FA9C42]/20 transition-all active:scale-95"
-          >
-            <Plus
-              size={20}
-              className="group-hover:rotate-90 transition-transform"
-            />
-            <span className="font-bold">New Customer</span>
-          </button>
-        )}
+            <button
+              onClick={() => handleOpenModal()}
+              className="group flex items-center gap-2 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-xl shadow-slate-200 hover:bg-[#FA9C42] hover:shadow-[#FA9C42]/20 transition-all active:scale-95"
+            >
+              <Plus
+                size={20}
+                className="group-hover:rotate-90 transition-transform"
+              />
+              <span className="font-bold">New Customer</span>
+            </button>
+          )}
       </div>
 
       {/* --- STATS OVERVIEW (Visual Polish) --- */}
@@ -566,7 +616,7 @@ export default function CustomerManagement() {
                               {(item.Last_Name?.[0] || "").toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-black text-slate-900">
+                              <div className="font-black uppercase text-slate-900">
                                 {item.name} {item.Last_Name}
                               </div>
                               <div className="text-sm text-slate-500 flex items-center gap-1">
@@ -630,15 +680,15 @@ export default function CustomerManagement() {
                               {(role === "admin" ||
                                 role === "superadmin" ||
                                 permissions?.["Customer Management_Edit"] ===
-                                  true) && (
-                                <button
-                                  onClick={() => handleEdit(item)}
-                                  title="Edit Details"
-                                  className="p-2.5 rounded-xl border border-slate-200 text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95"
-                                >
-                                  <Edit2 size={18} />
-                                </button>
-                              )}
+                                true) && (
+                                  <button
+                                    onClick={() => handleEdit(item)}
+                                    title="Edit Details"
+                                    className="p-2.5 rounded-xl border border-slate-200 text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95"
+                                  >
+                                    <Edit2 size={18} />
+                                  </button>
+                                )}
                               <button
                                 onClick={() => openHistory(item)}
                                 title="View History"
@@ -716,11 +766,10 @@ export default function CustomerManagement() {
                                 #Q{q.id}
                               </span>
                               <span
-                                className={`text-[11px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                                  Number(q.due_amount) <= 0
+                                className={`text-[11px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${Number(q.due_amount) <= 0
                                     ? "bg-emerald-100 text-emerald-700"
                                     : "bg-amber-100 text-amber-700"
-                                }`}
+                                  }`}
                               >
                                 {Number(q.due_amount) <= 0
                                   ? "Settled"
@@ -810,11 +859,10 @@ export default function CustomerManagement() {
                           onClick={() =>
                             openCustomerQuotations(selectedClient, i + 1)
                           }
-                          className={`w-8 h-8 text-xs font-bold rounded-lg transition-all ${
-                            qPage === i + 1
+                          className={`w-8 h-8 text-xs font-bold rounded-lg transition-all ${qPage === i + 1
                               ? "bg-blue-600 text-white shadow-lg"
                               : "text-slate-400 hover:bg-slate-100"
-                          }`}
+                            }`}
                         >
                           {i + 1}
                         </button>
@@ -858,11 +906,10 @@ export default function CustomerManagement() {
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
-                    className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
-                      currentPage === i + 1
+                    className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${currentPage === i + 1
                         ? "bg-[#FA9C42] text-white shadow-lg shadow-[#FA9C42]/20"
                         : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
+                      }`}
                   >
                     {i + 1}
                   </button>
@@ -924,6 +971,7 @@ export default function CustomerManagement() {
                     <InputField
                       label="First Name"
                       name="name"
+                      className={"uppercase"}
                       value={customer.name}
                       onChange={handleChange}
                       error={errors.name}
@@ -933,6 +981,7 @@ export default function CustomerManagement() {
                     <InputField
                       label="Last Name"
                       name="Last_Name"
+                      className={"uppercase"}
                       value={customer.Last_Name}
                       onChange={handleChange}
                       error={errors.Last_Name}
@@ -1141,7 +1190,7 @@ export default function CustomerManagement() {
             {/* Timeline Content */}
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               {selectedCustomer.followups &&
-              selectedCustomer.followups.length > 0 ? (
+                selectedCustomer.followups.length > 0 ? (
                 <div className="relative border-l-2 border-slate-100 ml-3 space-y-10">
                   {selectedCustomer.followups.map((log, idx) => (
                     <div key={idx} className="relative pl-8">

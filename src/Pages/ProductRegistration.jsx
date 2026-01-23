@@ -149,8 +149,21 @@ export default function ProductRegistration() {
   }, []);
 
   // Form handlers
+  // const handleChange = (e) => {
+  //   setProduct({ ...product, [e.target.name]: e.target.value });
+  // };
+
   const handleChange = (e) => {
-    setProduct({ ...product, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    const formattedValue = (name === "name")
+      ? value.toUpperCase()
+      : value;
+
+    setProduct({
+      ...product,
+      [name]: formattedValue
+    });
   };
 
   const handleImageUpload = (e) => {
@@ -916,7 +929,7 @@ export default function ProductRegistration() {
                         onChange={handleChange}
                         disabled={modalMode === "view"}
                         placeholder="e.g. Italian Glazed Marble"
-                        className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none disabled:bg-slate-50 transition-all font-medium"
+                        className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none uppercase disabled:bg-slate-50 transition-all font-medium"
                         required
                       />
                     </div>
