@@ -421,7 +421,14 @@ export default function ArchitectRegistration() {
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">Birthdate</label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                    <input type="date" name="birthdate" value={architect.birthdate} onChange={handleChange} className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium" />
+                    <input
+                      type="date"
+                      name="birthdate"
+                      // value={architect.birthdate}
+                      value={architect.birthdate ? architect.birthdate.split("T")[0] : ""}
+
+                      onChange={handleChange}
+                      className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium" />
                   </div>
                 </div>
                 <div className="space-y-1.5">

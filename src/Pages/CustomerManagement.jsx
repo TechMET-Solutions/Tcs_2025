@@ -126,6 +126,7 @@ export default function CustomerManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   console.log(currentPage, "currentPage");
   const [totalPages, setTotalPages] = useState(1);
+  const [totalPagesCount, setTotalPagesCount] = useState(1);
   const itemsPerPage = 10; // You can make this dynamic if needed
   const { permissions, user, loading, role } = useAuth();
   console.log(permissions, user, loading, role);
@@ -174,6 +175,7 @@ export default function CustomerManagement() {
 
       setCustomerList(res.data.customers || []);
       setTotalPages(res.data.pagination.totalPages || 1);
+      setTotalPagesCount(res.data.pagination.total || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
@@ -456,7 +458,7 @@ export default function CustomerManagement() {
             {[
               {
                 label: "Total Leads",
-                val: customerList.length,
+                val: totalPagesCount,
                 color: "text-blue-600",
               },
             ].map((stat, i) => (

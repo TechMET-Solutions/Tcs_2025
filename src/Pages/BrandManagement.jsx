@@ -177,8 +177,8 @@ export default function BrandManagement() {
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
                     className={`w-11 h-11 rounded-xl text-sm font-black transition-all ${currentPage === i + 1
-                        ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
-                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                      ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
+                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                       }`}
                   >
                     {i + 1}
@@ -244,7 +244,7 @@ export default function BrandManagement() {
 
               <div className="pt-4 flex flex-col gap-4">
                 <button type="submit" className="w-full py-5 bg-[#FA9C42] text-white font-black rounded-2xl shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all text-lg uppercase tracking-widest">
-                  {isEditing ? "Update Registry" : "Complete Registration"}
+                  {isEditing ? "Update Brand" : "Save Brand"}
                 </button>
                 <button type="button" onClick={() => setShowModal(false)} className="w-full py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">
                   Discard Changes
