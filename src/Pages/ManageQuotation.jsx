@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { sendPaymentRequest } from "../Component/API/paymentApi";
 import { BASEURL } from "../Component/API/Url";
 import { useAuth } from "../utils/AuthContext";
@@ -22,7 +22,8 @@ import QuotationHeader from "./QuotationHeader";
 export default function ManageQuotation() {
   const [quotationList, setQuotationList] = useState([]);
   const [quoteType, setQuoteType] = useState("overall");
-
+  const { state } = useLocation();
+  const employeeId = state?.employeeId;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
@@ -62,6 +63,19 @@ export default function ManageQuotation() {
     due: 0,
     billingType: "",
   });
+
+  const [menuPos, setMenuPos] = useState(null);
+
+  const toggleMenu = (id, e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+
+    setOpenMenuId(id);
+    setMenuPos({
+      top: rect.bottom + 6,
+      left: rect.right - 190, // adjust for width
+    });
+  };
+
   // 1. Driver Details State
   const [driverDetails, setDriverDetails] = useState({
     deliveryBoy: "",
@@ -71,9 +85,9 @@ export default function ManageQuotation() {
   const [openMenuId, setOpenMenuId] = useState(null);
 
   // Function to toggle the menu
-  const toggleMenu = (id) => {
-    setOpenMenuId(openMenuId === id ? null : id);
-  };
+  // const toggleMenu = (id) => {
+  //   setOpenMenuId(openMenuId === id ? null : id);
+  // };
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   // const [selectedQuotation, setSelectedQuotation] = useState(null);
@@ -97,6 +111,19 @@ export default function ManageQuotation() {
         "Content-Type": "application/json",
       },
     });
+
+    return res.json();
+  };
+  const markQuotationPendingAPI = async (id) => {
+    const res = await fetch(
+      `${BASEURL}/api/Quotation/quotations/${id}/pending`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
 
     return res.json();
   };
@@ -248,6 +275,37 @@ export default function ManageQuotation() {
   // };
   // 3. The Logic Controller
 
+  // const fetchQuotationsParticularEmployee = async (
+  //   page = 1,
+  //   search = "",
+  //   priority = "",
+  // ) => {
+  //   try {
+  //     let url = `${BASEURL}/api/Quotation/Quatation?page=${page}&limit=10`;
+
+  //     if (quoteType === "self" && user?.id) {
+  //       url += `&employeeId=${user.id}`;
+  //     }
+
+  //     if (search) {
+  //       url += `&search=${encodeURIComponent(search)}`;
+  //     }
+
+  //     if (priority) {
+  //       url += `&priority=${priority}`;
+  //     }
+
+  //     const res = await axios.get(url);
+
+  //     if (res.data.success) {
+  //       setQuotationList(res.data.quotations);
+  //       setTotalPages(res.data.pagination.totalPages);
+  //     }
+  //   } catch (error) {
+  //     console.log("Employee Fetch Error:", error);
+  //   }
+  // };
+
   const fetchQuotationsParticularEmployee = async (
     page = 1,
     search = "",
@@ -256,7 +314,12 @@ export default function ManageQuotation() {
     try {
       let url = `${BASEURL}/api/Quotation/Quatation?page=${page}&limit=10`;
 
-      if (quoteType === "self" && user?.id) {
+      // If navigated from user-wise table, use that employeeId
+      if (employeeId) {
+        url += `&employeeId=${employeeId}`;
+      }
+      // Otherwise fall back to self user logic
+      else if (quoteType === "self" && user?.id) {
         url += `&employeeId=${user.id}`;
       }
 
@@ -279,14 +342,40 @@ export default function ManageQuotation() {
     }
   };
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   fetchQuotationsParticularEmployee(employeeId);
+  // }, [employeeId]);
+
+  // useEffect(() => {
+  //   // If coming from user-wise page with employeeId
+  //   if (employeeId) {
+  //     fetchQuotationsParticularEmployee(currentPage);
+  //     return; // stop further logic
+  //   }
+
+  //   // Normal flow
+  //   if (quoteType === "self") {
+  //     fetchQuotationsParticularEmployee(currentPage);
+  //   } else {
+  //     fetchQuotations(currentPage);
+  //   }
+  // }, [employeeId, currentPage, quoteType]);
+
+  const reloadQuotations = () => {
+    if (employeeId) {
+      fetchQuotationsParticularEmployee(currentPage);
+      return;
+    }
+
     if (quoteType === "self") {
       fetchQuotationsParticularEmployee(currentPage);
     } else {
       fetchQuotations(currentPage);
     }
-    // Dependency array is correct: it runs when page or filter changes
-  }, [currentPage, quoteType]);
+  };
+  useEffect(() => {
+    reloadQuotations();
+  }, [employeeId, currentPage, quoteType]);
 
   const filteredData = quotationList.filter((q) =>
     q.clientName?.toLowerCase().includes(search.toLowerCase()),
@@ -555,7 +644,7 @@ export default function ManageQuotation() {
       )}
 
       {/* TABLE */}
-      <div className="bg-white rounded-[35px] shadow-sm border border-slate-100 overflow-hidden w-full overflow-x-auto overscroll-x-contain">
+      <div className="bg-white rounded-[35px] shadow-sm border border-slate-100 overflow-hidden w-full overflow-x-auto overscroll-x-contain mb-[300px]">
         <table className="text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50">
@@ -636,8 +725,12 @@ export default function ManageQuotation() {
                   <div className="relative inline-block text-left">
                     {/* 3-Dot Trigger Button - Now with onClick */}
                     <button
-                      onClick={() => toggleMenu(q.id)}
-                      className={`p-2 rounded-full transition-colors ${openMenuId === q.id ? "bg-slate-200" : "hover:bg-slate-100"}`}
+                      onClick={(e) => toggleMenu(q.id, e)}
+                      className={`p-2 rounded-full transition-colors ${
+                        openMenuId === q.id
+                          ? "bg-slate-200"
+                          : "hover:bg-slate-100"
+                      }`}
                     >
                       <MoreVertical size={20} className="text-slate-600" />
                     </button>
@@ -651,7 +744,10 @@ export default function ManageQuotation() {
                           onClick={() => setOpenMenuId(null)}
                         ></div>
 
-                        <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-50 flex flex-col p-2 gap-1 animate-in fade-in zoom-in-95 duration-100">
+                        <div
+                          style={{ top: menuPos.top, left: menuPos.left }}
+                          className="fixed w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-50 flex flex-col p-2 gap-1 animate-in fade-in zoom-in-95 duration-100"
+                        >
                           {(role === "admin" ||
                             role === "superadmin" ||
                             permissions?.["Quotation Management_Edit"]) && (
@@ -753,18 +849,22 @@ export default function ManageQuotation() {
                   </div>
                 </td>
                 <td className="p-6">
-                  {q.type === "final" ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-600 text-[10px] font-black uppercase tracking-widest">
-                      <CheckCircle size={14} /> Final
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => openFinalizeModal(q)}
-                      className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-yellow-100"
-                    >
-                      Pending
-                    </button>
-                  )}
+                  <button
+                    onClick={() => openFinalizeModal(q)}
+                    className={
+                      q.type === "final"
+                        ? "inline-flex items-center gap-1 text-emerald-600 text-[10px] font-black uppercase tracking-widest hover:underline"
+                        : "bg-yellow-50 text-yellow-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-yellow-100"
+                    }
+                  >
+                    {q.type === "final" ? (
+                      <>
+                        <CheckCircle size={14} /> Final
+                      </>
+                    ) : (
+                      "Pending"
+                    )}
+                  </button>
                 </td>
               </tr>
             ))}
@@ -1237,7 +1337,9 @@ export default function ManageQuotation() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95">
             <h3 className="text-lg font-black text-slate-800 mb-4">
-              Finalize Quotation
+              {selectedQuotation.type === "final"
+                ? "Mark Quotation as Pending"
+                : "Finalize Quotation"}
             </h3>
 
             <div className="space-y-2 text-sm text-slate-600">
@@ -1266,29 +1368,30 @@ export default function ManageQuotation() {
               <button
                 onClick={async () => {
                   try {
-                    const res = await finalizeQuotationAPI(
-                      selectedQuotation.id,
-                    );
+                    const isFinal = selectedQuotation.type === "final";
+
+                    const res = isFinal
+                      ? await markQuotationPendingAPI(selectedQuotation.id)
+                      : await finalizeQuotationAPI(selectedQuotation.id);
 
                     if (res?.success) {
-                      setFilteredData((prev) =>
-                        prev.map((x) =>
-                          x.id === selectedQuotation.id
-                            ? { ...x, type: "final" }
-                            : x,
-                        ),
-                      );
+                      reloadQuotations(); // 🔥 re-run the same condition logic
                     }
                   } catch (err) {
-                    console.error("Failed to finalize quotation", err);
+                    console.error("Failed to update quotation", err);
                   } finally {
-                    // Modal hamesha close ho
                     setShowFinalizeModal(false);
                   }
                 }}
-                className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700"
+                className={
+                  selectedQuotation.type === "final"
+                    ? "px-4 py-2 rounded-lg bg-yellow-600 text-white font-bold hover:bg-yellow-700"
+                    : "px-4 py-2 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700"
+                }
               >
-                Mark as Final
+                {selectedQuotation.type === "final"
+                  ? "Mark as Pending"
+                  : "Mark as Final"}
               </button>
             </div>
           </div>

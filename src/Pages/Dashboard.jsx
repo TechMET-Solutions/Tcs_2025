@@ -185,7 +185,14 @@ export default function Dashboard() {
       alert("Action failed: " + error.message);
     }
   };
-
+  const goToQuotations = (row) => {
+    navigate("/quotation/manage", {
+      state: {
+        employeeId: row.employeeId,
+        employeeName: row.employeeName,
+      },
+    });
+  };
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-10 font-['Lexend'] text-slate-800">
       {/* --- HEADER --- */}
@@ -220,10 +227,10 @@ export default function Dashboard() {
                   </span>
 
                   {/* Animated Ping Effect (Optional: gives a 'Live' feel) */}
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                  {/* <span className="absolute -top-1 -right-1 flex h-4 w-4">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-4 w-4 bg-orange-600"></span>
-                  </span>
+                  </span> */}
                 </>
               )}
             </button>
@@ -327,7 +334,7 @@ export default function Dashboard() {
 
                   <td
                     className="p-5 text-center font-bold text-blue-600 cursor-pointer underline"
-                    onClick={() => openModal(row, "quotations")}
+                    onClick={() => goToQuotations(row)}
                   >
                     {row.quotationCount}
                   </td>
