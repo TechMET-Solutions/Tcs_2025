@@ -100,7 +100,7 @@ export default function App() {
           <Route path="/employee-reviews" element={<EmployeeReviews />} />
           <Route path="/architect/:id" element={<ArchitectDetails />} />
           <Route path="/AddDeliveryChallan" element={<DeliveryChallanCreator />} />
-          <Route path="/WalletSystem" element={<CreditWalletSystem />} />
+          <Route path="/walletSystem" element={<CreditWalletSystem />} />
            <Route path="/report" element={<Report />} />
         </Route>
 

@@ -11,6 +11,7 @@ import {
   Truck,
   X,
 } from "lucide-react";
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendPaymentRequest } from "../Component/API/paymentApi";
@@ -21,7 +22,7 @@ import QuotationHeader from "./QuotationHeader";
 export default function ManageQuotation() {
   const [quotationList, setQuotationList] = useState([]);
   const [quoteType, setQuoteType] = useState("overall");
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
@@ -38,10 +39,13 @@ export default function ManageQuotation() {
     contact: "",
     tempo: "",
   });
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  // const [selectedQuotation, setSelectedQuotation] = useState(null);
+
   const [remarks, setRemarks] = useState("");
 
   const [dcItems, setDcItems] = useState([]);
-  
+
   const [editData, setEditData] = useState({
     id: null,
     clientName: "",
@@ -81,6 +85,20 @@ export default function ManageQuotation() {
   const openFollowUpModal = (q) => {
     setSelectedQuotation(q);
     setIsFollowUpOpen(true);
+  };
+  const openFinalizeModal = (q) => {
+    setSelectedQuotation(q);
+    setShowFinalizeModal(true);
+  };
+  const finalizeQuotationAPI = async (id) => {
+    const res = await fetch(`${BASEURL}/api/Quotation/quotations/${id}/final`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return res.json();
   };
 
   const openFollowUpHistory = async (quotation) => {
@@ -262,7 +280,6 @@ export default function ManageQuotation() {
   };
 
   useEffect(() => {
-    
     if (quoteType === "self") {
       fetchQuotationsParticularEmployee(currentPage);
     } else {
@@ -439,12 +456,9 @@ export default function ManageQuotation() {
   };
 
   const openDeliveryChallan = (q) => {
-  
-
     setSelectedQuotation(q);
 
     const formattedItems = q?.items?.map((i) => {
-      
       // Calculation: Jar adhi 0 pathvle astil tar purn quantity dya, nahi tar vaza kara
       const pendingToDispatch =
         i.dispatchedBoxes === 0 || i.dispatchedBoxes === "0"
@@ -488,7 +502,6 @@ export default function ManageQuotation() {
   };
 
   const handlePriorityChange = async (quotationId, priority) => {
-    
     try {
       const res = await axios.put(
         `${BASEURL}api/Quotation/priority/${quotationId}`,
@@ -511,7 +524,11 @@ export default function ManageQuotation() {
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-6 md:p-10 font-['Lexend'] text-slate-700">
-      <QuotationHeader fetchQuotations={fetchQuotations} fetchQuotationsParticularEmployee={fetchQuotationsParticularEmployee} quoteType={quoteType} />
+      <QuotationHeader
+        fetchQuotations={fetchQuotations}
+        fetchQuotationsParticularEmployee={fetchQuotationsParticularEmployee}
+        quoteType={quoteType}
+      />
       {role === "employee" && (
         <div className="flex gap-2 mb-4">
           <button
@@ -552,6 +569,7 @@ export default function ManageQuotation() {
                 "Due Amount",
                 "Priority",
                 "Actions",
+                "Type",
               ].map((h) => (
                 <th
                   key={h}
@@ -733,6 +751,20 @@ export default function ManageQuotation() {
                       </>
                     )}
                   </div>
+                </td>
+                <td className="p-6">
+                  {q.type === "final" ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-600 text-[10px] font-black uppercase tracking-widest">
+                      <CheckCircle size={14} /> Final
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => openFinalizeModal(q)}
+                      className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-yellow-100"
+                    >
+                      Pending
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -1197,6 +1229,67 @@ export default function ManageQuotation() {
                   <p className="text-sm font-medium">{item.remarks}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {showFinalizeModal && selectedQuotation && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95">
+            <h3 className="text-lg font-black text-slate-800 mb-4">
+              Finalize Quotation
+            </h3>
+
+            <div className="space-y-2 text-sm text-slate-600">
+              <p>
+                <b>ID:</b> #{selectedQuotation.id}
+              </p>
+              <p>
+                <b>Client:</b> {selectedQuotation.clientName}
+              </p>
+              <p>
+                <b>Products:</b> {selectedQuotation?.items?.length}
+              </p>
+              <p>
+                <b>Grand Total:</b> ₹{selectedQuotation.grandTotal}
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowFinalizeModal(false)}
+                className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await finalizeQuotationAPI(
+                      selectedQuotation.id,
+                    );
+
+                    if (res?.success) {
+                      setFilteredData((prev) =>
+                        prev.map((x) =>
+                          x.id === selectedQuotation.id
+                            ? { ...x, type: "final" }
+                            : x,
+                        ),
+                      );
+                    }
+                  } catch (err) {
+                    console.error("Failed to finalize quotation", err);
+                  } finally {
+                    // Modal hamesha close ho
+                    setShowFinalizeModal(false);
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700"
+              >
+                Mark as Final
+              </button>
             </div>
           </div>
         </div>

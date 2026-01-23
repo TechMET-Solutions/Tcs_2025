@@ -178,7 +178,7 @@ export default function Navbar() {
                 {role !== "admin" && role !== "superadmin" && (
                   <li
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-blue-600"
-                    onClick={() => navigate("/WalletSystem")}
+                    onClick={() => navigate("/walletSystem")}
                   >
                     My Wallet
                   </li>

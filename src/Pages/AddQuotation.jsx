@@ -337,9 +337,8 @@ export default function AddQuotation() {
     const row = rows[rowIndex];
 
     const product = products.find(
-  (p) => p.name === row.productName && p.size === size,
-);
-
+      (p) => p.name === row.productName && p.size === size,
+    );
 
     if (!product) return;
 
@@ -352,6 +351,51 @@ export default function AddQuotation() {
       quality: product.quality,
       cov: product.Cov, // coverage of this size
       rate: Number(product.rate), // rate of this size
+    });
+
+    setRows(updated);
+  };
+  const selectBySize = (rowIndex, size) => {
+    const row = rows[rowIndex];
+
+    const product = products.find(
+      (p) => p.name === row.productName && p.size === size,
+    );
+
+    if (!product) return;
+
+    const updated = [...rows];
+
+    updated[rowIndex] = recalcRow({
+      ...updated[rowIndex],
+      productId: product.id,
+      size: product.size,
+      quality: product.quality,
+      cov: product.cov,
+      rate: Number(product.rate),
+    });
+
+    setRows(updated);
+  };
+
+  const selectByQuality = (rowIndex, quality) => {
+    const row = rows[rowIndex];
+
+    const product = products.find(
+      (p) => p.name === row.productName && p.quality === quality,
+    );
+
+    if (!product) return;
+
+    const updated = [...rows];
+
+    updated[rowIndex] = recalcRow({
+      ...updated[rowIndex],
+      productId: product.id,
+      size: product.size,
+      quality: product.quality,
+      cov: product.cov,
+      rate: Number(product.rate),
     });
 
     setRows(updated);
@@ -700,11 +744,12 @@ export default function AddQuotation() {
                         Details
                       </th>
                       <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[100px] text-center">
-                        Rate
-                      </th>
-                      <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[100px] text-center">
                         Quality
                       </th>
+                      <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[100px] text-center">
+                        Rate
+                      </th>
+
                       <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[140px] text-center">
                         Box
                       </th>
@@ -739,7 +784,7 @@ export default function AddQuotation() {
                       >
                         {" "}
                         {/* Fixed row height for stability */}
-                        <td className="p-3 relative">
+                        <td className="p-3 relative overflow-visible">
                           <input
                             type="text"
                             className="lux-input w-full text-xs h-13 px-2 rounded-xl border-slate-200 bg-slate-50"
@@ -748,10 +793,11 @@ export default function AddQuotation() {
                             onChange={(e) =>
                               handleProductSearch(i, e.target.value)
                             }
+                            onFocus={() => showListForRow(i)}
                           />
 
                           {r.showList && r.filteredProducts?.length > 0 && (
-                            <div className="absolute z-20 w-full bg-white border rounded-lg shadow max-h-40 overflow-y-auto bottom-full mb-1">
+                            <div className=" z-10 left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto">
                               {r.filteredProducts.map((p) => (
                                 <div
                                   key={p.id}
@@ -764,15 +810,13 @@ export default function AddQuotation() {
                             </div>
                           )}
                         </td>
-                        <td className="">
+                        <td className="p-2">
                           {/* Size Dropdown */}
                           <select
                             className="lux-input text-xs h-13 px-2 rounded-xl border-slate-200 bg-slate-50"
                             value={r.size}
                             disabled={!r.productName}
-                            onChange={(e) =>
-                              selectProductSize(i, e.target.value)
-                            }
+                            onChange={(e) => selectBySize(i, e.target.value)}
                           >
                             <option value="">
                               {r.productName
@@ -781,18 +825,36 @@ export default function AddQuotation() {
                             </option>
 
                             {products
-                              .filter((p) => p.name === r.productName) // all same-name products
+                              .filter((p) => p.name === r.productName)
                               .map((p) => (
                                 <option key={p.id} value={p.size}>
                                   {p.size}
                                 </option>
                               ))}
                           </select>
+                        </td>
+                        <td className="p-2">
+                          {/* Quality Dropdown */}
+                          <select
+                            className="lux-input text-xs h-13 px-2 rounded-xl border-slate-200 bg-slate-50"
+                            value={r.quality}
+                            disabled={!r.productName}
+                            onChange={(e) => selectByQuality(i, e.target.value)}
+                          >
+                            <option value="">
+                              {r.productName
+                                ? "Select Quality"
+                                : "Select Product First"}
+                            </option>
 
-                          {/* Quality */}
-                          {/* <p className="text-[9px] font-black text-orange-400 uppercase mt-1">
-                            {r.quality || "---"}
-                          </p> */}
+                            {products
+                              .filter((p) => p.name === r.productName)
+                              .map((p) => (
+                                <option key={p.id} value={p.quality}>
+                                  {p.quality}
+                                </option>
+                              ))}
+                          </select>
                         </td>
                         <td className="p-3 text-center">
                           <input
@@ -802,11 +864,6 @@ export default function AddQuotation() {
                               updateRowField(i, "rate", e.target.value)
                             }
                           />
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="text-[10px] font-black text-orange-500 bg-orange-50 px-2 py-1 rounded-md uppercase">
-                            {r.quality}
-                          </span>
                         </td>
                         <td className="p-3">
                           <div className="flex items-center justify-center gap-1">
