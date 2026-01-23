@@ -20,7 +20,7 @@ export default function AddInventory() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [rows, setRows] = useState([]);
-  console.log(rows, "rows");
+
   const [subTotal, setSubTotal] = useState(0);
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,7 +30,6 @@ export default function AddInventory() {
   const editData = location.state?.data;
   const isEditMode = !!editData;
 
-  console.log(editData, isEditMode, "data");
   // Brand Colors from your screenshots
   const BRAND_ORANGE = "#FF7A00";
   const SIDEBAR_DARK = "#1E1E1E";
@@ -68,9 +67,9 @@ export default function AddInventory() {
     filteredProducts: [],
   };
   // useEffect(() => {
-  //   debugger
+  //
   //   if (isEditMode && editData && products.length > 0) {
-  //     debugger
+  //
   //     // 1. Populate Metadata (Matching your JSON keys)
   //     setPurchaseMeta({
   //       purchaseDate: editData.purchase_date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
@@ -81,7 +80,7 @@ export default function AddInventory() {
 
   // 2. Populate Rows
   //   if (editData.items && editData.items.length > 0) {
-  //     debugger
+  //
   //     const mappedRows = editData.items.map(item => {
   //       // Find the product details from the 'products' state using the product_id
   //       const productInfo = products.find(p => p.id === item.product_id) || {};
@@ -110,7 +109,6 @@ export default function AddInventory() {
 
   useEffect(() => {
     if (isEditMode && editData && products.length > 0) {
-      debugger;
       // 1. Populate Metadata
       setPurchaseMeta({
         purchaseDate:
@@ -159,7 +157,7 @@ export default function AddInventory() {
       size: product.size,
       quality: product.quality,
       rate: Number(product.rate),
-      cov: product.Cov,
+      cov: product.cov,
       batches: product.batches || [],
       availQty: 0,
       qty: "",
@@ -375,7 +373,6 @@ export default function AddInventory() {
   // };
 
   const savePurchase = async (e) => {
-    debugger;
     e.preventDefault();
 
     if (!purchaseMeta.clientName || !purchaseMeta.billNo) {
@@ -632,12 +629,45 @@ export default function AddInventory() {
                       )}
                     </td>
 
-                    <td className="p-3">
+                    {/* <td className="p-3">
                       <input
                         readOnly
                         value={r.quality}
                         className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold"
                       />
+                    </td> */}
+                    <td className="p-3">
+                      {r.filteredProducts?.length > 0 ? (
+                        <select
+                          value={r.productId || ""}
+                          onChange={(e) => {
+                            const selected = r.filteredProducts.find(
+                              (p) => p.id === Number(e.target.value),
+                            );
+
+                            if (!selected) return;
+
+                            const updated = [...rows];
+                            applyProductToRow(updated, i, selected);
+                            setRows(updated);
+                          }}
+                          className="tableInput w-[120px] font-bold"
+                        >
+                          <option value="">Select Quality</option>
+
+                          {r.filteredProducts.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.quality}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          value={r.quality}
+                          className="tableInput w-20 bg-slate-50 text-slate-400 cursor-not-allowed font-bold"
+                          readOnly
+                        />
+                      )}
                     </td>
 
                     <td className="p-3">

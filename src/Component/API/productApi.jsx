@@ -5,7 +5,7 @@ const BASE_URL = `${BASEURL}/api/product`;
 
 // ✅ ADD PRODUCT API (POST)
 export const addProductAPI = (data) => {
-    console.log(data,"data")
+    
     return axios.post(`${BASE_URL}/add`, data, {
         headers: {
             "Content-Type": "multipart/form-data",

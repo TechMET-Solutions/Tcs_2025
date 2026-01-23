@@ -10,7 +10,6 @@ export default function CategoryManagement() {
   
  const { permissions, user, loading, role } = useAuth(); 
 
-  console.log(permissions,"permissions")
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);

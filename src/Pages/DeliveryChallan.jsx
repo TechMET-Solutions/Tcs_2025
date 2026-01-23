@@ -34,7 +34,7 @@ export default function DeliveryChallan() {
   const [trackingDate, setTrackingDate] = useState("");
   const [trackingStatus, setTrackingStatus] = useState("");
   const [trackingList, setTrackingList] = useState([]);
-  console.log("Tracking List:", trackingList);
+
   const [loadingTracking, setLoadingTracking] = useState(false);
 
   const { permissions, role } = useAuth();

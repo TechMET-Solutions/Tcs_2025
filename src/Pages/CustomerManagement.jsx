@@ -124,15 +124,15 @@ export default function CustomerManagement() {
     response: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  console.log(currentPage, "currentPage");
+
   const [totalPages, setTotalPages] = useState(1);
   const [totalPagesCount, setTotalPagesCount] = useState(1);
   const itemsPerPage = 10; // You can make this dynamic if needed
   const { permissions, user, loading, role } = useAuth();
-  console.log(permissions, user, loading, role);
+ 
   const [employees, setEmployees] = useState([]);
   const [employeesData, setEmployeesData] = useState([]);
-  console.log(employees, "employees");
+ 
   const [architects, setArchitects] = useState([]);
   const [architectsData, setArchitectsData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -156,9 +156,9 @@ export default function CustomerManagement() {
     assignedArchitectId: "",
   });
   const [priorityFilter, setPriorityFilter] = useState("");
-  console.log(customer, "custoemr");
+  
   const fetchCustomers = async (page = 1) => {
-    debugger;
+   
     try {
       let url;
 
@@ -220,7 +220,7 @@ export default function CustomerManagement() {
   const apiCalled = useRef(false);
 
   useEffect(() => {
-    debugger;
+    
     // 1. Check if role exists (not null/undefined/empty)
     // 2. Ensure api hasn't been called yet
     if (role && !apiCalled.current) {
@@ -355,7 +355,7 @@ export default function CustomerManagement() {
   };
 
   const openHistory = async (item) => {
-    debugger;
+  
     try {
       const res = await axios.get(`${BASE_URL}/followups/${item.id}`);
       setSelectedCustomer({ ...item, followups: res.data.followups || [] });

@@ -154,7 +154,7 @@ const OrderBook = () => {
         getProductAPI().then((res) => {
             setProducts(res.data.products || []);
             setRows([{ ...emptyRow }]);
-            console.log("Products fetched:", res.data.products);
+            
         });
     }, []);
 

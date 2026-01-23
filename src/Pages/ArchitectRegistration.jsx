@@ -431,13 +431,13 @@ export default function ArchitectRegistration() {
                       className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium" />
                   </div>
                 </div>
-                <div className="space-y-1.5">
+                {/* <div className="space-y-1.5">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">Loyalty Points</label>
                   <div className="relative">
                     <Award className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400" size={18} />
                     <input type="number" name="loyaltyPoints" value={architect.loyaltyPoints} onChange={handleChange} className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-bold text-blue-600" />
                   </div>
-                </div>
+                </div> */}
                 <div className="col-span-2 space-y-1.5">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">Internal Remarks</label>
                   <textarea name="remark" value={architect.remark} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all text-slate-600 resize-none font-medium" rows={3} />

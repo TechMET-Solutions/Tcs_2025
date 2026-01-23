@@ -31,7 +31,7 @@ const TodoComponent = ({ section = "General", employeeId = 1 }) => {
   useEffect(() => { if (isOpen) fetchTodos(); }, [isOpen, section]);
 
   const handleAddTodo = async (e) => {
-    debugger
+    
     e.preventDefault();
     if (!newTask.trim()) return;
     setIsSubmitting(true);

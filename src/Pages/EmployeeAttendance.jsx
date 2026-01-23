@@ -21,7 +21,7 @@ export default function EmployeeAttendance() {
   const [filteredRecords, setFilteredRecords] = useState([]);
 
   useEffect(() => {
-    debugger
+  
     if (!selectedEmployee || !selectedMonth) return;
 
     (async () => {

@@ -40,10 +40,16 @@ const CreditLedger = () => {
   // 3. Expense Submit karne ka logic
   const handleSpendCredit = async () => {
     const formData = new FormData();
-    formData.append("employeeId", user.id); // Default 1 jayega
+    formData.append("employeeId", user.id);
     formData.append("amount", inputAmount);
     formData.append("note", spendReason);
-    formData.append("bill_image", billFile);
+
+    // Bill image optional
+    if (billFile) {
+      formData.append("bill_image", billFile);
+    } else {
+      formData.append("bill_image", "");
+    }
 
     try {
       setLoading(true);
@@ -55,11 +61,12 @@ const CreditLedger = () => {
         alert("Expense Recorded Successfully!");
         setInputAmount("");
         setSpendReason("");
-        setBillFile(null);
-        fetchData(); // Balance refresh karne ke liye
+        setBillFile("");
+        fetchData();
       }
     } catch (err) {
       alert(err.response?.data?.message || "Transaction Failed");
+    } finally {
       setLoading(false);
     }
   };

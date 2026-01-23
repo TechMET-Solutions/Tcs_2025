@@ -328,7 +328,7 @@ export default function ProductRegistration() {
       rate: item.rate || "",
       status: item.status || "",
       link: item.link || "",
-      cov: item.Cov || "",
+      cov: item.cov || "",
       godown: normalizeGodown(item.godown), // ✅ FIX
       description: item.description || "",
       image: null,
@@ -346,7 +346,7 @@ export default function ProductRegistration() {
   };
 
   const editProduct = (item) => {
-    debugger;
+   
     setModalMode("edit");
     setSelectedProductId(item.id);
 
@@ -359,7 +359,7 @@ export default function ProductRegistration() {
       rate: item.rate || "",
       status: item.status || "",
       link: item.link || "",
-      cov: item.Cov || "",
+      cov: item.cov || "",
       godown: normalizeGodown(item.godown), // ✅ FIX
       description: item.description || "",
       image: null,
@@ -378,7 +378,7 @@ export default function ProductRegistration() {
 
   const deleteProduct = (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
-      console.log("Delete ID:", id);
+     
     }
   };
 

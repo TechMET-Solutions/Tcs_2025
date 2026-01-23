@@ -26,7 +26,7 @@ export default function EmployeeAttendanceCard() {
     const fetchEmployees = async () => {
       try {
         const res = await fetch(
-          `${BASEURL}/api/dashboard/records?page=1&limit=20&search=${search}`,
+          `${BASEURL}api/employees/list?page=1&limit=20&search=${search}`,
           { signal: controller.signal },
         );
         const data = await res.json();
@@ -72,7 +72,7 @@ export default function EmployeeAttendanceCard() {
       return;
     }
 
-    const url = `${BASEURL}api/attendance/export?employeeId=${selectedEmp}&from=${fromDate}&to=${toDate}`;
+    const url = `${BASEURL}/api/dashboard/records?employeeId=${selectedEmp}&from=${fromDate}&to=${toDate}`;
 
     const res = await fetch(url);
     const blob = await res.blob();

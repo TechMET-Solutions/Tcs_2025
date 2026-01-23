@@ -21,9 +21,9 @@ const EmpDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [currentStatus, setCurrentStatus] = useState(""); // READY, IN, or COMPLETED
-  console.log(currentStatus, "currentStatus");
+ 
   const [stats, setStats] = useState({ quotationCount: 0, followUpCount: 0 });
-  console.log(stats, "stats");
+  
   const [followUps, setFollowUps] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [taskStatus, setTaskStatus] = useState("pending");
@@ -31,7 +31,7 @@ const EmpDashboard = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [remark, setRemark] = useState("");
   const { user } = useAuth();
-  console.log(user, "user");
+
   // 1. Fetch all dashboard data on component mount
   useEffect(() => {
     if (user?.id) {

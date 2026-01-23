@@ -33,7 +33,7 @@ export default function Sidebar() {
   
   // Destructuring permissions, user, and loading from your AuthContext
   const { permissions, user, loading, role } = useAuth(); 
-  console.log(role,"role")
+ 
   const [open, setOpen] = useState(true);
   const [openInventory, setOpenInventory] = useState(false);
   const [openQuotation, setOpenQuotation] = useState(false);

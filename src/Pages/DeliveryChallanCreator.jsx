@@ -9,7 +9,7 @@ const DeliveryChallanCreator = () => {
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [challanItems, setChallanItems] = useState([]);
-  console.log("Challan Items:", challanItems);
+  
   const [driverDetails, setDriverDetails] = useState({
     deliveryBoy: "",
     contact: "",

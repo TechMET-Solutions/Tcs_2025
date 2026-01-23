@@ -21,7 +21,7 @@ import QuotationHeader from "./QuotationHeader";
 export default function ManageQuotation() {
   const [quotationList, setQuotationList] = useState([]);
   const [quoteType, setQuoteType] = useState("overall");
-  console.log(quoteType, "quoteType");
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
@@ -41,7 +41,7 @@ export default function ManageQuotation() {
   const [remarks, setRemarks] = useState("");
 
   const [dcItems, setDcItems] = useState([]);
-  console.log(dcItems, "dcItems");
+  
   const [editData, setEditData] = useState({
     id: null,
     clientName: "",
@@ -262,7 +262,7 @@ export default function ManageQuotation() {
   };
 
   useEffect(() => {
-    debugger;
+    
     if (quoteType === "self") {
       fetchQuotationsParticularEmployee(currentPage);
     } else {
@@ -366,7 +366,7 @@ export default function ManageQuotation() {
       items: itemsToDispatch,
     };
 
-    console.log("Sending Payload:", payload); // Debugging sathi check kara
+    // Debugging sathi check kara
 
     try {
       const response = await fetch(`${BASEURL}/api/Quotation/generate-dc`, {
@@ -439,12 +439,12 @@ export default function ManageQuotation() {
   };
 
   const openDeliveryChallan = (q) => {
-    debugger;
+  
 
     setSelectedQuotation(q);
 
     const formattedItems = q?.items?.map((i) => {
-      debugger;
+      
       // Calculation: Jar adhi 0 pathvle astil tar purn quantity dya, nahi tar vaza kara
       const pendingToDispatch =
         i.dispatchedBoxes === 0 || i.dispatchedBoxes === "0"
@@ -488,7 +488,7 @@ export default function ManageQuotation() {
   };
 
   const handlePriorityChange = async (quotationId, priority) => {
-    debugger;
+    
     try {
       const res = await axios.put(
         `${BASEURL}api/Quotation/priority/${quotationId}`,
@@ -538,8 +538,8 @@ export default function ManageQuotation() {
       )}
 
       {/* TABLE */}
-      <div className="bg-white rounded-[35px] shadow-sm border border-slate-100 overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-white rounded-[35px] shadow-sm border border-slate-100 overflow-hidden w-full overflow-x-auto overscroll-x-contain">
+        <table className="text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50">
               {[

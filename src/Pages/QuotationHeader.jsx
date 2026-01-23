@@ -10,7 +10,7 @@ const QuotationHeader = ({
   const [priority, setPriority] = useState(""); // "", 1, 2, 3
 
   const handleFetch = (page, s, p) => {
-    debugger;
+   
     if (quoteType === "overall") {
       fetchQuotations(page, s, p);
     } else {

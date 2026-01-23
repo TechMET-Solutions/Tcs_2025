@@ -47,7 +47,7 @@ export default function EmployeeRegistration() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [limit] = useState(10);
-  console.log(employee, "employee");
+  
   const fetchEmployeesFromDB = async (page = 1, term = searchTerm) => {
     try {
       const res = await getEmployeesAPI(page, limit, term);
@@ -93,7 +93,7 @@ export default function EmployeeRegistration() {
   // NEW: Toggle Block/Unblock Status
   const handleToggleStatus = async (id, currentStatus) => {
     // Determine the new status to send
-    debugger;
+   
     const newStatus = currentStatus === "active" ? "blocked" : "active";
 
     try {

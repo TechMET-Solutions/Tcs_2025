@@ -26,14 +26,14 @@ export default function AddQuotation() {
 
   const [clientName, setClientName] = useState("");
   const [clientId, setClientid] = useState(null);
-  console.log(clientId, "clientid");
+
   const [clientContact, setClientContact] = useState("");
   const [clientContactAlt, setClientContactAlt] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [clientGst, setClientGst] = useState("");
   const [attendedBy, setAttendedBy] = useState("");
-  console.log(attendedBy, "attendedBy");
+
   const [architects, setArchitects] = useState([]); // List from API
   const [selectedArchitect, setSelectedArchitect] = useState(""); // The ID of selected architect
   const [selectedAttended, setSelectedAttended] = useState("");
@@ -76,7 +76,6 @@ export default function AddQuotation() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
-  console.log(Attended, "Attended");
   useEffect(() => {
     const fetchArchitects = async () => {
       try {
@@ -109,7 +108,7 @@ export default function AddQuotation() {
     fetchEmployee();
   }, []);
   const [additionalDiscount, setAdditionalDiscount] = useState(0);
-  console.log(additionalDiscount, "additionalDiscount");
+
   const [products, setProducts] = useState([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedback, setFeedback] = useState({
@@ -142,7 +141,7 @@ export default function AddQuotation() {
     area: "",
   };
   const [rows, setRows] = useState([emptyRow]);
-  console.log(rows, "rows");
+
   // ---------------- JODIT CONFIG ----------------
   const config = useMemo(
     () => ({
@@ -172,7 +171,7 @@ export default function AddQuotation() {
 
   // useEffect(() => {
   //   if (editData) {
-  //     debugger
+
   //     // Mapping based on your provided JSON structure
   //     setClientName(editData.clientName || "");
   //     setClientContact(editData.contactNo || "");
@@ -206,7 +205,6 @@ export default function AddQuotation() {
   //   }
   // }, [editData]);
   useEffect(() => {
-    debugger;
     if (editData) {
       setClientName(editData.clientName || "");
       setClientContact(editData.contactNo || "");
@@ -276,7 +274,6 @@ export default function AddQuotation() {
 
   // ---------------- CALCULATIONS ----------------
   const recalcRow = (row) => {
-    debugger;
     const boxes = parseFloat(row.box) || 0;
     const covPerBox = parseFloat(row.cov) || 0; // Editable coverage per box
     const rate = parseFloat(row.rate) || 0;
@@ -315,27 +312,34 @@ export default function AddQuotation() {
   };
 
   const selectProduct = (i, productId) => {
-    debugger;
     const p = products.find((x) => x.id == productId);
     if (!p) return;
+
     const updated = [...rows];
+
     updated[i] = recalcRow({
       ...updated[i],
       productId: p.id,
       productName: p.name,
+      search: p.name, // show selected name in input
       size: p.size,
       quality: p.quality,
-      cov: p.Cov,
+      cov: p.cov,
       rate: Number(p.rate),
+      showList: false, // 🔴 close dropdown
+      filteredProducts: [], // optional: clear list
     });
+
     setRows(updated);
   };
+
   const selectProductSize = (rowIndex, size) => {
     const row = rows[rowIndex];
 
     const product = products.find(
-      (p) => p.name === row.productName && p.size === size,
-    );
+  (p) => p.name === row.productName && p.size === size,
+);
+
 
     if (!product) return;
 
@@ -361,7 +365,6 @@ export default function AddQuotation() {
   // ---------------- SAVE / UPDATE LOGIC ----------------
 
   const saveQuotation = async () => {
-    debugger;
     if (!rows || rows.length === 0) {
       alert("Please add at least one item to the quotation.");
       return; // Stop execution
@@ -384,7 +387,7 @@ export default function AddQuotation() {
         additionalDiscount: additionalDiscount,
         clientDetails: {
           clientid: clientId,
-          name: searchTerm,
+          name: searchTerm || clientName,
           contactNo: clientContact,
           altContactNo: clientContactAlt,
           email: clientEmail,
@@ -417,6 +420,31 @@ export default function AddQuotation() {
       alert("Error processing quotation");
     }
   };
+  const handleProductSearch = async (index, value) => {
+    const newRows = [...rows];
+    newRows[index].search = value;
+    newRows[index].showList = true;
+    setRows(newRows);
+
+    if (!value) {
+      newRows[index].filteredProducts = [];
+      setRows([...newRows]);
+      return;
+    }
+
+    const res = await axios.get(`${BASEURL}/api/product/list?search=${value}`);
+
+    newRows[index].filteredProducts = res.data.products || [];
+    setRows([...newRows]);
+  };
+
+  // const selectProduct = (index, productId, name) => {
+  //   const newRows = [...rows];
+  //   newRows[index].productId = productId;
+  //   newRows[index].search = name;
+  //   newRows[index].showList = false;
+  //   setRows(newRows);
+  // };
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-4 md:p-10 font-['Lexend'] text-slate-700">
@@ -711,19 +739,30 @@ export default function AddQuotation() {
                       >
                         {" "}
                         {/* Fixed row height for stability */}
-                        <td className="p-3">
-                          <select
+                        <td className="p-3 relative">
+                          <input
+                            type="text"
                             className="lux-input w-full text-xs h-13 px-2 rounded-xl border-slate-200 bg-slate-50"
-                            value={r.productId}
-                            onChange={(e) => selectProduct(i, e.target.value)}
-                          >
-                            <option value="">Select a Product</option>
-                            {products.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.name}
-                              </option>
-                            ))}
-                          </select>
+                            placeholder="Type product name..."
+                            value={r.search || clientName}
+                            onChange={(e) =>
+                              handleProductSearch(i, e.target.value)
+                            }
+                          />
+
+                          {r.showList && r.filteredProducts?.length > 0 && (
+                            <div className="absolute z-20 w-full bg-white border rounded-lg shadow max-h-40 overflow-y-auto bottom-full mb-1">
+                              {r.filteredProducts.map((p) => (
+                                <div
+                                  key={p.id}
+                                  className="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100"
+                                  onClick={() => selectProduct(i, p.id, p.name)}
+                                >
+                                  {p.name}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </td>
                         <td className="">
                           {/* Size Dropdown */}
