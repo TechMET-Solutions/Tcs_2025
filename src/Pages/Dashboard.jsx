@@ -1,6 +1,5 @@
+import axios from "axios";
 import {
-  ArrowRight,
-  ArrowUpCircle,
   BarChart3,
   Bell,
   Calendar,
@@ -11,7 +10,7 @@ import {
   ShoppingCart,
   TrendingUp,
   Wallet,
-  X,
+  X
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -26,15 +25,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { getDashboardStats } from "../Component/API/dashboardApi";
 import {
   getPendingRequests,
   updateRequestStatus,
 } from "../Component/API/paymentApi";
+import { BASEURL } from "../Component/API/Url";
 import { useAuth } from "../utils/AuthContext";
 import TodoComponent from "./TodoComponent";
-import { getDashboardStats } from "../Component/API/dashboardApi";
-import axios from "axios";
-import { BASEURL } from "../Component/API/Url";
 
 export default function Dashboard() {
   const { permissions, user, loading, role } = useAuth();
@@ -42,9 +40,28 @@ export default function Dashboard() {
   const [requests, setRequests] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
- const [salesData, setSalesData] = useState([]);
-const [dailyReport, setDailyReport] = useState([]);
-    const [stats, setStats] = useState({
+  const [userWiseData, setUserWiseData] = useState([]);
+  const [dateRange, setDateRange] = useState({
+    start: "2025-01-23",
+    end: "2026-01-23"
+  });
+
+  const fetchUserWiseOrders = async () => {
+    try {
+      const res = await axios.get(`${BASEURL}/api/dashboard/user-wise-orders`, {
+        params: { start: dateRange.start, end: dateRange.end }
+      });
+      if (res.data.success) {
+        setUserWiseData(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching user wise data:", error);
+    }
+  };
+
+  const [salesData, setSalesData] = useState([]);
+  const [dailyReport, setDailyReport] = useState([]);
+  const [stats, setStats] = useState({
     customerCurrentMonthCount: 0,
     monthlyPurchasesTotal: 0,
     monthlyQuestionCount: 0,
@@ -63,26 +80,26 @@ const [dailyReport, setDailyReport] = useState([]);
     }
   };
 
- const fetchCharts = async () => {
-  const res = await axios.get(`${BASEURL}/api/dashboard/charts`);
-  if (res.data.success) {
-    setSalesData(
-      res.data.data.salesVsPurchase.map(i => ({
-        month: i.month,
-        sales: 0,               // if you later add sales table
-        purchase: Number(i.purchase),
-      }))
-    );
+  const fetchCharts = async () => {
+    const res = await axios.get(`${BASEURL}/api/dashboard/charts`);
+    if (res.data.success) {
+      setSalesData(
+        res.data.data.salesVsPurchase.map(i => ({
+          month: i.month,
+          sales: 0,               // if you later add sales table
+          purchase: Number(i.purchase),
+        }))
+      );
 
-    setDailyReport(
-      res.data.data.cashFlow.map(i => ({
-        day: i.day.slice(0, 3),
-        in: Number(i.inAmount),
-        out: Number(i.outAmount),
-      }))
-    );
-  }
-};
+      setDailyReport(
+        res.data.data.cashFlow.map(i => ({
+          day: i.day.slice(0, 3),
+          in: Number(i.inAmount),
+          out: Number(i.outAmount),
+        }))
+      );
+    }
+  };
 
 
 
@@ -141,11 +158,12 @@ const [dailyReport, setDailyReport] = useState([]);
       console.error("Error fetching requests:", error);
     }
   };
- useEffect(() => {
-  fetchStats();
-  fetchCharts();
-  fetchRequests();
-}, []);
+  useEffect(() => {
+    fetchStats();
+    fetchCharts();
+    fetchRequests();
+    fetchUserWiseOrders(); // Add this call
+  }, []);
 
 
   const handleStatusUpdate = async (requestId, status) => {
@@ -180,31 +198,31 @@ const [dailyReport, setDailyReport] = useState([]);
           {(role === "admin" ||
             role === "superadmin" ||
             permissions?.["Quotation Management_Payment Requests"] ===
-              true) && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className=" flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200 group"
-            >
-              <Bell size={20} className="group-hover:animate-bounce" />
-              <span className="hidden sm:inline">Requests</span>
+            true) && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className=" flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200 group"
+              >
+                <Bell size={20} className="group-hover:animate-bounce" />
+                <span className="hidden sm:inline">Requests</span>
 
-              {/* Notification Badge */}
-              {requests.length > 0 && (
-                <>
-                  {/* The Actual Count Badge */}
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-black text-orange-600 shadow-sm">
-                    {requests.length > 99 ? "99+" : requests.length}
-                  </span>
+                {/* Notification Badge */}
+                {requests.length > 0 && (
+                  <>
+                    {/* The Actual Count Badge */}
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-black text-orange-600 shadow-sm">
+                      {requests.length > 99 ? "99+" : requests.length}
+                    </span>
 
-                  {/* Animated Ping Effect (Optional: gives a 'Live' feel) */}
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-4 w-4 bg-orange-600"></span>
-                  </span>
-                </>
-              )}
-            </button>
-          )}
+                    {/* Animated Ping Effect (Optional: gives a 'Live' feel) */}
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-4 w-4 bg-orange-600"></span>
+                    </span>
+                  </>
+                )}
+              </button>
+            )}
           <button
             onClick={() => navigate("/work-panel")}
             className="px-6 py-3 bg-white border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all"
@@ -248,53 +266,53 @@ const [dailyReport, setDailyReport] = useState([]);
               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                 <BarChart3 size={20} />
               </div>
-               Purchase Record
+              Purchase Record
             </h2>
             <select className="bg-slate-50 border-none rounded-xl px-4 py-2 text-xs font-black uppercase text-slate-500 outline-none">
               <option>Last 4 Months</option>
             </select>
           </div>
           <ResponsiveContainer width="100%" height={320}>
-  <BarChart
-    data={salesData}
-    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-  >
-    <CartesianGrid
-      strokeDasharray="3 3"
-      vertical={false}
-      stroke="#F1F5F9"
-    />
-    <XAxis
-      dataKey="month"
-      axisLine={false}
-      tickLine={false}
-      tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
-      dy={10}
-    />
-    <YAxis
-      axisLine={false}
-      tickLine={false}
-      tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
-    />
-    <Tooltip
-      cursor={{ fill: "#F8FAFC" }}
-      contentStyle={{
-        borderRadius: "16px",
-        border: "none",
-        boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)",
-        fontWeight: "bold",
-      }}
-    />
+            <BarChart
+              data={salesData}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="#F1F5F9"
+              />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
+                dy={10}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 700 }}
+              />
+              <Tooltip
+                cursor={{ fill: "#F8FAFC" }}
+                contentStyle={{
+                  borderRadius: "16px",
+                  border: "none",
+                  boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)",
+                  fontWeight: "bold",
+                }}
+              />
 
-    {/* Only Purchase */}
-    <Bar
-      dataKey="purchase"
-      fill="#9333EA"
-      radius={[6, 6, 0, 0]}
-      barSize={40}
-    />
-  </BarChart>
-</ResponsiveContainer>
+              {/* Only Purchase */}
+              <Bar
+                dataKey="purchase"
+                fill="#9333EA"
+                radius={[6, 6, 0, 0]}
+                barSize={40}
+              />
+            </BarChart>
+          </ResponsiveContainer>
 
         </div>
 
@@ -363,6 +381,63 @@ const [dailyReport, setDailyReport] = useState([]);
               />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+        {/* --- USER WISE ORDER TABLE --- */}
+
+      </div>
+
+      <div className="max-w-[1600px] mx-auto bg-white rounded-[32px] border border-slate-100 shadow-2xl overflow-hidden mb-10">
+        <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">
+            User Wise Order
+          </h2>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="date"
+              value={dateRange.start}
+              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <input
+              type="date"
+              value={dateRange.end}
+              onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <button
+              onClick={fetchUserWiseOrders}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-md"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50">
+                <th className="p-6 text-sm font-black text-slate-500 uppercase tracking-wider text-center border-b border-slate-100">Name</th>
+                <th className="p-6 text-sm font-black text-slate-500 uppercase tracking-wider text-center border-b border-slate-100">Total Attended</th>
+                <th className="p-6 text-sm font-black text-slate-500 uppercase tracking-wider text-center border-b border-slate-100">Quotation Count</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {userWiseData.map((row, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="p-5 text-center font-bold text-slate-600">{row.name}</td>
+                  <td className="p-5 text-center font-bold text-slate-600">{row.totalAttended}</td>
+                  <td className="p-5 text-center font-bold text-slate-600">{row.quotationCount}</td>
+                </tr>
+              ))}
+              {userWiseData.length === 0 && (
+                <tr>
+                  <td colSpan="3" className="p-10 text-center text-slate-400 font-medium">No data available for selected dates.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

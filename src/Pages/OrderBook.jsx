@@ -11,9 +11,15 @@ const API = `${BASEURL}/api/orderBook`;
 const OrderBook = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [orders, setOrders] = useState([]);
+    const [brands, setBrands] = useState([]);
 
     const getToday = () => new Date().toISOString().split("T")[0];
 
+    const selectBrand = (brandName) => {
+        setForm({ ...form, brand: brandName });
+        // Dropdown close karne ke liye
+        setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null });
+    };
 
     const [form, setForm] = useState({
         name: "",
@@ -21,6 +27,7 @@ const OrderBook = () => {
         quality: "",
         date: getToday(),
         quantity: "",
+        brand: ""
     });
     const [editId, setEditId] = useState(null);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -31,6 +38,19 @@ const OrderBook = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [limit] = useState(10);
+
+    // 1. Fetch Brands on Mount
+    useEffect(() => {
+        const fetchBrands = async () => {
+            try {
+                const res = await axios.get(`${BASEURL}/api/brands/list`); // Adjust URL as per your API structure
+                setBrands(res.data.brands || res.data);
+            } catch (err) {
+                console.error("Error fetching brands", err);
+            }
+        };
+        fetchBrands();
+    }, []);
 
 
 
@@ -59,7 +79,8 @@ const OrderBook = () => {
             size: "",
             quality: "",
             date: getToday(),
-            quantity: ""
+            quantity: "",
+            brand: ""
         });
         setRows([{ ...emptyRow }]);
         setDropdownPos({
@@ -99,7 +120,8 @@ const OrderBook = () => {
             size: item.size || "",
             quality: item.quality || "",
             date: formattedDate,
-            quantity: item.quantity || ""
+            quantity: item.quantity || "",
+            brand: item.brand || ""
         });
 
         // 🔥 rows state (for product input)
@@ -154,7 +176,7 @@ const OrderBook = () => {
         getProductAPI().then((res) => {
             setProducts(res.data.products || []);
             setRows([{ ...emptyRow }]);
-            
+            console.log("Products fetched:", res.data.products);
         });
     }, []);
 
@@ -167,6 +189,8 @@ const OrderBook = () => {
         );
         setRows(updated);
     };
+
+
 
     const selectProductFromSearch = (i, product) => {
         const updated = [...rows];
@@ -185,13 +209,20 @@ const OrderBook = () => {
         };
         setRows(updated);
 
-        // 🔥 Sync with form (this fixes "Missing fields")
+        // 🔥 BRAND NAME FIND KARNA: ID ki jagah Name nikal rahe hain
+        const selectedBrand = brands.find(b => String(b.id) === String(product.brand));
+        const brandValueToSave = selectedBrand ? selectedBrand.name : (product.brand || "");
+
+
+        // 🔥 Sync with form and auto-select brand from product data
         setForm((prev) => ({
             ...prev,
             name: product.name,
             size: product.size,
             quality: product.quality,
+            brand: brandValueToSave // 🔥 Ab yahan Name save ho raha hai
         }));
+
 
         setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null });
     };
@@ -241,6 +272,7 @@ const OrderBook = () => {
                                 <th className="px-4 py-6 text-center">Quality</th>
                                 <th className="px-4 py-6 text-center">Date</th>
                                 <th className="px-4 py-6 text-center">Quantity</th>
+                                <th className="px-4 py-6 text-center">Brand</th>
                                 <th className="px-8 py-6 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -259,6 +291,9 @@ const OrderBook = () => {
                                     <td className="px-4 py-5 text-center font-medium text-slate-500">{formatIndianDate(order.date)}</td>
                                     <td className="px-4 py-5 text-center font-black text-slate-800 text-lg">
                                         {order.quantity}
+                                    </td>
+                                    <td className="px-4 py-5 text-center font-medium text-slate-600">
+                                        {order.brand}
                                     </td>
                                     <td className="px-8 py-5">
                                         <div className="flex items-center justify-center gap-6">
@@ -300,8 +335,8 @@ const OrderBook = () => {
                                         key={i}
                                         onClick={() => setCurrentPage(i + 1)}
                                         className={`w-11 h-11 rounded-xl text-sm font-black transition-all ${currentPage === i + 1
-                                                ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
-                                                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                                            ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
+                                            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                                             }`}
                                     >
                                         {i + 1}
@@ -371,6 +406,104 @@ const OrderBook = () => {
                                     </div>
                                 ))}
 
+                                {/* <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                        Brand Name
+                                    </label>
+                                    <select
+                                        value={form.brand} // Yeh ID store karega
+                                        onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                                        className="w-full rounded-xl bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                                    >
+                                        <option value="">Select Brand</option>
+                                        {brands.map((b) => (
+                                            <option key={b.id} value={b.id}>
+                                                {b.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div> */}
+
+                                 {/* <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                        Brand Name
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="Search or Select Brand..."
+                                            value={
+                                                // Agar ID hai toh array se find karke name dikhao, varna form ki current value
+                                                brands.find(b => String(b.id) === String(form.brand))?.name || form.brand
+                                            }
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setForm({ ...form, brand: val });
+
+                                                // Dropdown show karne ke liye position set karein
+                                                const rect = e.target.getBoundingClientRect();
+                                                setDropdownPos({
+                                                    top: rect.bottom,
+                                                    left: rect.left,
+                                                    width: rect.width,
+                                                    rowIndex: 0, // Dummy index
+                                                    type: "brandSearch"
+                                                });
+                                            }}
+                                            onFocus={(e) => {
+                                                const rect = e.target.getBoundingClientRect();
+                                                setDropdownPos({
+                                                    top: rect.bottom,
+                                                    left: rect.left,
+                                                    width: rect.width,
+                                                    rowIndex: 0,
+                                                    type: "brandSearch"
+                                                });
+                                            }}
+                                            className="w-full rounded-xl bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                                        />
+                                    </div>
+                                </div>  */}
+
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                        Brand Name
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="Search or Type Brand..."
+                                            // Form state se value lega
+                                            value={form.brand}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                // 🔥 Direct state update taaki manual entry save ho sake
+                                                setForm({ ...form, brand: val });
+
+                                                // Dropdown dikhane ke liye position
+                                                const rect = e.target.getBoundingClientRect();
+                                                setDropdownPos({
+                                                    top: rect.bottom,
+                                                    left: rect.left,
+                                                    width: rect.width,
+                                                    rowIndex: 0,
+                                                    type: "brandSearch"
+                                                });
+                                            }}
+                                            onFocus={(e) => {
+                                                const rect = e.target.getBoundingClientRect();
+                                                setDropdownPos({
+                                                    top: rect.bottom,
+                                                    left: rect.left,
+                                                    width: rect.width,
+                                                    rowIndex: 0,
+                                                    type: "brandSearch"
+                                                });
+                                            }}
+                                            className="w-full rounded-xl bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
+                                        />
+                                    </div>
+                                </div>
 
                                 {/* Size / Quality */}
                                 <div className="grid grid-cols-2 gap-4">
@@ -393,7 +526,6 @@ const OrderBook = () => {
                                             Quality
                                         </label>
                                         <input
-                                            readOnly
                                             type="text"
                                             value={form.quality}
                                             onChange={(e) => setForm({ ...form, quality: e.target.value })}
@@ -493,6 +625,3 @@ const OrderBook = () => {
 };
 
 export default OrderBook;
-
-
-{/* Product List */ }
