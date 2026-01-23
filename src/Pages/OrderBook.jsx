@@ -12,6 +12,7 @@ const OrderBook = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [orders, setOrders] = useState([]);
     const [brands, setBrands] = useState([]);
+    const [selectedBrandFilter, setSelectedBrandFilter] = useState("");
 
     const getToday = () => new Date().toISOString().split("T")[0];
 
@@ -154,9 +155,15 @@ const OrderBook = () => {
     };
 
 
-    const filteredOrders = orders.filter((order) =>
-        order.name.toLowerCase().includes(search.toLowerCase())
-    );
+    // const filteredOrders = orders.filter((order) =>
+    //     order.name.toLowerCase().includes(search.toLowerCase())
+    // );
+
+    const filteredOrders = orders.filter((order) => {
+        const matchesSearch = order.name.toLowerCase().includes(search.toLowerCase());
+        const matchesBrand = selectedBrandFilter === "" || order.brand === selectedBrandFilter;
+        return matchesSearch && matchesBrand;
+    });
 
 
     // Product Fetching
@@ -227,6 +234,8 @@ const OrderBook = () => {
         setDropdownPos({ top: 0, left: 0, width: 0, rowIndex: null, type: null });
     };
 
+  
+
 
 
 
@@ -240,6 +249,22 @@ const OrderBook = () => {
                 </div>
 
                 <div className="flex items-center gap-6">
+                    {/* Brand Filter Dropdown */}
+                    <div className="relative">
+                        <select
+                            value={selectedBrandFilter}
+                            onChange={(e) => setSelectedBrandFilter(e.target.value)}
+                            className="w-48 rounded-xl border-none bg-slate-50 py-3 px-4 text-sm focus:ring-2 focus:ring-orange-100 outline-none transition-all appearance-none cursor-pointer text-slate-600 font-medium"
+                        >
+                            <option value="">All Brands</option>
+                            {brands.map((b) => (
+                                <option key={b.id} value={b.name}>
+                                    {b.name}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                    </div>
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
                         <input
@@ -258,6 +283,8 @@ const OrderBook = () => {
                         Create New Order
                     </button>
                 </div>
+
+                
             </div>
 
             {/* Main Table Section */}
@@ -405,65 +432,6 @@ const OrderBook = () => {
                                         </div>
                                     </div>
                                 ))}
-
-                                {/* <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                                        Brand Name
-                                    </label>
-                                    <select
-                                        value={form.brand} // Yeh ID store karega
-                                        onChange={(e) => setForm({ ...form, brand: e.target.value })}
-                                        className="w-full rounded-xl bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                                    >
-                                        <option value="">Select Brand</option>
-                                        {brands.map((b) => (
-                                            <option key={b.id} value={b.id}>
-                                                {b.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div> */}
-
-                                 {/* <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                                        Brand Name
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            placeholder="Search or Select Brand..."
-                                            value={
-                                                // Agar ID hai toh array se find karke name dikhao, varna form ki current value
-                                                brands.find(b => String(b.id) === String(form.brand))?.name || form.brand
-                                            }
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                setForm({ ...form, brand: val });
-
-                                                // Dropdown show karne ke liye position set karein
-                                                const rect = e.target.getBoundingClientRect();
-                                                setDropdownPos({
-                                                    top: rect.bottom,
-                                                    left: rect.left,
-                                                    width: rect.width,
-                                                    rowIndex: 0, // Dummy index
-                                                    type: "brandSearch"
-                                                });
-                                            }}
-                                            onFocus={(e) => {
-                                                const rect = e.target.getBoundingClientRect();
-                                                setDropdownPos({
-                                                    top: rect.bottom,
-                                                    left: rect.left,
-                                                    width: rect.width,
-                                                    rowIndex: 0,
-                                                    type: "brandSearch"
-                                                });
-                                            }}
-                                            className="w-full rounded-xl bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-                                        />
-                                    </div>
-                                </div>  */}
 
                                 <div>
                                     <label className="mb-1.5 block text-sm font-medium text-slate-700">
