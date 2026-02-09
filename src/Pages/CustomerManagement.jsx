@@ -15,12 +15,14 @@ import {
   Plus,
   Receipt,
   Search,
+  Trash2,
   User,
   X
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BASEURL } from "../Component/API/Url";
 import { useAuth } from "../utils/AuthContext";
+import DeleteModal from "../Component/DeleteModal";
 
 /* ✅ MODERN TOOLTIP */
 const Tooltip = ({ text, children }) => {
@@ -108,7 +110,7 @@ const SelectField = ({ label, name, value, onChange, error, options }) => (
 );
 
 export default function CustomerManagement() {
-  const BASE_URL = `${BASEURL}api/users`;
+  const BASE_URL = `${BASEURL}/api/users`;
   const [showModal, setShowModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showUpdateFollowup, setShowUpdateFollowup] = useState(false);
@@ -470,6 +472,56 @@ export default function CustomerManagement() {
     }
   };
 
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  // const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+
+  // const handleDelete = async (id) => {
+  //   try {
+  //     if (!window.confirm("Are you sure you want to delete this customer?")) return;
+
+  //     setDeletingId(id);
+
+  //     const res = await axios.delete(`${BASE_URL}/delete/${id}`);
+
+  //     if (res.data.success) {
+  //       alert("Customer deleted successfully");
+  //     }
+  //   } catch (err) {
+  //     console.error("Delete error:", err);
+  //     alert(err?.response?.data?.message || "Failed to delete customer");
+  //   } finally {
+  //     setDeletingId(null);
+  //   }
+  // };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedCustomer) return;
+
+    try {
+      setDeletingId(selectedCustomer.id);
+
+      const res = await axios.delete(`${BASE_URL}/delete/${selectedCustomer.id}`);
+
+      if (res.data.success) {
+        // 🔥 IMPORTANT: refresh list
+        fetchCustomers(currentPage);
+
+        setIsDeleteOpen(false);
+        setSelectedCustomer(null);
+      }
+      }
+     catch (err) {
+      console.error("Delete error:", err);
+      alert(err?.response?.data?.message || "Failed to delete customer");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-8 font-['Lexend'] text-slate-800">
       {/* --- HEADER SECTION --- */}
@@ -687,6 +739,20 @@ export default function CustomerManagement() {
                                     className="p-2.5 rounded-xl border border-slate-200 text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95"
                                   >
                                     <Edit2 size={18} />
+                                  </button>
+                                )}
+                              {(role === "admin" ||
+                                role === "superadmin"
+                              ) && (
+                                  <button
+                                  // onClick={() => handleDelete(item.id)}
+                                  onClick={() => {
+                                    setSelectedCustomer(item);
+                                    setIsDeleteOpen(true);
+                                  }} title="Delete Details"
+                                    className="p-2.5 rounded-xl border border-slate-200 text-red-600 bg-white hover:bg-red-50 hover:border-red-200 hover:shadow-md transition-all active:scale-95"
+                                  >
+                                    <Trash2 size={18} />
                                   </button>
                                 )}
                               <button
@@ -1286,6 +1352,19 @@ export default function CustomerManagement() {
           </div>
         </div>
       )}
+
+      <DeleteModal
+        isOpen={isDeleteOpen}
+        title="Delete Customer?"
+        description={`Are you sure you want to delete ${selectedCustomer?.name || "this customer"
+          }? This action cannot be undone.`}
+        onCancel={() => {
+          setIsDeleteOpen(false);
+          setSelectedCustomer(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+      />
+ 
     </div>
   );
 }

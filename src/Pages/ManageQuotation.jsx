@@ -593,7 +593,7 @@ export default function ManageQuotation() {
   const handlePriorityChange = async (quotationId, priority) => {
     try {
       const res = await axios.put(
-        `${BASEURL}api/Quotation/priority/${quotationId}`,
+        `${BASEURL}/api/Quotation/priority/${quotationId}`,
         { priority: Number(priority) },
       );
 

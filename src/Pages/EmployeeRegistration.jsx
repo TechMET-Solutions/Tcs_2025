@@ -176,7 +176,7 @@ export default function EmployeeRegistration() {
         );
       } else {
         response = await axios.put(
-          `${BASEURL}api/employees/update/${employee.id}`,
+          `${BASEURL}/api/employees/update/${employee.id}`,
           formData,
           config,
         );

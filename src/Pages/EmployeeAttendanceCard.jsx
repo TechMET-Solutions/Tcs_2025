@@ -26,7 +26,7 @@ export default function EmployeeAttendanceCard() {
     const fetchEmployees = async () => {
       try {
         const res = await fetch(
-          `${BASEURL}api/employees/list?page=1&limit=20&search=${search}`,
+          `${BASEURL}/api/employees/list?page=1&limit=20&search=${search}`,
           { signal: controller.signal },
         );
         const data = await res.json();
