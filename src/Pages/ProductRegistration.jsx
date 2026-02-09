@@ -80,12 +80,15 @@ export default function ProductRegistration() {
   const batchRef = useRef();
   const { permissions, user, loading, role } = useAuth();
 
-  const fetchProducts = async (page = 1) => {
+  const fetchProducts = async (page = 1, search = "") => {
     try {
-      // Note: Assuming getProductAPI is an axios call, pass the query params
-      const res = await axios.get(
-        `${BASEURL}/api/product/list?page=${page}&limit=${limit}`,
-      );
+      const res = await axios.get(`${BASEURL}/api/product/list`, {
+        params: {
+          page,
+          limit,
+          search,
+        },
+      });
 
       if (res.data.success) {
         setProductList(res.data.products);
@@ -99,8 +102,8 @@ export default function ProductRegistration() {
   };
 
   useEffect(() => {
-    fetchProducts(currentPage);
-  }, [currentPage]);
+    fetchProducts(currentPage, searchTerm);
+  }, [currentPage, searchTerm]);
 
   const fetchBrands = async () => {
     try {
@@ -156,13 +159,11 @@ export default function ProductRegistration() {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    const formattedValue = (name === "name")
-      ? value.toUpperCase()
-      : value;
+    const formattedValue = name === "name" ? value.toUpperCase() : value;
 
     setProduct({
       ...product,
-      [name]: formattedValue
+      [name]: formattedValue,
     });
   };
 
@@ -359,7 +360,6 @@ export default function ProductRegistration() {
   };
 
   const editProduct = (item) => {
-   
     setModalMode("edit");
     setSelectedProductId(item.id);
 
@@ -389,9 +389,32 @@ export default function ProductRegistration() {
     setShowAddModal(true);
   };
 
-  const deleteProduct = (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-     
+  // const deleteProduct = (id) => {
+  //   if (window.confirm("Are you sure you want to delete this product?")) {
+
+  //   }
+  // };
+  const deleteProduct = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
+
+    try {
+      const res = await axios.delete(`${BASEURL}/api/product/delete/${id}`);
+
+      if (res.data.success) {
+        alert("✅ Product deleted successfully");
+
+        // 🔁 Refresh list
+        fetchProducts(currentPage, searchTerm);
+
+        // Optional: move back a page if last item deleted
+        if (productList.length === 1 && currentPage > 1) {
+          setCurrentPage((prev) => prev - 1);
+        }
+      }
+    } catch (error) {
+      console.error("DELETE PRODUCT ERROR:", error);
+      alert("❌ Failed to delete product");
     }
   };
 
@@ -436,6 +459,34 @@ export default function ProductRegistration() {
     }
 
     pdf.save("Batch-Inventory.pdf");
+  };
+  const getPaginationPages = () => {
+    const pages = [];
+    const delta = 1; // pages before & after current
+
+    pages.push(1);
+
+    if (currentPage > delta + 2) {
+      pages.push("...");
+    }
+
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      pages.push(i);
+    }
+
+    if (currentPage < totalPages - (delta + 1)) {
+      pages.push("...");
+    }
+
+    if (totalPages > 1) {
+      pages.push(totalPages);
+    }
+
+    return pages;
   };
 
   return (
@@ -735,7 +786,7 @@ export default function ProductRegistration() {
             </tbody>
           </table>
           {/* --- PAGINATION FOOTER --- */}
-          <div className="px-10 py-6 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+          {/* <div className="px-10 py-6 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
               Showing Page <span className="text-slate-900">{currentPage}</span>{" "}
               of {totalPages}
@@ -774,6 +825,54 @@ export default function ProductRegistration() {
                 Next
               </button>
             </div>
+          </div> */}
+
+          <div className="flex items-center gap-2 justify-center p-2">
+            {/* ◀ Previous */}
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              className="px-4 h-11 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600
+               hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              Prev
+            </button>
+
+            {/* Numbers + dots */}
+            <div className="flex gap-1">
+              {getPaginationPages().map((page, index) =>
+                page === "..." ? (
+                  <span
+                    key={index}
+                    className="w-11 h-11 flex items-center justify-center text-slate-400 font-bold"
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-11 h-11 rounded-xl text-sm font-black transition-all ${
+                      currentPage === page
+                        ? "bg-[#FA9C42] text-white shadow-lg shadow-orange-200"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
+            </div>
+
+            {/* ▶ Next */}
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              className="px-4 h-11 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600
+               hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>

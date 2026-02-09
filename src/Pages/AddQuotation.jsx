@@ -895,18 +895,20 @@ export default function AddQuotation() {
                             readOnly
                           />
                         </td>
-                        <td className="p-3 text-center w-[100px]">
-                          <div className="flex flex-col items-center">
-                            <input
-                              className="table-input w-16 h-10 text-center border-blue-100 bg-blue-50/20 font-bold text-blue-600"
-                              value={r.cov} // This is the individual box coverage
-                              onChange={(e) =>
-                                updateRowField(i, "cov", e.target.value)
-                              }
-                            />
-                            {/* <span className="text-[8px] font-bold text-blue-400 uppercase mt-1">Cov / Box</span> */}
-                          </div>
-                        </td>
+                       <td className="p-3 text-center w-[100px]">
+  <div className="flex flex-col items-center">
+    <input
+      type="number"
+      step="0.01"   // allows point/decimal values
+      className="table-input w-[80px] h-10 text-center border-blue-100 bg-blue-50/20 font-bold text-blue-600"
+      value={r.cov}
+      onChange={(e) =>
+        updateRowField(i, "cov", parseFloat(e.target.value) || 0)
+      }
+    />
+  </div>
+</td>
+
                         <td className="p-3 text-center">
                           <input
                             className="table-input w-14 h-10 text-center text-orange-600"
