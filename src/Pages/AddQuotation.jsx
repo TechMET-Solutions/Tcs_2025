@@ -229,9 +229,10 @@ export default function AddQuotation() {
           const discount = Number(item.discount) || 0;
           const Area = item.area;
           // Perfect Logic Calculations
-          const calculatedCoverage = box * cov;
+          const calculatedCoverage = box * cov * rate;
           const totalWeight = box * weight;
-          const totalAmount = calculatedCoverage * rate - discount;
+          const subAmount = (calculatedCoverage * discount) / 100;
+          const totalAmount = calculatedCoverage - subAmount;
 
           return {
             productId: item.productId,
@@ -426,6 +427,7 @@ export default function AddQuotation() {
       return;
     }
     try {
+      debugger
       const payload = {
         quotationId: isEditMode ? editData.id : undefined,
         additionalDiscount: additionalDiscount,
@@ -489,6 +491,7 @@ export default function AddQuotation() {
   //   newRows[index].showList = false;
   //   setRows(newRows);
   // };
+
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-4 md:p-10 font-['Lexend'] text-slate-700">
