@@ -18,15 +18,54 @@ const TodoComponent = ({ section = "General", employeeId = 1 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { permissions, user, role } = useAuth();
   
+  // const fetchTodos = async () => {
+  //   // debugger
+  //   setLoading(true);
+  //   try {
+  //     const res = await axios.get(API_URL_GET, { params: { role: role, section } });
+  //     setTodos(res.data);
+  //   } catch (err) { console.error(err); }
+  //   setLoading(false);
+  // };
+
+  // const fetchTodos = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const res = await axios.get(API_URL_GET, { params: { role: role, section } });
+
+  //     // FIX HERE
+  //     setTodos(res.data.tasks || []);
+
+  //   } catch (err) {
+  //     console.error(err);
+  //     setTodos([]);
+  //   }
+  //   setLoading(false);
+  // };
+
   const fetchTodos = async () => {
-    // debugger
     setLoading(true);
     try {
-      const res = await axios.get(API_URL_GET, { params: { role: role, section } });
-      setTodos(res.data);
-    } catch (err) { console.error(err); }
+      const params = { role, section };
+
+      // 🔹 send user_id only for employee
+      if (role === "employee") {
+        params.user_id = user.id;
+      }
+
+      const res = await axios.get(API_URL_GET, { params });
+
+      // 🔹 backend returns { success, tasks }
+      setTodos(res.data.tasks || []);
+
+    } catch (err) {
+      console.error(err);
+      setTodos([]);
+    }
     setLoading(false);
   };
+
+
 
   useEffect(() => { if (isOpen) fetchTodos(); }, [isOpen, section]);
 
