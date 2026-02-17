@@ -49,10 +49,24 @@ export default function Dashboard() {
     setShowModal(true);
   };
   const [userWiseData, setUserWiseData] = useState([]);
+
+  const today = new Date();
+
+  // Start = current month ka 1st day
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 2);
+
+  // Format function (YYYY-MM-DD)
+  const formatDate = (date) => date.toISOString().split("T")[0];
+
   const [dateRange, setDateRange] = useState({
-    start: "2025-01-23",
-    end: "2026-01-23",
+    start: formatDate(startOfMonth),
+    end: formatDate(today),
   });
+
+  // const [dateRange, setDateRange] = useState({
+  //   start: "2025-01-23",
+  //   end: "2026-01-23",
+  // });
 
   const fetchUserWiseOrders = async () => {
     try {

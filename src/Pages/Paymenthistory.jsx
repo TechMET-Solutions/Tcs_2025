@@ -105,21 +105,24 @@ const PaymentHistory = () => {
         {/* 3-TAB SWITCHER */}
         <div className="flex p-1 bg-slate-200 rounded-2xl w-fit mb-8 shadow-inner">
           {[
-            { id: 'billing', label: 'Billing', icon: <Receipt size={16}/> },
-            { id: 'non-billing', label: 'Non-Billing', icon: <FileText size={16}/> },
-            { id: 'other', label: 'Other/None', icon: <LayoutGrid size={16}/> }
+            { id: 'billing', label: 'Red', icon: <Receipt size={16}/> },
+            { id: 'non-billing', label: 'Blue', icon: <FileText size={16}/> },
+            // { id: 'other', label: 'Other/None', icon: <LayoutGrid size={16}/> }
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
-                activeTab === tab.id 
-                ? 'bg-white text-indigo-600 shadow-md scale-105' 
-                : 'text-slate-500 hover:text-slate-700'
-              }`}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all
+    ${activeTab === tab.id
+                  ? tab.id === "billing"
+                    ? "bg-red-500 text-white shadow-md scale-105"
+                    : "bg-blue-500 text-white shadow-md scale-105"
+                  : "text-slate-500 hover:text-slate-700"
+                }`}
             >
               {tab.icon} {tab.label}
             </button>
+
           ))}
         </div>
 

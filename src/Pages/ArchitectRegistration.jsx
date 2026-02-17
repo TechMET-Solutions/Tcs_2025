@@ -34,7 +34,7 @@ export default function ArchitectRegistration() {
     firstname: "",
     lastname: "",
     whatsapp: "",
-    commission: "",
+    // commission: "",
     birthdate: "",
     loyaltyPoints: "",
     remark: ""
@@ -108,7 +108,7 @@ export default function ArchitectRegistration() {
       firstname: "",
       lastname: "",
       whatsapp: "",
-      commission: "",
+      // commission: "",
       birthdate: "",
       loyaltyPoints: "",
       remark: ""
@@ -421,13 +421,13 @@ export default function ArchitectRegistration() {
                       onWheel={(e) => e.target.blur()} placeholder="+91 XXXXXXXXXX" className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-medium" required />
                   </div>
                 </div>
-                <div className="space-y-1.5">
+                {/* <div className="space-y-1.5">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">Commission Rate</label>
                   <div className="relative">
                     <Percent className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FA9C42]" size={16} />
                     <input type="number" name="commission" value={architect.commission} onChange={handleChange} className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border-2 border-slate-100 focus:border-[#FA9C42] outline-none transition-all font-bold text-[#FA9C42]" required />
                   </div>
-                </div>
+                </div> */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">Birthdate</label>
                   <div className="relative">

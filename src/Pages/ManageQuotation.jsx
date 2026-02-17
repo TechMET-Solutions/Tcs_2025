@@ -1131,7 +1131,7 @@ export default function ManageQuotation() {
             {/* Transaction Type Selection */}
             <div className="mb-6 mt-5">
               <label className="modal-label">Transaction Type</label>
-              <div className="grid grid-cols-3 gap-2 mt-2">
+              <div className="grid grid-cols-2 gap-2 mt-2">
                 {/* Option 1: Billing */}
                 <label
                   className={`flex flex-col items-center justify-center py-3 px-2 rounded-2xl border-2 cursor-pointer transition-all duration-200 
@@ -1187,7 +1187,7 @@ export default function ManageQuotation() {
                 </label>
 
                 {/* Option 3: None (Empty String) */}
-                <label
+                {/* <label
                   className={`flex flex-col items-center justify-center py-3 px-2 rounded-2xl border-2 cursor-pointer transition-all duration-200 
         ${
           paymentData.billingType === ""
@@ -1211,7 +1211,7 @@ export default function ManageQuotation() {
                   <span className="text-[10px] uppercase tracking-tight">
                     None
                   </span>
-                </label>
+                </label> */}
               </div>
             </div>
             <button
