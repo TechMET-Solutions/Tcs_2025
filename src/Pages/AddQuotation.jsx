@@ -264,7 +264,7 @@ export default function AddQuotation() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${BASEURL}/api/product/list`);
+        const res = await axios.get(`${BASEURL}/api/product/all-list`);
         setProducts(res.data.products || []);
       } catch (err) {
         console.error(err);
@@ -313,7 +313,15 @@ export default function AddQuotation() {
   };
 
   const selectProduct = (i, productId) => {
-    const p = products.find((x) => x.id == productId);
+    debugger
+    // First try to find in filtered products of this row
+    let p = rows[i]?.filteredProducts?.find((x) => x.id == productId);
+
+    // If not found, try the full products array
+    if (!p) {
+      p = products.find((x) => x.id == productId);
+    }
+
     if (!p) return;
 
     const updated = [...rows];
@@ -357,6 +365,7 @@ export default function AddQuotation() {
     setRows(updated);
   };
   const selectBySize = (rowIndex, size) => {
+    // debugger
     const row = rows[rowIndex];
 
     const product = products.find(
@@ -466,6 +475,7 @@ export default function AddQuotation() {
       alert("Error processing quotation");
     }
   };
+
   const handleProductSearch = async (index, value) => {
     const newRows = [...rows];
     newRows[index].search = value;
@@ -482,6 +492,12 @@ export default function AddQuotation() {
 
     newRows[index].filteredProducts = res.data.products || [];
     setRows([...newRows]);
+  };
+
+  const showListForRow = (index) => {
+    const newRows = [...rows];
+    newRows[index].showList = true;
+    setRows(newRows);
   };
 
   // const selectProduct = (index, productId, name) => {
@@ -736,7 +752,7 @@ export default function AddQuotation() {
               </div>
               <div className="overflow-x-auto rounded-[24px] border border-slate-100 shadow-sm bg-white">
                 <table className="w-full text-left border-collapse table-fixed">
-                  {" "}
+
                   {/* table-fixed helps maintain column sizes */}
                   <thead className="bg-slate-50/50 border-b border-slate-100">
                     <tr>
@@ -786,14 +802,13 @@ export default function AddQuotation() {
                         key={i}
                         className="hover:bg-slate-50/30 transition-colors h-[70px]"
                       >
-                        {" "}
                         {/* Fixed row height for stability */}
                         <td className="p-3 relative overflow-visible">
                           <input
                             type="text"
                             className="lux-input w-full text-xs h-13 px-2 rounded-xl border-slate-200 bg-slate-50"
                             placeholder="Type product name..."
-                            value={r.search || clientName}
+                            value={r.search || ""}
                             onChange={(e) =>
                               handleProductSearch(i, e.target.value)
                             }
@@ -820,7 +835,7 @@ export default function AddQuotation() {
                             className="lux-input text-xs h-13 px-2 rounded-xl border-slate-200 bg-slate-50"
                             value={r.size}
                             disabled={!r.productName}
-                            onChange={(e) => selectBySize(i, e.target.value)}
+                            onChange={(e) => selectProductSize(i, e.target.value)}
                           >
                             <option value="">
                               {r.productName
@@ -898,19 +913,19 @@ export default function AddQuotation() {
                             readOnly
                           />
                         </td>
-                       <td className="p-3 text-center w-[100px]">
-  <div className="flex flex-col items-center">
-    <input
-      type="number"
-      step="0.01"   // allows point/decimal values
-      className="table-input w-[80px] h-10 text-center border-blue-100 bg-blue-50/20 font-bold text-blue-600"
-      value={r.cov}
-      onChange={(e) =>
-        updateRowField(i, "cov", parseFloat(e.target.value) || 0)
-      }
-    />
-  </div>
-</td>
+                        <td className="p-3 text-center w-[100px]">
+                          <div className="flex flex-col items-center">
+                            <input
+                              type="number"
+                              step="0.01"   // allows point/decimal values
+                              className="table-input w-[80px] h-10 text-center border-blue-100 bg-blue-50/20 font-bold text-blue-600"
+                              value={r.cov}
+                              onChange={(e) =>
+                                updateRowField(i, "cov", parseFloat(e.target.value) || 0)
+                              }
+                            />
+                          </div>
+                        </td>
 
                         <td className="p-3 text-center">
                           <input
