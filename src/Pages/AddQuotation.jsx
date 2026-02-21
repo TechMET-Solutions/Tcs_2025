@@ -237,6 +237,7 @@ export default function AddQuotation() {
           return {
             productId: item.productId,
             productName: item.productName || item.name,
+            search: item.productName || item.name,
             size: item.size,
             quality: item.quality,
             rate: rate,

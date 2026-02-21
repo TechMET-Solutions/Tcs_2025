@@ -13,8 +13,9 @@ import {
   addPurchaseAPI,
   updatePurchaseAPI,
 } from "../Component/API/inventoryApi";
-import { getProductAPI } from "../Component/API/productApi";
+import { getProductAPI, searchProductAPI } from "../Component/API/productApi";
 import { BASEURL } from "../Component/API/Url";
+import axios from "axios";
 
 export default function AddInventory() {
   const navigate = useNavigate();
@@ -167,12 +168,32 @@ export default function AddInventory() {
     };
   };
 
+  // useEffect(() => {
+  //   searchProductAPI().then((res) => {
+  //     setProducts(res.data.products || []);
+  //     setRows([{ ...emptyRow }]);
+  //   });
+  // }, []);
+
+
   useEffect(() => {
-    getProductAPI().then((res) => {
-      setProducts(res.data.products || []);
-      setRows([{ ...emptyRow }]);
-    });
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(
+          "https://dashboard.theceramicstudio.in/api/product/all-list?search="
+        );
+
+        setProducts(res.data.products || []);
+        setRows([{ ...emptyRow }]);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
   }, []);
+
+
   useEffect(() => {
     const fetchSuppliers = async () => {
       if (searchTerm.length < 2) {
